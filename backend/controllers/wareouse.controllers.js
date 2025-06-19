@@ -1,4 +1,5 @@
 import User from "../models/user.model.js"
+import Order from "../models/order.model.js";
 import { generateToken, verifyToken } from "../utils/jwt.js"
 
 async function login(req,res) {
@@ -26,6 +27,25 @@ async function login(req,res) {
     }
 }
 
+async function updateWarehouseStatus(req, res) {
+    try {
+        const { orderId, statusWarehouse } = req.body;
+        if (!orderId || !statusWarehouse) {
+            return res.json({ msg: "Order ID and statusWarehouse are required", success: false, status: 400 });
+        }
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            return res.json({ msg: "Order not found", success: false, status: 404 });
+        }
+        order.statusWarehouse = statusWarehouse;
+        await order.save();
+        return res.json({ msg: "Warehouse status updated", order, success: true, status: 200 });
+    } catch (error) {
+        return res.json({ msg: "Failed to update warehouse status", success: false, error: error.message, status: 500 });
+    }
+}
+
 export const warehouseController = {
     login,
+    updateWarehouseStatus,
 }

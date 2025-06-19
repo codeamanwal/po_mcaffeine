@@ -1,5 +1,8 @@
 import { generateToken, verifyToken } from "../utils/jwt.js"
 import User from "../models/user.model.js";
+import Order from "../models/order.model.js";
+import csv from "csv-parser";
+import fs from "fs";
 
 
 async function createAdmin (req, res) {
@@ -195,10 +198,6 @@ async function createLogistic(req,res) {
     }
 }
 
-async function createOrder(req, res) {
-
-}
-
 async function getAllWareHouses(req, res){
     try {
         const token = req.headers?.authorization?.split(" ")[1];
@@ -245,12 +244,127 @@ async function getAllLogistics(req,res) {
 }
 
 
+// Create a single order
+export async function createOrder(req, res) {
+    try {
+        const orderData = req.body;
+        const newOrder = await Order.create(orderData);
+        return res.json({
+            msg: "Order created successfully",
+            order: newOrder,
+            success: true,
+            status: 201
+        });
+    } catch (error) {
+        return res.json({
+            msg: "Order creation failed",
+            success: false,
+            error: error.message,
+            status: 500
+        });
+    }
+}
+
+// Bulk order creation from CSV file
+export async function bulkCreateOrders(req, res) {
+    try {
+        if (!req.file) {
+            return res.json({ msg: "CSV file is required", success: false, status: 400 });
+        }
+
+        const orders = [];
+        fs.createReadStream(req.file.path)
+            .pipe(csv())
+            .on("data", (row) => {
+                // Map CSV columns to Order fields as needed
+                orders.push({
+                    entryDate: row['Entry Date'],
+                    brand: row['Brand'],
+                    channel: row['Channel'],
+                    location: row['Location'],
+                    poDate: row['PO Date'],
+                    poNumber: row['PO Number'],
+                    srNo: row['Sr/ No'],
+                    skuName: row['SKU Name'],
+                    skuCode: row['SKU Code'],
+                    channelSkuCode: row['Channel SKU Code'],
+                    qty: row['Qty'],
+                    gmv: row['GMV'],
+                    poValue: row['PO Value'],
+                    actualPoNumber: row['Actual PO Number'],
+                    updatedQty: row['Updated Qty'],
+                    updatedGmv: row['Updated GMV'],
+                    updatedPoValue: row['Updated PO Value'],
+                    facility: row['Facility'],
+                    accountsWorking: row['Accounts Working'],
+                    channelInwardingQuantity: row['Channel Inwarding Quantity'],
+                    workingDate: row['Working Date'],
+                    dispatchDate: row['Dispatch Date'],
+                    currentAppointmentDate: row['Current Appointment Date'],
+                    statusPlanning: row['Status (Planning)'],
+                    statusWarehouse: row['Status (Warehouse)'],
+                    statusLogistics: row['Status (Logistics)'],
+                    orderNumbers: row['Order No 1|Order No 2|Order No 3'],
+                    poNumberInwardCWH: row['PO Number (Inward - CWH)'],
+                    invoiceLink: row['Invoice Link'],
+                    cnLink: row['CN Link'],
+                    maxPoEntryCount: row['Max. PO Entry Count'],
+                    poCheck: row['PO Check'],
+                    temp: row['Temp'],
+                    inwardPos: row['Inward Pos'],
+                    sku: row['SKU'],
+                    uidDb: row['UID_DB'],
+                    channelType: row['Channel Type'],
+                    actualWeight: row['Actual Weight'],
+                    check: row['Check']
+                });
+            })
+            .on("end", async () => {
+                try {
+                    const createdOrders = await Order.bulkCreate(orders);
+                    return res.json({
+                        msg: "Bulk orders created successfully",
+                        count: createdOrders.length,
+                        success: true,
+                        status: 201
+                    });
+                } catch (err) {
+                    return res.json({
+                        msg: "Bulk order creation failed",
+                        success: false,
+                        error: err.message,
+                        status: 500
+                    });
+                }
+            })
+            .on("error", (err) => {
+                return res.json({
+                    msg: "Error reading CSV file",
+                    success: false,
+                    error: err.message,
+                    status: 500
+                });
+            });
+    } catch (error) {
+        return res.json({
+            msg: "Bulk order creation failed",
+            success: false,
+            error: error.message,
+            status: 500
+        });
+    }
+}
+
+
 export const adminController = {
     createAdmin,
     login,
     createWareHouse,
     createLogistic,
-    createOrder,
+
     getAllWareHouses,
     getAllLogistics,
+
+    createOrder,
+    bulkCreateOrders
 }
