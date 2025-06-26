@@ -6,7 +6,7 @@ import { warehouseRouter } from "./src/routes/warehouse.routes.js";
 import { logisticRouter } from "./src/routes/logistic.routes.js";
 import { connectToDatabase } from "./src/db/postgresql.js"; // Import DB connection
 import { AuthMiddleware, WarehouseMiddleware } from "./src/middleware/auth.middleware.js";
-import User from "./models/user.model.js";
+import User from "./src/models/user.model.js";
 import { generateToken } from "./src/utils/jwt.js";
 
 const app = express();
