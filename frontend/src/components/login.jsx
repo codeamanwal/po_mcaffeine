@@ -153,10 +153,10 @@ export default function LoginPage({ onLogin, onForgotPassword, isDarkMode, onTog
                 <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Demo Credentials:</p>
                 <div className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
                   <p>
-                    <strong>Email:</strong> superadmin@mcaffeine.com
+                    <strong>Email:</strong> superadmin@email.com
                   </p>
                   <p>
-                    <strong>Password:</strong> password123
+                    <strong>Password:</strong> password
                   </p>
                 </div>
               </div>
