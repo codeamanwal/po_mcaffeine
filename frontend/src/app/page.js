@@ -1,141 +1,44 @@
 "use client"
 
-import { useState, useEffect } from "react"
-// import { useAuth } from "../hooks/useAuth"
-import LoginPage from "@/components/login"
-import ForgotPasswordPage from "@/components/login"
-import DashboardPage from "@/components/login"
-import UserSettingsPage from "@/components/login"
-import CreateUserPage from "@/components/login"
-import UserManagementPage from "@/components/login"
-import { set } from "date-fns"
-
+import { useUserStore } from "@/store/user-store"
+import { useThemeStore } from "@/store/theme-store"
+import NavigationHeader from "@/components/header"
+import { useRouter } from "next/navigation";
 export default function Page() {
-  const [currentPage, setCurrentPage] = useState()
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [isAuthenticated, setIsAuthenticated ] = useState(true)
 
-  // if(currentPage === "dummy"){
-  //   return (
-  //     <div className="font-2xl text-center">
-  //       Loading ....
-  //     </div>
-  //   )
-  // }
+  const router = useRouter();
 
-  // Initialize theme from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("mcaffeine-theme")
-    if (savedTheme === "dark") {
-      setIsDarkMode(true)
-      document.documentElement.classList.add("dark")
-    }
-  }, [])
+  const { isLoggedIn } = useUserStore()
+  const {isDarkMode, setIsDarkMode} = useThemeStore()
 
-  // Handle theme toggle
-  const handleToggleTheme = () => {
-    const newTheme = !isDarkMode
-    setIsDarkMode(newTheme)
-
-    if (newTheme) {
-      document.documentElement.classList.add("dark")
-      localStorage.setItem("mcaffeine-theme", "dark")
+  const handleGo = () => {
+    if (isLoggedIn) {
+      window.location.href = "/dashboard"
     } else {
-      document.documentElement.classList.remove("dark")
-      localStorage.setItem("mcaffeine-theme", "light")
+      window.location.href = "/login"
     }
   }
 
-  // Redirect to login if not authenticated and trying to access protected pages
-  useEffect(() => {
-    const loggedInUser = localStorage.getItem("mcaffeine_user");
-    console.log("loggedInUser", loggedInUser)
-    if(loggedInUser){
-      setIsAuthenticated(true)
-      setCurrentPage("dashboard")
-    }else {
-      if (!isAuthenticated && currentPage !== "login" && currentPage !== "forgot-password") {
-        setCurrentPage("login")
-      }
-    }
-  }, [isAuthenticated, currentPage])
-
-  // Redirect to dashboard after successful login
-  useEffect(() => {
-    if (isAuthenticated && currentPage === "login") {
-      setCurrentPage("dashboard")
-    }
-  }, [isAuthenticated, currentPage])
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case "login":
-        return (
-          <LoginPage
-            onLogin={() => setCurrentPage("dashboard")}
-            onForgotPassword={() => setCurrentPage("forgot-password")}
-            isDarkMode={isDarkMode}
-            onToggleTheme={handleToggleTheme}
+  return (
+    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+          <NavigationHeader
+            currentPage="/"
+            onNavigate={(page) => {router.push(`/${page}`)}}
           />
-        )
-      case "forgot-password":
-        return (
-          <ForgotPasswordPage
-            onBack={() => setCurrentPage("login")}
-            onResetSuccess={() => setCurrentPage("login")}
-            isDarkMode={isDarkMode}
-            onToggleTheme={handleToggleTheme}
-          />
-        )
-      case "dashboard":
-        return (
-          <DashboardPage
-            onNavigate={(page) => setCurrentPage(page)}
-            isDarkMode={isDarkMode}
-            onToggleTheme={handleToggleTheme}
-          />
-        )
-      case "user-settings":
-        return (
-          <UserSettingsPage
-            onNavigate={(page) => setCurrentPage(page)}
-            isDarkMode={isDarkMode}
-            onToggleTheme={handleToggleTheme}
-          />
-        )
-      case "create-user":
-        return (
-          <CreateUserPage
-            onNavigate={(page) => setCurrentPage(page)}
-            isDarkMode={isDarkMode}
-            onToggleTheme={handleToggleTheme}
-          />
-        )
-      case "user-management":
-        return (
-          <UserManagementPage
-            onNavigate={(page) => setCurrentPage(page)}
-            isDarkMode={isDarkMode}
-            onToggleTheme={handleToggleTheme}
-          />
-        )
-      default:
-        return isAuthenticated ? (
-          <DashboardPage
-            onNavigate={(page) => setCurrentPage(page)}
-            isDarkMode={isDarkMode}
-            onToggleTheme={handleToggleTheme}
-          />
-        ) : (
-          <LoginPage
-            onLogin={() => setCurrentPage("dashboard")}
-            onForgotPassword={() => setCurrentPage("forgot-password")}
-            isDarkMode={isDarkMode}
-            onToggleTheme={handleToggleTheme}
-          />
-        )
-    }
-  }
-
-  return renderPage()
+    
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+      
+      <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Welcome to PO CMS</h1>
+      <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
+        Manage your purchase orders and shipments efficiently.
+      </p>
+      <button
+        onClick={handleGo}
+        className="px-6 py-3 rounded bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold text-lg shadow hover:from-blue-700 hover:to-purple-700 transition"
+      >
+        {isLoggedIn ? "Go to Dashboard" : "Go to Login"}
+      </button>
+    </div>
+    </div>
+  )
 }
