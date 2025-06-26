@@ -1,13 +1,13 @@
 import express from "express";
 import "dotenv/config"
 import cors from "cors"
-import { adminRouter } from "./routes/admin.routes.js";
-import { warehouseRouter } from "./routes/warehouse.routes.js";
-import { logisticRouter } from "./routes/logistic.routes.js";
-import { connectToDatabase } from "./db/postgresql.js"; // Import DB connection
-import { AuthMiddleware, WarehouseMiddleware } from "./middleware/auth.middleware.js";
+import { adminRouter } from "./src/routes/admin.routes.js";
+import { warehouseRouter } from "./src/routes/warehouse.routes.js";
+import { logisticRouter } from "./src/routes/logistic.routes.js";
+import { connectToDatabase } from "./src/db/postgresql.js"; // Import DB connection
+import { AuthMiddleware, WarehouseMiddleware } from "./src/middleware/auth.middleware.js";
 import User from "./models/user.model.js";
-import { generateToken } from "./utils/jwt.js";
+import { generateToken } from "./src/utils/jwt.js";
 
 const app = express();
 
