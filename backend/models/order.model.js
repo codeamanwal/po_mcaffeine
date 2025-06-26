@@ -19,7 +19,7 @@ const Order = sequelize.define('Order', {
   updatedQty: { type: DataTypes.INTEGER, allowNull: true },
   updatedGmv: { type: DataTypes.FLOAT, allowNull: true },
   updatedPoValue: { type: DataTypes.FLOAT, allowNull: true },
-  facility: { type: DataTypes.STRING, allowNull: true },
+  facility: { type: DataTypes.STRING, allowNull: true },  // warehouse
   accountsWorking: { type: DataTypes.STRING, allowNull: true },
   channelInwardingQuantity: { type: DataTypes.INTEGER, allowNull: true },
   workingDate: { type: DataTypes.DATE, allowNull: true },

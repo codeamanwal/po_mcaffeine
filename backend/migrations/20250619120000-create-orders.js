@@ -8,7 +8,7 @@ export default {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGERw
       },
       entryDate: { type: Sequelize.DATE, allowNull: true },
       brand: { type: Sequelize.STRING, allowNull: true },
