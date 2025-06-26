@@ -2,11 +2,11 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../db/postgresql.js';
 
 const Order = sequelize.define('Order', {
-  entryDate: { type: DataTypes.DATE, allowNull: true },
+  entryDate: { type: DataTypes.STRING, allowNull: true },
   brand: { type: DataTypes.STRING, allowNull: true },
   channel: { type: DataTypes.STRING, allowNull: true },
   location: { type: DataTypes.STRING, allowNull: true },
-  poDate: { type: DataTypes.DATE, allowNull: true },
+  poDate: { type: DataTypes.STRING, allowNull: true },
   poNumber: { type: DataTypes.STRING, allowNull: true },
   srNo: { type: DataTypes.STRING, allowNull: true },
   skuName: { type: DataTypes.STRING, allowNull: true },
@@ -28,7 +28,7 @@ const Order = sequelize.define('Order', {
   statusPlanning: { type: DataTypes.STRING, allowNull: true },
   statusWarehouse: { type: DataTypes.STRING, allowNull: true },
   statusLogistics: { type: DataTypes.STRING, allowNull: true },
-  orderNumbers: { type: DataTypes.STRING, allowNull: true }, // Order No 1|Order No 2|Order No 3
+  orderNumbers: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true }, 
   poNumberInwardCWH: { type: DataTypes.STRING, allowNull: true },
   invoiceLink: { type: DataTypes.STRING, allowNull: true },
   cnLink: { type: DataTypes.STRING, allowNull: true },

@@ -33,7 +33,7 @@ export default function LoginPage({ onLogin, onForgotPassword, isDarkMode, onTog
       console.log(result.data)
 
       if (result.status === 200) {
-        login(result.data.user)
+        login(result.data.user, result.data.token)
         onLogin()
       } else {
         setError(result.error || "Login failed")

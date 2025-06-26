@@ -8,6 +8,8 @@ import { connectToDatabase } from "./src/db/postgresql.js"; // Import DB connect
 import { AuthMiddleware, WarehouseMiddleware } from "./src/middleware/auth.middleware.js";
 import User from "./src/models/user.model.js";
 import { generateToken } from "./src/utils/jwt.js";
+import { orderRouter } from "./src/routes/order.routes.js";
+import { getPublicUser } from "./src/utils/user.js";
 
 const app = express();
 
@@ -26,6 +28,8 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/warehouse", AuthMiddleware ,warehouseRouter);
 app.use("/api/v1/logistic",AuthMiddleware, logisticRouter);
 
+app.use("/api/v1/order", AuthMiddleware, orderRouter);
+
 
 app.get("/", (req, res) => {
     res.send("Welcome to PO-CMS-Backend");
@@ -43,8 +47,12 @@ app.post("/api/v1/auth/login" ,async (req,res) => {
         if(user && user.password === password) {
 
             /**************************************************/
-            const {pasword, ...publicUser} = user.toJSON();
+            // const {pasword, ...publicUser} = user.toJSON();
             /*************************************************/
+
+            const publicUser = getPublicUser(user.toJSON());
+
+            console.log("publicUser: ", publicUser);
 
             const token = generateToken(publicUser)
             res.cookie('token', token, {

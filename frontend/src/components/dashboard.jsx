@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import NavigationHeader from "@/components/header"
 import { useThemeStore } from "@/store/theme-store"
+import { getPoFormatOrderList } from "@/lib/order"
+import { poFormatDataType } from "@/constants/data_type"
 
 // Sample data based on provided format
-const poFormatData = [
+const poData = [
   {
     entryDate: "2024-12-04",
     brand: "MCaffeine",
@@ -96,7 +98,7 @@ const poFormatData = [
   },
 ]
 
-const shipmentStatusData = [
+const shipmentData = [
   {
     uid: 135290,
     entryDate: "2024/12/04",
@@ -189,6 +191,35 @@ export default function DashboardPage({ onNavigate }) {
 
   const [activeTab, setActiveTab] = useState("po-format")
 
+  const [poFormatData, setPoFormatData] = useState([])
+  const [shipmentStatusData, setShipmentStatusData] = useState([])
+
+  async function getPoFormateData() {
+    try {
+      const res = await getPoFormatOrderList();
+      console.log(res.data)
+      setPoFormatData(res.data.orders)
+    } catch (error) {
+      console.log(error);
+      setPoFormatData(poData)
+    }
+  }
+
+  async function getShipmentData() {
+    try {
+      // const res = await getPoFormatOrderList();
+      // console.log(res.data)
+      setShipmentStatusData(shipmentData)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    getPoFormateData()
+    getShipmentData()
+  },[])
+
   return (
     <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
       <NavigationHeader
@@ -234,32 +265,24 @@ export default function DashboardPage({ onNavigate }) {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-                          <TableHead className="font-semibold">Entry Date</TableHead>
-                          <TableHead className="font-semibold">Brand</TableHead>
-                          <TableHead className="font-semibold">Channel</TableHead>
-                          <TableHead className="font-semibold">Location</TableHead>
-                          <TableHead className="font-semibold">PO Date</TableHead>
-                          <TableHead className="font-semibold">PO Number</TableHead>
-                          <TableHead className="font-semibold">Sr No</TableHead>
-                          <TableHead className="font-semibold">SKU Name</TableHead>
-                          <TableHead className="font-semibold">SKU Code</TableHead>
-                          <TableHead className="font-semibold">Channel SKU Code</TableHead>
-                          <TableHead className="font-semibold">Qty</TableHead>
-                          <TableHead className="font-semibold">GMV</TableHead>
-                          <TableHead className="font-semibold">PO Value</TableHead>
-                          <TableHead className="font-semibold">Updated Qty</TableHead>
-                          <TableHead className="font-semibold">Updated GMV</TableHead>
-                          <TableHead className="font-semibold">Updated PO Value</TableHead>
-                          <TableHead className="font-semibold">Facility</TableHead>
-                          <TableHead className="font-semibold">Status (Planning)</TableHead>
-                          <TableHead className="font-semibold">Channel Type</TableHead>
-                          <TableHead className="font-semibold">Actual Weight</TableHead>
+                          {
+                            poFormatDataType.map((item, index) => (
+                              <TableHead key={index} className="font-semibold mx-1 border-2 border-x-white py-1">{item.fieldName}</TableHead>
+                            ))
+                          }
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {poFormatData.map((row, index) => (
                           <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <TableCell>{row.entryDate}</TableCell>
+
+                            {
+                              poFormatDataType.map((item, index) => (
+                                <TableCell key={index} className="mx-1 border-2 border-x-white py-1">{row[item.fieldName]}</TableCell>
+                              ))
+                            }
+
+                            {/* <TableCell>{row.entryDate}</TableCell>
                             <TableCell>
                               <Badge
                                 variant="outline"
@@ -301,7 +324,7 @@ export default function DashboardPage({ onNavigate }) {
                                 {row.channelType}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right">{row.actualWeight} kg</TableCell>
+                            <TableCell className="text-right">{row.actualWeight} kg</TableCell> */}
                           </TableRow>
                         ))}
                       </TableBody>

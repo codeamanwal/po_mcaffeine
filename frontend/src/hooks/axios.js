@@ -3,14 +3,18 @@ import { useUserStore } from "@/store/user-store"
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
 })
 
 // Add a request interceptor to include the Bearer token
 api.interceptors.request.use(
   (config) => {
     // Get the token from the user store
-    const { token } = useUserStore.getState()
+    const { token } = useUserStore.getState();
+    console.log("token: ", token )
+    if(!token){
+      config.headers.Authorization = `Bearer ${"false_token"}`
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }

@@ -1,6 +1,7 @@
+import { use } from "react";
 import { User } from "../models/user.model.js";
 
-export async function createUser(req, res) {
+async function createUser(req, res) {
     try {
         const body = req.body;
         if(!body) {
@@ -21,7 +22,7 @@ export async function createUser(req, res) {
             return res.status(400).json({msg:"User already exists", success: false, status: 400})
         }
 
-        if(role === "admin"){
+        if(role === "admin" || role === "superadmin") {
             if(req.user.role !== "superadmin") {
                 return res.status(400).json({msg:"You are not authorized to create admin", success: false, status: 400})
             }
@@ -50,4 +51,114 @@ export async function createUser(req, res) {
     } catch (error) {
        return res.status(500).json({msg:"Something went wrong", success: false, status: 500}) 
     }
+}
+
+async function deleteUser(req, res) {
+    try {
+        const body = req.body;
+        if(!body) {
+            return res.status(400).json({msg:"Please enter the details", success: false, status: 400})
+        }
+
+        const {id} = body
+        if(!id.trim()) {
+            return res.status(400).json({msg:"Please enter name, email, password & role", success: false, status: 400})
+        }
+
+        const existingUser = await User.findOne({where: {id: id}})
+        if(!existingUser) {
+            return res.status(400).json({msg:"User does not exist", success: false, status: 400})
+        }
+
+        if(existingUser.id === req.user.id) {
+            return res.status(400).json({msg:"You cannot delete yourself", success: false, status: 400})
+        }
+
+        if(existingUser === "superadmin" && req.user.role !== "superadmin") {
+            return res.status(400).json({msg:"You cannot delete superadmin", success: false, status: 400})
+        }
+
+        if(existingUser.role === "admin") {
+            if(req.user.role !== "superadmin") {
+                return res.status(400).json({msg:"You are not authorized to delete admin", success: false, status: 400})
+            }
+        }
+
+        if(existingUser.role === "logistic" || existingUser.role === "warehouse") {
+            if(req.user.role !== "admin" || req.user.role !== "superadmin") {
+                return res.status(400).json({msg:"You are not authorized to delete logistic", success: false, status: 400})
+            }
+        }
+
+        const deletedUser = await User.destroy({ where: {id: id}})
+        return res.status(200).json({msg:"User deleted successfully", deletedUser:deletedUser, success: true, status: 200})
+    } catch (error) {
+        return res.status(500).json({msg:"Something went wrong", success: false, status: 500})
+    }
+}
+
+async function changeYourPassword(req, res) {
+    try {
+        const body = req.body;
+        if(!body) {
+            return res.status(400).json({msg:"Please enter the details", success: false, status: 400})
+        }
+
+        const {currentPassword, newPassword} = body
+        if(!currentPassword || !newPassword) {
+            return res.status(400).json({msg:"Please enter current password and new password", success: false, status: 400})
+        }
+
+        const existingUser = await User.findOne({where: {id: req.user.id}})
+        if(!existingUser) {
+            return res.status(400).json({msg:"User does not exist", success: false, status: 400})
+        }
+
+        if(existingUser.password !== currentPassword) {
+            return res.status(400).json({msg:"Current password is incorrect", success: false, status: 400})
+        }
+
+        if(existingUser.password === newPassword) {
+            return res.status(400).json({msg:"New password cannot be same as current password", success: false, status: 400})
+        }
+
+        const updatedUser = await User.update({password: newPassword}, {where: {id: req.user.id}})
+        const {password, ...user} = updatedUser.toJSON();
+        return res.status(200).json({msg:"Password changed successfully", updatedUser:user, success: true, status: 200})
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Something went wrong!", success: false, error, status: 500})
+    }
+}
+
+async function getAllUsers(req, res){
+    try {
+        let users = await User.findAll();
+        // remove password from all the users
+        users.forEach(user => {
+            let {password, ...publicUser} = user.toJSON();
+            user = publicUser;
+        })
+        return res.status(200).json({msg:"Data fetched successfully", users, success: true, status: 200})
+    } catch (error) {
+        return res.status(500).json({msg:"Something went wrong While fetcing data!", success: false, error, status: 500})
+    }
+}
+
+async function getUser(req, res) {
+    try {
+        const user = req.user;
+        const {password, ...publicUser} = user.toJSON();
+        return res.status(200).json({msg:"Data fetched successfully", user: publicUser, success: true, status: 200})
+    } catch (error) {
+        return res.status(500).json({msg:"Something went wrong While fetcing data!", success: false, error, status: 500})
+    }
+}
+
+export {
+    createUser,
+    deleteUser, 
+    changeYourPassword, 
+    getAllUsers,
+    getUser
 }

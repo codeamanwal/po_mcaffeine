@@ -31,4 +31,3 @@ async function loginUser( req, res ) {
         return res.status(500).json({msg:"Something went wrong", success: false, status: 500})
     }
 }
-

@@ -8,13 +8,13 @@ export default {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGERw
+        type: Sequelize.INTEGER
       },
-      entryDate: { type: Sequelize.DATE, allowNull: true },
+      entryDate: { type: Sequelize.STRING, allowNull: true },
       brand: { type: Sequelize.STRING, allowNull: true },
       channel: { type: Sequelize.STRING, allowNull: true },
       location: { type: Sequelize.STRING, allowNull: true },
-      poDate: { type: Sequelize.DATE, allowNull: true },
+      poDate: { type: Sequelize.STRING, allowNull: true },
       poNumber: { type: Sequelize.STRING, allowNull: true },
       srNo: { type: Sequelize.STRING, allowNull: true },
       skuName: { type: Sequelize.STRING, allowNull: true },
