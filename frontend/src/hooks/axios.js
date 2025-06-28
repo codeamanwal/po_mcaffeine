@@ -11,7 +11,7 @@ api.interceptors.request.use(
   (config) => {
     // Get the token from the user store
     const { token } = useUserStore.getState();
-    console.log("token: ", token )
+    // console.log("token: ", token )
     if(!token){
       config.headers.Authorization = `Bearer ${"false_token"}`
     }

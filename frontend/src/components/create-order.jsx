@@ -13,6 +13,9 @@ import { CalendarIcon, AlertCircle, CheckCircle, Package, ArrowLeft } from 'luci
 import { format } from "date-fns"
 import NavigationHeader from "@/components/header"
 import { cn } from "@/lib/utils"
+import api from "@/hooks/axios"
+import { createSingleOrderUrl } from "@/constants/urls"
+import { se } from "date-fns/locale"
 
 export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme }) {
   const [orderData, setOrderData] = useState({
@@ -42,68 +45,88 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
     setOrderData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const formatDDMMYYYY = (date) => {
+    return format(date, "dd-MM-yyyy")
+  }
+
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setSuccess("")
-
-    // Validation
-    const requiredFields = [
-      "brand",
-      "channel",
-      "location",
-      "poNumber",
-      "srNo",
-      "skuName",
-      "skuCode",
-      "channelSkuCode",
-      "qty",
-      "gmv",
-      "poValue",
-    ]
-
-    for (const field of requiredFields) {
-      if (!orderData[field] || orderData[field] === "") {
-        setError(`${field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())} is required`)
+    
+    try {
+      e.preventDefault()
+      setIsLoading(true)
+      setError("")
+      setSuccess("")
+  
+      // Validation
+      const requiredFields = [
+        "brand",
+        "channel",
+        "location",
+        "poNumber",
+        "srNo",
+        "skuName",
+        "skuCode",
+        "channelSkuCode",
+        "qty",
+        "gmv",
+        "poValue",
+      ]
+  
+      for (const field of requiredFields) {
+        if (!orderData[field] || orderData[field] === "") {
+          setError(`${field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())} is required`)
+          setIsLoading(false)
+          return
+        }
+      }
+  
+      if (!orderData.entryDate || !orderData.poDate) {
+        setError("Entry Date and PO Date are required")
         setIsLoading(false)
         return
       }
-    }
-
-    if (!orderData.entryDate || !orderData.poDate) {
-      setError("Entry Date and PO Date are required")
+  
+      // changing date to string 
+      const finalOrder = {
+        ...orderData,
+        entryDate: formatDDMMYYYY(orderData.entryDate),
+        poDate: formatDDMMYYYY(orderData.poDate),
+      }
+  
+      console.log(finalOrder)
+      const res = await api.post(createSingleOrderUrl, {...finalOrder})
+  
+      // console.log(res.data);
+  
+      if (res.status === 200) {
+        setSuccess("Order created successfully!")
+  
+        // Reseting form after success
+        setTimeout(() => {
+          setOrderData({
+            entryDate: new Date(),
+            brand: "",
+            channel: "",
+            location: "",
+            poDate: undefined,
+            poNumber: "",
+            srNo: "",
+            skuName: "",
+            skuCode: "",
+            channelSkuCode: "",
+            qty: "",
+            gmv: "",
+            poValue: "",
+          })
+          setSuccess("")
+        }, 2000)
+      } 
+    } catch (error) {
+      console.log(error)
+      setError("Failed to create order", error.message)
+    }finally{
       setIsLoading(false)
-      return
     }
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    // Mock success
-    setSuccess("Order created successfully!")
-    
-    // Reset form after success
-    setTimeout(() => {
-      setOrderData({
-        entryDate: new Date(),
-        brand: "",
-        channel: "",
-        location: "",
-        poDate: undefined,
-        poNumber: "",
-        srNo: "",
-        skuName: "",
-        skuCode: "",
-        channelSkuCode: "",
-        qty: "",
-        gmv: "",
-        poValue: "",
-      })
-      setSuccess("")
-    }, 2000)
-
-    setIsLoading(false)
   }
 
   return (

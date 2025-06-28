@@ -1,5 +1,4 @@
-import { use } from "react";
-import { User } from "../models/user.model.js";
+import User  from "../models/user.model.js";
 
 async function createUser(req, res) {
     try {
@@ -22,6 +21,7 @@ async function createUser(req, res) {
             return res.status(400).json({msg:"User already exists", success: false, status: 400})
         }
 
+        // Role base Protection
         if(role === "admin" || role === "superadmin") {
             if(req.user.role !== "superadmin") {
                 return res.status(400).json({msg:"You are not authorized to create admin", success: false, status: 400})
@@ -29,8 +29,8 @@ async function createUser(req, res) {
         }
 
         if(role === "logistic" || role === "warehouse") {
-            if(req.user.role !== "admin" || req.user.role !== "superadmin") {
-                return res.status(400).json({msg:"You are not authorized to create logistic", success: false, status: 400})
+            if(req.user.role !== "admin" && req.user.role !== "superadmin") {
+                return res.status(400).json({msg:"You are not authorized to create user", success: false, status: 400})
             }
         }
 
@@ -61,7 +61,7 @@ async function deleteUser(req, res) {
         }
 
         const {id} = body
-        if(!id.trim()) {
+        if(!id) {
             return res.status(400).json({msg:"Please enter name, email, password & role", success: false, status: 400})
         }
 
@@ -69,12 +69,13 @@ async function deleteUser(req, res) {
         if(!existingUser) {
             return res.status(400).json({msg:"User does not exist", success: false, status: 400})
         }
+        console.log(existingUser)
 
         if(existingUser.id === req.user.id) {
             return res.status(400).json({msg:"You cannot delete yourself", success: false, status: 400})
         }
 
-        if(existingUser === "superadmin" && req.user.role !== "superadmin") {
+        if(existingUser.role === "superadmin" && req.user.role !== "superadmin") {
             return res.status(400).json({msg:"You cannot delete superadmin", success: false, status: 400})
         }
 
@@ -85,15 +86,16 @@ async function deleteUser(req, res) {
         }
 
         if(existingUser.role === "logistic" || existingUser.role === "warehouse") {
-            if(req.user.role !== "admin" || req.user.role !== "superadmin") {
-                return res.status(400).json({msg:"You are not authorized to delete logistic", success: false, status: 400})
+            if(req.user.role !== "admin" && req.user.role !== "superadmin") {
+                return res.status(400).json({msg:"You are not authorized to delete user", success: false, status: 400})
             }
         }
 
         const deletedUser = await User.destroy({ where: {id: id}})
         return res.status(200).json({msg:"User deleted successfully", deletedUser:deletedUser, success: true, status: 200})
     } catch (error) {
-        return res.status(500).json({msg:"Something went wrong", success: false, status: 500})
+        console.log(error)
+        return res.status(500).json({msg:"Something went wrong while deleting user", success: false, status: 500})
     }
 }
 
@@ -123,8 +125,8 @@ async function changeYourPassword(req, res) {
         }
 
         const updatedUser = await User.update({password: newPassword}, {where: {id: req.user.id}})
-        const {password, ...user} = updatedUser.toJSON();
-        return res.status(200).json({msg:"Password changed successfully", updatedUser:user, success: true, status: 200})
+        // const {password, ...user} = updatedUser.toJSON();
+        return res.status(200).json({msg:"Password changed successfully", updatedUser:updatedUser, success: true, status: 200})
     } catch (error) {
         console.log(error);
         return res.status(500).json({msg:"Something went wrong!", success: false, error, status: 500})
@@ -155,7 +157,7 @@ async function getUser(req, res) {
     }
 }
 
-export {
+export const userControllers = {
     createUser,
     deleteUser, 
     changeYourPassword, 

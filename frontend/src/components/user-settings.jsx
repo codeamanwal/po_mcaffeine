@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, AlertCircle, CheckCircle, Lock, User } from "lucide-react"
-import { useAuth } from "@/hooks/use-auth"
 import { useUserStore } from "@/store/user-store"
 import NavigationHeader from "@/components/header"
 import { formatDate } from "date-fns"
+import api from "@/hooks/axios"
+import { changeUserPasswordUrl } from "@/constants/urls"
 
 export default function UserSettingsPage({ onNavigate, isDarkMode, onToggleTheme }) {
   const [currentPassword, setCurrentPassword] = useState("")
@@ -24,44 +25,48 @@ export default function UserSettingsPage({ onNavigate, isDarkMode, onToggleTheme
   const [success, setSuccess] = useState("")
 
   const { user } = useUserStore();
-  const { changePassword } = useAuth()
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setSuccess("")
-
-    if (newPassword !== confirmPassword) {
-      setError("New passwords do not match")
+    try {
+      e.preventDefault()
+      setIsLoading(true)
+      setError("")
+      setSuccess("")
+  
+      if (newPassword !== confirmPassword) {
+        setError("New passwords do not match")
+        setIsLoading(false)
+        return
+      }
+  
+      if (newPassword.length < 6) {
+        setError("New password must be at least 6 characters long")
+        setIsLoading(false)
+        return
+      }
+  
+      if (currentPassword === newPassword) {
+        setError("New password must be different from current password")
+        setIsLoading(false)
+        return
+      }
+  
+      const res = await api.post(changeUserPasswordUrl, {currentPassword, newPassword});
+  
+      // console.log(res.data);
+  
+      if(res.status === 200) {
+        setSuccess("Password changed successfully!")
+        setCurrentPassword("")
+        setNewPassword("")
+        setConfirmPassword("")
+      }
+    } catch (error) {
+      console.log(error);
+      setError(error?.response?.data?.msg || "Failed to change password")
+    } finally {
       setIsLoading(false)
-      return
     }
-
-    if (newPassword.length < 6) {
-      setError("New password must be at least 6 characters long")
-      setIsLoading(false)
-      return
-    }
-
-    if (currentPassword === newPassword) {
-      setError("New password must be different from current password")
-      setIsLoading(false)
-      return
-    }
-
-    const result = await changePassword(currentPassword, newPassword)
-
-    if (result.success) {
-      setSuccess("Password changed successfully!")
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
-    } else {
-      setError(result.error || "Failed to change password")
-    }
-
-    setIsLoading(false)
   }
 
   return (

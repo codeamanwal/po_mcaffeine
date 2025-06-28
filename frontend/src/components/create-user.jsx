@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, AlertCircle, CheckCircle, UserPlus, ArrowLeft } from "lucide-react"
-import { useAuth } from "@/hooks/use-auth"
 import { useUserStore } from "@/store/user-store"
 import NavigationHeader from "@/components/header"
+import api from "@/hooks/axios"
+import { createUserUrl } from "@/constants/urls"
 
 export default function CreateUserPage({ onNavigate, isDarkMode, onToggleTheme }) {
   const [formData, setFormData] = useState({
@@ -23,41 +24,51 @@ export default function CreateUserPage({ onNavigate, isDarkMode, onToggleTheme }
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  const { createUser } = useAuth()
 
   const { user } = useUserStore() 
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setSuccess("")
+    try {
+      e.preventDefault()
+      setIsLoading(true)
+      setError("")
+      setSuccess("")
+  
+      if (!formData.name || !formData.email || !formData.password || !formData.role) {
+        setError("All fields are required")
+        setIsLoading(false)
+        return
+      }
+  
+      if (formData.password.length < 6) {
+        setError("Password must be at least 6 characters long")
+        setIsLoading(false)
+        return
+      }
+  
+      const res = await api.post(createUserUrl, {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      })
 
-    if (!formData.name || !formData.email || !formData.password || !formData.role) {
-      setError("All fields are required")
+      if(res.status === 201) {
+        setSuccess("User created successfully!")
+        setFormData({ name: "", email: "", password: "", role: "" })
+        setTimeout(() => {
+          onNavigate("user-management")
+        }, 2000)
+      }else {
+        setError("Failed to create user")
+      }
+
+    } catch (error) {
+      console.log(error)
+      setError( error?.response?.data?.msg ||"Failed to create user")
+    } finally {
       setIsLoading(false)
-      return
     }
-
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      setIsLoading(false)
-      return
-    }
-
-    const result = await createUser(formData)
-
-    if (result.success) {
-      setSuccess("User created successfully!")
-      setFormData({ name: "", email: "", password: "", role: "" })
-      setTimeout(() => {
-        onNavigate("user-management")
-      }, 2000)
-    } else {
-      setError(result.error || "Failed to create user")
-    }
-
-    setIsLoading(false)
   }
 
   const handleInputChange = (field, value) => {

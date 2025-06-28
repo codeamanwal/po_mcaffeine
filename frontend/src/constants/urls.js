@@ -4,7 +4,12 @@ const base_url = process.env.NEXT_PUBLIC_API_BASE_URL
 export const loginUrl = `${base_url}/api/v1/auth/login`
 
 // user urls =>
-export const createAdminUrl = `${base_url}/api/v1/admin/create-admin`
+export const createUserUrl = `${base_url}/api/v1/user/create-user`
+export const deleteUserUrl = `${base_url}/api/v1/user/delete-user`
+
+export const getAllUsersUrl = `${base_url}/api/v1/user/get-all-users`
+export const changeUserPasswordUrl = `${base_url}/api/v1/user/change-user-password`
+
 
 // order urls =>
 
