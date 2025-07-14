@@ -14,7 +14,13 @@ export const changeUserPasswordUrl = `${base_url}/api/v1/user/change-user-passwo
 // order urls =>
 
 export const createSingleOrderUrl = `${base_url}/api/v1/order/create-single-order` 
+export const updateSingleOrderUrl = `${base_url}/api/v1/order/update-single-order`
 export const createBulkOrderUrl = `${base_url}/api/v1/order/create-bulk-orders`
 
 export const getAllOrdersUrl = `${base_url}/api/v1/order/get-all-orders`
 export const getShipmentStatusListUrl = `${base_url}/api/v1/order/get-shipment-status-list`
+
+// New order urls => 
+export const createShipmentOrderUrl = `${base_url}/api/v1/shipment/create-shipment-order`
+export const getShipmentOrderListUrl = `${base_url}/api/v1/shipment/get-all-shipments`
+export const getAllSkuOrdersUrl = `${base_url}/api/v1/shipment/get-all-sku-orders`

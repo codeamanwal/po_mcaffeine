@@ -4,13 +4,15 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Database, Package } from "lucide-react"
+import { Database, Edit, Edit2, Package, Trash } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import NavigationHeader from "@/components/header"
 import { useThemeStore } from "@/store/theme-store"
-import { getPoFormatOrderList } from "@/lib/order"
-import { poFormatDataType } from "@/constants/data_type"
+import { getPoFormatOrderList,getShipmentStatusList,updateSinglePoOrder } from "@/lib/order"
+import { poFormatDataType, shipmentStatusDataType } from "@/constants/data_type"
+import EditOrderModal from "./edit-order-modal"
+import EditShipmentModal from "./edit-shipment-modal"
 
 // Sample data based on provided format
 const poData = [
@@ -194,6 +196,11 @@ export default function DashboardPage({ onNavigate }) {
   const [poFormatData, setPoFormatData] = useState([])
   const [shipmentStatusData, setShipmentStatusData] = useState([])
 
+  const [isEditModal, setEditModal] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState({})
+  const [selectedShipment, setSelectedShipment] = useState({})
+  const [isShipmentEditModal, setShipmentEditModal] = useState(false)
+
   async function getPoFormateData() {
     try {
       const res = await getPoFormatOrderList();
@@ -207,9 +214,49 @@ export default function DashboardPage({ onNavigate }) {
 
   async function getShipmentData() {
     try {
-      // const res = await getPoFormatOrderList();
-      // console.log(res.data)
-      setShipmentStatusData(shipmentData)
+      const res = await getShipmentStatusList();
+      console.log("Shipment Data: ", res.data.shipments);
+      setShipmentStatusData(res.data.shipments)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  function handleEditOrder(data){
+    console.log(data)
+    setSelectedOrder(data)
+    setEditModal(true)
+  }
+
+  function handleDeleteOrder(data) {
+    console.log("Delete order:", data);
+    // Implement delete functionality here
+  }
+
+  function handleEditShipment(data) {
+    console.log(data)
+    setSelectedShipment(data)
+    setShipmentEditModal(true)
+  }
+
+  function handleDeleteShipment(data) {
+    console.log("Delete Shipment:", data);
+    // Implement delete functionality here
+  }
+
+  async function onUpdateSingleOrder(data) {
+    try {
+      let updatedData = localStorage.getItem("orderData");
+      // console.log("Updated Data: ", updatedData);
+      updatedData = JSON.parse(updatedData);
+      console.log("Parsed Data: ", updatedData);
+      const res = await updateSinglePoOrder(updatedData);
+      console.log(res);
+      if(res.status === 200) {
+        console.log("Order updated successfully");
+        setEditModal(false);
+        getPoFormateData(); 
+      }
     } catch (error) {
       console.log(error);
     }
@@ -246,6 +293,7 @@ export default function DashboardPage({ onNavigate }) {
             </TabsTrigger>
           </TabsList>
 
+          {/* po format table  */}
           <TabsContent value="po-format">
             <Card className="shadow-lg">
               <CardHeader className="pb-6">
@@ -267,9 +315,10 @@ export default function DashboardPage({ onNavigate }) {
                         <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
                           {
                             poFormatDataType.map((item, index) => (
-                              <TableHead key={index} className="font-semibold mx-1 border-2 border-x-white py-1">{item.fieldName}</TableHead>
+                              <TableHead key={index} className="font-semibold mx-1 border-1 border-x-white py-1">{item.label}</TableHead>
                             ))
                           }
+                            <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -278,53 +327,18 @@ export default function DashboardPage({ onNavigate }) {
 
                             {
                               poFormatDataType.map((item, index) => (
-                                <TableCell key={index} className="mx-1 border-2 border-x-white py-1">{row[item.fieldName]}</TableCell>
+                                <TableCell key={index} className="mx-1 border-1 border-x-white py-1">{row[item.fieldName]}</TableCell>
                               ))
                             }
 
-                            {/* <TableCell>{row.entryDate}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="outline"
-                                className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900 dark:text-purple-200"
-                              >
-                                {row.brand}
-                              </Badge>
+                            <TableCell className="mx-1 flex flex-row space-x-2 cursor-pointer">
+                              {
+                                <>
+                                <span onClick={() => handleEditOrder(row)}><Edit className="h-6 w-6 text-blue-500" /></span>
+                                <span onClick={() => handleDeleteOrder(row)}><Trash className="h-6 w-6 text-red-500"/></span>
+                                </>
+                              }
                             </TableCell>
-                            <TableCell>{row.channel}</TableCell>
-                            <TableCell>{row.location}</TableCell>
-                            <TableCell>{row.poDate}</TableCell>
-                            <TableCell className="font-mono text-sm">{row.poNumber}</TableCell>
-                            <TableCell>{row.srNo}</TableCell>
-                            <TableCell className="max-w-xs truncate" title={row.skuName}>
-                              {row.skuName}
-                            </TableCell>
-                            <TableCell className="font-mono text-sm">{row.skuCode}</TableCell>
-                            <TableCell className="font-mono text-sm">{row.channelSkuCode}</TableCell>
-                            <TableCell className="text-right">{row.qty}</TableCell>
-                            <TableCell className="text-right">₹{row.gmv.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">₹{row.poValue.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">{row.updatedQty}</TableCell>
-                            <TableCell className="text-right">₹{row.updatedGmv}</TableCell>
-                            <TableCell className="text-right">₹{row.updatedPoValue}</TableCell>
-                            <TableCell>{row.facility}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="default"
-                                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                              >
-                                {row.statusPlanning}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="secondary"
-                                className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                              >
-                                {row.channelType}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">{row.actualWeight} kg</TableCell> */}
                           </TableRow>
                         ))}
                       </TableBody>
@@ -335,7 +349,8 @@ export default function DashboardPage({ onNavigate }) {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
+          {/* Shipment table  */}
           <TabsContent value="shipment-status">
             <Card className="shadow-lg">
               <CardHeader className="pb-6">
@@ -351,90 +366,37 @@ export default function DashboardPage({ onNavigate }) {
               </CardHeader>
               <CardContent>
                 <ScrollArea className="w-full">
-                  <div className="min-w-[2000px]">
+                  <div className="">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-                          <TableHead className="font-semibold">UID</TableHead>
-                          <TableHead className="font-semibold">Entry Date</TableHead>
-                          <TableHead className="font-semibold">PO Date</TableHead>
-                          <TableHead className="font-semibold">Facility</TableHead>
-                          <TableHead className="font-semibold">Channel</TableHead>
-                          <TableHead className="font-semibold">Location</TableHead>
-                          <TableHead className="font-semibold">PO Number</TableHead>
-                          <TableHead className="font-semibold">Total Units</TableHead>
-                          <TableHead className="font-semibold">Brand Name</TableHead>
-                          <TableHead className="font-semibold">Status (Active/Inactive)</TableHead>
-                          <TableHead className="font-semibold">Status (Planning)</TableHead>
-                          <TableHead className="font-semibold">Dispatch Date</TableHead>
-                          <TableHead className="font-semibold">Order No 1</TableHead>
-                          <TableHead className="font-semibold">Channel Type</TableHead>
-                          <TableHead className="font-semibold">PO Entry Count</TableHead>
-                          <TableHead className="font-semibold">Updated PO Qty</TableHead>
-                          <TableHead className="font-semibold">Updated PO Value</TableHead>
-                          <TableHead className="font-semibold">GMV</TableHead>
-                          <TableHead className="font-semibold">Physical Weight</TableHead>
-                          <TableHead className="font-semibold">Temp</TableHead>
+                          {
+                            shipmentStatusDataType.map((item, idx) => (
+                              <TableHead key={idx} className="font-semibold mx-1 border-1 border-x-white py-1">{item.label}</TableHead>
+                            ))
+                          }
+                          {
+                            <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead>
+                          }
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {shipmentStatusData.map((row, index) => (
                           <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <TableCell className="font-mono">{row.uid}</TableCell>
-                            <TableCell>{row.entryDate}</TableCell>
-                            <TableCell>{row.poDate}</TableCell>
-                            <TableCell>{row.facility}</TableCell>
-                            <TableCell>{row.channel}</TableCell>
-                            <TableCell>{row.location}</TableCell>
-                            <TableCell className="font-mono text-sm">{row.poNumber}</TableCell>
-                            <TableCell className="text-right">{row.totalUnits.toLocaleString()}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="outline"
-                                className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900 dark:text-purple-200"
-                              >
-                                {row.brandName}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="default"
-                                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                              >
-                                {row.statusActiveInactive}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="default"
-                                className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                              >
-                                {row.statusPlanning}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{row.dispatchDate}</TableCell>
-                            <TableCell className="font-mono text-sm">{row.orderNo1}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="secondary"
-                                className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                              >
-                                {row.channelType}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">{row.poEntryCount.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">{row.updatedPoQty}</TableCell>
-                            <TableCell className="font-mono text-sm">{row.updatedPoValue}</TableCell>
-                            <TableCell className="font-mono text-sm">{row.gmv}</TableCell>
-                            <TableCell className="text-right">{row.physicalWeight}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="destructive"
-                                className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                              >
-                                {row.temp}
-                              </Badge>
-                            </TableCell>
+                            {
+                              shipmentStatusDataType.map((item, idx) => (
+                                <TableCell key={idx} className="mx-1 border-1 border-x-white py-1">
+                                  {row[item.fieldName]}
+                                </TableCell>
+                              ))
+                            }
+                            {
+
+                              <TableCell className="mx-2 py-1 flex flex-row">
+                                <span onClick={() => handleEditShipment(row)}><Edit className="text-blue-500 h-6 w-6"  /></span>
+                                <span onClick={() => handleDeleteShipment(row)}><Trash className="text-red-500 h-6 w-6 mx-1" /></span>
+                              </TableCell>
+                            } 
                           </TableRow>
                         ))}
                       </TableBody>
@@ -446,6 +408,21 @@ export default function DashboardPage({ onNavigate }) {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <EditOrderModal 
+          isOpen={isEditModal}
+          onClose={()=>{setEditModal(false)}}
+          orderData={selectedOrder}
+          onSave={() => {onUpdateSingleOrder(selectedOrder);setSelectedOrder({})}}
+        />
+
+        <EditShipmentModal 
+          isOpen={isShipmentEditModal}
+          onClose={()=>{setShipmentEditModal(false)}}
+          shipmentData={selectedShipment}
+          onSave={(data) => {onUpdateSingleShipment(selectedShipment);setSelectedShipment({}); console.log("onSave: ",data)}}
+        />
+
       </main>
     </div>
   )

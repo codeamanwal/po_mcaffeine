@@ -69,7 +69,6 @@ async function deleteUser(req, res) {
         if(!existingUser) {
             return res.status(400).json({msg:"User does not exist", success: false, status: 400})
         }
-        console.log(existingUser)
 
         if(existingUser.id === req.user.id) {
             return res.status(400).json({msg:"You cannot delete yourself", success: false, status: 400})

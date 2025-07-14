@@ -11,6 +11,7 @@ import { generateToken } from "./src/utils/jwt.js";
 import { orderRouter } from "./src/routes/order.routes.js";
 import { getPublicUser } from "./src/utils/user.js";
 import { userRouter } from "./src/routes/user.routes.js";
+import { shipmentRouter } from "./src/routes/shipment.routes.js";
 
 const app = express();
 
@@ -31,6 +32,8 @@ app.use("/api/v1/logistic",AuthMiddleware, logisticRouter);
 
 app.use("/api/v1/order", AuthMiddleware, orderRouter);
 app.use("/api/v1/user", AuthMiddleware, userRouter);
+
+app.use("/api/v1/shipment", shipmentRouter);
 
 
 
