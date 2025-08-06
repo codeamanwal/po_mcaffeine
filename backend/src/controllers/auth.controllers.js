@@ -11,7 +11,7 @@ async function loginUser( req, res ) {
         if(user && user.password === password) {
 
             /**************************************************/
-            const {pasword, ...publicUser} = user.toJSON();
+            const {password, ...publicUser} = user.toJSON();
             /*************************************************/
 
             const token = generateToken(publicUser)

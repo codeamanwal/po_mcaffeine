@@ -16,7 +16,7 @@ export default {
       channelInwardingQuantity: { type: Sequelize.INTEGER },
       actualWeight: { type: Sequelize.FLOAT },
       shipmentOrderId: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: 'shipment_orders',
           key: 'uid'

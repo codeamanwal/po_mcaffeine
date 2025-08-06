@@ -13,6 +13,8 @@ import { getPoFormatOrderList,getShipmentStatusList,updateSinglePoOrder } from "
 import { poFormatDataType, shipmentStatusDataType } from "@/constants/data_type"
 import EditOrderModal from "./edit-order-modal"
 import EditShipmentModal from "./edit-shipment-modal"
+import { Button } from "./ui/button"
+import { useRouter } from "next/navigation"
 
 // Sample data based on provided format
 const poData = [
@@ -189,6 +191,8 @@ const shipmentData = [
 
 export default function DashboardPage({ onNavigate }) {
 
+  const router = useRouter()
+
   const {isDarkMode, setIsDarkMode} = useThemeStore()
 
   const [activeTab, setActiveTab] = useState("po-format")
@@ -238,6 +242,7 @@ export default function DashboardPage({ onNavigate }) {
     setSelectedShipment(data)
     setShipmentEditModal(true)
   }
+
 
   function handleDeleteShipment(data) {
     console.log("Delete Shipment:", data);
@@ -356,12 +361,16 @@ export default function DashboardPage({ onNavigate }) {
               <CardHeader className="pb-6">
                 <CardTitle className="flex items-center justify-between text-xl">
                   <span>Shipment Status Data</span>
+
                   <Badge
                     variant="secondary"
                     className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-sm px-3 py-1"
                   >
                     {shipmentStatusData.length} Records
                   </Badge>
+                  <Button className={"bg-blue-500 text-white hover:bg-blue-600"} onClick={() => router.push("/bulk-shipment-update")}>
+                    <Edit className="h-5 w-5" /> Bulk Edit
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -420,7 +429,7 @@ export default function DashboardPage({ onNavigate }) {
           isOpen={isShipmentEditModal}
           onClose={()=>{setShipmentEditModal(false)}}
           shipmentData={selectedShipment}
-          onSave={(data) => {onUpdateSingleShipment(selectedShipment);setSelectedShipment({}); console.log("onSave: ",data)}}
+          onSave={() => {}}
         />
 
       </main>

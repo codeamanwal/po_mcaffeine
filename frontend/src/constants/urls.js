@@ -22,5 +22,6 @@ export const getShipmentStatusListUrl = `${base_url}/api/v1/order/get-shipment-s
 
 // New order urls => 
 export const createShipmentOrderUrl = `${base_url}/api/v1/shipment/create-shipment-order`
+export const getShipmentWithSkuOrdersUrl = `${base_url}/api/v1/shipment/get-shipment-with-sku-orders`
 export const getShipmentOrderListUrl = `${base_url}/api/v1/shipment/get-all-shipments`
 export const getAllSkuOrdersUrl = `${base_url}/api/v1/shipment/get-all-sku-orders`

@@ -3,9 +3,9 @@
 /** @type {import('sequelize-cli').Migration} */
 export default {
   async up(queryInterface, Sequelize) {
-    await queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
+    // await queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
     await queryInterface.createTable('shipment_orders', {
-      uid: { type: Sequelize.UUID, defaultValue: Sequelize.literal('uuid_generate_v4()'), primaryKey: true },
+      uid: { type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true },
       entryDate: { type: Sequelize.STRING, allowNull: false },
       poDate: { type: Sequelize.STRING, allowNull: false },
       facility: { type: Sequelize.STRING },

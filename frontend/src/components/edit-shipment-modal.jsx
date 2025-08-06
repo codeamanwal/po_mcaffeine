@@ -16,6 +16,7 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/store/user-store"
 import { shipmentStatusDataType } from "@/constants/data_type"
+import { updateShipment } from "@/lib/order"
 
 // const shipmentStatusDataType = [
 //   { fieldName: "uid", label: "UID", id: "uid", type: "text" },
@@ -183,7 +184,7 @@ const adminFields = [
   "channel",
   "location",
   "poNumber",
-  "totalUnits",
+  // "totalUnits",
   "brandName",
   "remarksPlanning",
   "specialRemarksCOPT",
@@ -212,7 +213,7 @@ const adminFields = [
   "tallyCustomerName",
   "customerCode",
   "poEntryCount",
-  "updatedGmv",
+  // "updatedGmv",
 ]
 
 const warehouseFields = [
@@ -322,19 +323,29 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         }
       })
 
-      console.log("Data to save:", dataToSave)
+      console.log("New Shipment Data:", dataToSave)
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      onSave(dataToSave)
+      // await new Promise((resolve) => setTimeout(resolve, 1000))
+      // try {
+      //   const response = await updateShipment(dataToSave);
+      //   const result = await response.json();
+      //   console.log("API Response:", result);
+      // } catch (error) {
+      //   console.error("Error updating shipment:", error);
+      // }
+      const res = await updateShipment(dataToSave);
+      setSuccess("Shipment updated successfully!")
+      console.log("Shipment updated successfully:", res.data)
+      onSave()
       setSuccess("Shipment updated successfully!")
 
-      setTimeout(() => {
-        onClose()
-      }, 1500)
+      // setTimeout(() => {
+      //   onClose()
+      // }, 1500)
     } catch (err) {
-      setError("Failed to update shipment")
+      console.error("Error: ", err)
+      setError("Failed to update shipment", err.message || err)
     }
 
     setIsLoading(false)

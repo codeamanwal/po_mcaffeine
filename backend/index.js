@@ -33,7 +33,7 @@ app.use("/api/v1/logistic",AuthMiddleware, logisticRouter);
 app.use("/api/v1/order", AuthMiddleware, orderRouter);
 app.use("/api/v1/user", AuthMiddleware, userRouter);
 
-app.use("/api/v1/shipment", shipmentRouter);
+app.use("/api/v1/shipment", AuthMiddleware, shipmentRouter);
 
 
 

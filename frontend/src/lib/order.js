@@ -1,9 +1,45 @@
-import { getAllOrdersUrl, updateSingleOrderUrl, createShipmentOrderUrl, getShipmentOrderListUrl, getAllSkuOrdersUrl } from "@/constants/urls"
+import { getAllOrdersUrl, updateSingleOrderUrl, createShipmentOrderUrl, getShipmentOrderListUrl, getAllSkuOrdersUrl, getShipmentWithSkuOrdersUrl } from "@/constants/urls"
 import api from "@/hooks/axios"
 
 export async function createShipmentOrder(data) {
     try {
         const res = await api.post(createShipmentOrderUrl, data);
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function createBulkShipment(data) {
+    try {
+        const res = await api.post("/api/v1/shipment/create-bulk-shipments", { data });
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function getShipmentWithSkuOrders(uid) {
+    try {
+        const res = await api.post(getShipmentWithSkuOrdersUrl, { uid });
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function updateShipment(data) {
+    try {
+        const res = await api.post("/api/v1/shipment/update-shipment", data);
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function updateBulkShipment(data){
+    try {
+        const res = await api.post("/api/v1/shipment/update-bulk-shipments", data);
         return res;
     } catch (error) {
         throw error;

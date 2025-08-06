@@ -9,9 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
 import { Upload, FileText, AlertCircle, CheckCircle, Download, ArrowLeft, X, Eye, Database } from "lucide-react"
-import axios from "axios"
-import api from "@/hooks/axios"
-import { createBulkOrderUrl } from "@/constants/urls"
+import { createBulkShipment } from "@/lib/order"
 
 
 export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme }) {
@@ -166,19 +164,21 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
 
     try {
 
-      const res = await api.post(createBulkOrderUrl, {orders: validOrders})
+      const res = await createBulkShipment(validOrders);
+
+      // const res = await api.post(createBulkOrderUrl, {orders: validOrders})
       console.log(res.data);
       
-      // Reset after success
-      setTimeout(() => {
-        setFile(null)
-        setParsedOrders([])
-        setShowPreview(false)
-        setSuccess("")
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
-        }
-      }, 1000)
+      // // Reset after success
+      // setTimeout(() => {
+      //   setFile(null)
+      //   setParsedOrders([])
+      //   setShowPreview(false)
+      //   setSuccess("")
+      //   if (fileInputRef.current) {
+      //     fileInputRef.current.value = ""
+      //   }
+      // }, 1000)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Failed to upload orders")
     }finally {

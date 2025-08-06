@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../db/postgresql.js';
 
 const ShipmentOrder = sequelize.define('ShipmentOrder', {
-  uid: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  uid: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   entryDate: { type: DataTypes.STRING, allowNull: false },
   poDate: { type: DataTypes.STRING, allowNull: false },
   facility: { type: DataTypes.STRING },
@@ -35,7 +35,9 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
   workingTypeWarehouse: { type: DataTypes.STRING },
   inventoryRemarksWarehouse: { type: DataTypes.TEXT },
   b2bWorkingTeamRemarks: { type: DataTypes.TEXT },
+  // common come from sku order and will also update similarly
   actualWeight: { type: DataTypes.FLOAT },
+  
   volumetricWeight: { type: DataTypes.FLOAT },
   channelType: { type: DataTypes.STRING },
   firstTransporter: { type: DataTypes.STRING },
