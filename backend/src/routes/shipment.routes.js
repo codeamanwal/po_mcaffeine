@@ -9,9 +9,12 @@ router.get("/get-all-shipments", shipmentControllers.getAllShipments)
 router.post("/get-shipment-with-sku-orders", shipmentControllers.getShipmentWithSkuOrders)
 router.get("/get-all-sku-orders", shipmentControllers.getAllSkuOrders)
 
+router.post("/get-skus-by-shipment", shipmentControllers.getSkusByShipment)
+
 router.get("/get-all-data", shipmentControllers.getAllData)
 
 router.post("/update-shipment", shipmentControllers.updateShipment)
 router.post("/update-bulk-shipments", shipmentControllers.updateBulkShipment)
+router.post("/update-skus-by-shipment", shipmentControllers.updateSkusBySipment)
 
 export const shipmentRouter = router

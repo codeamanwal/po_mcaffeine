@@ -28,6 +28,15 @@ export async function getShipmentWithSkuOrders(uid) {
     }
 }
 
+export async function getSkuOrdersByShipment(uid){
+    try {
+        const res = await api.post("/api/v1/shipment/get-skus-by-shipment", {uid});
+        return res;
+    } catch (error) {
+        throw error
+    }
+}
+
 export async function updateShipment(data) {
     try {
         const res = await api.post("/api/v1/shipment/update-shipment", data);
@@ -43,6 +52,15 @@ export async function updateBulkShipment(data){
         return res;
     } catch (error) {
         throw error;
+    }
+}
+
+export async function updateSkusByShipment(data) {
+    try {
+        const res = await api.post("/api/v1/shipment/update-skus-by-shipment", data);
+        return res;
+    } catch (error) {
+        throw error
     }
 }
 

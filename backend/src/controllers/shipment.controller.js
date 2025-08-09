@@ -1,5 +1,3 @@
-
-import { where } from "sequelize";
 import { sequelize } from "../db/postgresql.js";
 import {ShipmentOrder} from "../models/index.js";
 import {SkuOrder} from "../models/index.js";
@@ -187,6 +185,23 @@ async function getShipmentWithSkuOrders(req, res) {
   }
 }
 
+async function getSkusByShipment(req, res) {
+  try {
+    console.log("getSkusByShipment triggered")
+      // shioment uid as uid
+    const { uid } = req.body;
+    console.log(uid);
+    const skus = await SkuOrder.findAll({where: {shipmentOrderId:uid} })
+    if(!skus || skus.length == 0){
+      return res.status(404).json({msg:"No sku orders found for given shipment order!"})
+    }
+    return res.status(200).json({msg: "Sku orders fetched successfully", skus});
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
 async function getAllShipments(req, res){
     try {
         const shipments = await ShipmentOrder.findAll({});
@@ -277,6 +292,26 @@ async function updateShipment(req, res) {
   }
 }
 
+async function updateSkusBySipment(req, res){
+  const t = await sequelize.transaction();
+
+  try {
+    const {shipmentId, skus} = req.body;
+    for (const item of skus) {
+      await SkuOrder.update(
+        item ,
+        { where: { shipmentOrderId: shipmentId, id: item.id }, transaction: t }
+      );
+    }
+    await t.commit();
+    return res.status(200).json({msg:"Sku orders updated successfully"});
+  } catch (error) {
+    await t.rollback()
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
 async function updateBulkShipment(req, res){
   const t = await sequelize.transaction();
   let errs = [];
@@ -289,11 +324,15 @@ async function updateBulkShipment(req, res){
 
     if(user.role === "superadmin"){
       for(const shipment of shipments) {
-        let { uid, ...updateData } = shipment;
+        let { uid, poNumber, ...updateData } = shipment;
         const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
         if (!existingShipment) {
-          errs.push({ uid, error: 'Shipment not found' });
+          errs.push({ uid, poNumber, error: 'Shipment not found with given uid' });
           continue; // Skip to the next shipment if not found
+        }
+        if(poNumber !== existingShipment.poNumber) {
+          errs.push({ uid, poNumber, error: 'Shipment not found with gien poNumber' });
+          continue;
         }
         // for (const field in updateData) {
         //   const entries = Object.entries(updateData[field]);
@@ -353,10 +392,12 @@ export const shipmentControllers = {
     createShipment,
     createBulkShipment,
     getShipmentWithSkuOrders,
+    getSkusByShipment,
     getAllShipments,
     getAllSkuOrders,
     getAllData,
     updateShipment,
     updateBulkShipment,
+    updateSkusBySipment,
 };
 

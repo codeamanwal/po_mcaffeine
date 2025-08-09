@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Database, Edit, Edit2, Package, Trash } from "lucide-react"
+import { Database, Edit, Edit2, Edit3, Eye, Package, Trash } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import NavigationHeader from "@/components/header"
@@ -15,6 +15,10 @@ import EditOrderModal from "./edit-order-modal"
 import EditShipmentModal from "./edit-shipment-modal"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
+import BulkUpdateShipmentModal from "./bulk-shipment-edit-modal"
+import SkuLevelEditModal from "./sku-level-edit-modal"
+import { Input } from "./ui/input"
+import { Select } from "./ui/select"
 
 // Sample data based on provided format
 const poData = [
@@ -202,8 +206,16 @@ export default function DashboardPage({ onNavigate }) {
 
   const [isEditModal, setEditModal] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState({})
+
   const [selectedShipment, setSelectedShipment] = useState({})
+  // shipment actions
   const [isShipmentEditModal, setShipmentEditModal] = useState(false)
+  const [isShipmentBulkEditModal, setShipmentBulkEditModal] = useState(false)
+  const [isShipmentViewModal, setShipmentViewModal] = useState(false)
+  const [isSkuEditModal, setSkuEditModal] = useState(false);
+
+
+
 
   async function getPoFormateData() {
     try {
@@ -235,6 +247,18 @@ export default function DashboardPage({ onNavigate }) {
   function handleDeleteOrder(data) {
     console.log("Delete order:", data);
     // Implement delete functionality here
+  }
+
+  function handleViewShipment(data) {
+    console.log(data);
+    setSelectedShipment(data)
+    setShipmentViewModal(true);
+  }
+
+  function handleEditSkuShipment(data) {
+    console.log(data);
+    setSelectedShipment(data)
+    setSkuEditModal(true);
   }
 
   function handleEditShipment(data) {
@@ -368,7 +392,7 @@ export default function DashboardPage({ onNavigate }) {
                   >
                     {shipmentStatusData.length} Records
                   </Badge>
-                  <Button className={"bg-blue-500 text-white hover:bg-blue-600"} onClick={() => router.push("/bulk-shipment-update")}>
+                  <Button className={"bg-blue-500 text-white hover:bg-blue-600"} onClick={() => {setShipmentBulkEditModal(true)}}>
                     <Edit className="h-5 w-5" /> Bulk Edit
                   </Button>
                 </CardTitle>
@@ -380,18 +404,25 @@ export default function DashboardPage({ onNavigate }) {
                       <TableHeader>
                         <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
                           {
+                            <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead>
+                          }
+                          {
                             shipmentStatusDataType.map((item, idx) => (
                               <TableHead key={idx} className="font-semibold mx-1 border-1 border-x-white py-1">{item.label}</TableHead>
                             ))
                           }
-                          {
-                            <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead>
-                          }
+                          
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {shipmentStatusData.map((row, index) => (
                           <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <TableCell className="mx-2 py-1 flex flex-row">
+                              <span onClick={() => handleEditSkuShipment(row)}><Edit3 /></span>
+                              <span onClick={() => handleViewShipment(row)}><Eye className="text-blue-500 h-6 w-6" /></span>
+                              <span onClick={() => handleEditShipment(row)}><Edit className="text-blue-500 h-6 w-6"  /></span>
+                              <span onClick={() => handleDeleteShipment(row)}><Trash className="text-red-500 h-6 w-6 mx-1" /></span>
+                            </TableCell>
                             {
                               shipmentStatusDataType.map((item, idx) => (
                                 <TableCell key={idx} className="mx-1 border-1 border-x-white py-1">
@@ -399,13 +430,6 @@ export default function DashboardPage({ onNavigate }) {
                                 </TableCell>
                               ))
                             }
-                            {
-
-                              <TableCell className="mx-2 py-1 flex flex-row">
-                                <span onClick={() => handleEditShipment(row)}><Edit className="text-blue-500 h-6 w-6"  /></span>
-                                <span onClick={() => handleDeleteShipment(row)}><Trash className="text-red-500 h-6 w-6 mx-1" /></span>
-                              </TableCell>
-                            } 
                           </TableRow>
                         ))}
                       </TableBody>
@@ -429,6 +453,20 @@ export default function DashboardPage({ onNavigate }) {
           isOpen={isShipmentEditModal}
           onClose={()=>{setShipmentEditModal(false)}}
           shipmentData={selectedShipment}
+          onSave={() => {}}
+        />
+
+        <BulkUpdateShipmentModal 
+          isOpen={isShipmentBulkEditModal}
+          onClose={()=>{setShipmentBulkEditModal(false)}}
+          shipmentData={selectedShipment}
+          onSave={() => {}}
+        />
+
+        <SkuLevelEditModal 
+          isOpen={isSkuEditModal}
+          onClose={()=>{setSkuEditModal(false)}}
+          shipmentId={selectedShipment.uid}
           onSave={() => {}}
         />
 
