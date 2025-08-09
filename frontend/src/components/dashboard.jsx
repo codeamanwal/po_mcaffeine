@@ -19,6 +19,7 @@ import BulkUpdateShipmentModal from "./bulk-shipment-edit-modal"
 import SkuLevelEditModal from "./sku-level-edit-modal"
 import { Input } from "./ui/input"
 import { Select } from "./ui/select"
+import ShipmentViewModal from "./view-shipment-modal"
 
 // Sample data based on provided format
 const poData = [
@@ -347,7 +348,7 @@ export default function DashboardPage({ onNavigate }) {
                               <TableHead key={index} className="font-semibold mx-1 border-1 border-x-white py-1">{item.label}</TableHead>
                             ))
                           }
-                            <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead>
+                            {/* <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead> */}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -360,14 +361,14 @@ export default function DashboardPage({ onNavigate }) {
                               ))
                             }
 
-                            <TableCell className="mx-1 flex flex-row space-x-2 cursor-pointer">
+                            {/* <TableCell className="mx-1 flex flex-row space-x-2 cursor-pointer">
                               {
                                 <>
                                 <span onClick={() => handleEditOrder(row)}><Edit className="h-6 w-6 text-blue-500" /></span>
                                 <span onClick={() => handleDeleteOrder(row)}><Trash className="h-6 w-6 text-red-500"/></span>
                                 </>
                               }
-                            </TableCell>
+                            </TableCell> */}
                           </TableRow>
                         ))}
                       </TableBody>
@@ -468,6 +469,14 @@ export default function DashboardPage({ onNavigate }) {
           onClose={()=>{setSkuEditModal(false)}}
           shipmentId={selectedShipment.uid}
           onSave={() => {}}
+        />
+
+        <ShipmentViewModal 
+          isOpen={isShipmentViewModal}
+          onClose={() => {setShipmentViewModal(false)}}
+          shipment={selectedShipment}
+          shipmentId={selectedShipment.uid}
+          poNumber={selectedShipment.poNumber}
         />
 
       </main>
