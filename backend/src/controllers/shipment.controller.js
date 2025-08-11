@@ -34,7 +34,7 @@ async function createLog({shipmentId, createdBy, change, remark}){
     const existingLog = await Log.findOne({where: {shipmentOrderId: shipmentId}});
     if(existingLog){
       // update the existing log
-      const log = await existingLog.update({ messages:[...existingLog.messages, newMsg]});
+      const log = await existingLog.update({ messages:[newMsg,...existingLog.messages]});
     console.log("Updated the log: ", log);      
       return log;
     } 
