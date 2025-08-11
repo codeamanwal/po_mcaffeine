@@ -9,6 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Loader2, Eye, History, AlertCircle, Calendar, Package, User, MapPin } from 'lucide-react'
+import { get } from 'react-hook-form'
+import api from '@/hooks/axios'
+import { getLogsOfShipment } from '@/lib/order'
 
 // Mock API functions
 const fetchShipmentData = async (shipment) => {
@@ -18,55 +21,59 @@ const fetchShipmentData = async (shipment) => {
 }
 
 const fetchShipmentLogs = async (shipmentId) => {
-  await new Promise(resolve => setTimeout(resolve, 800))
+  // await new Promise(resolve => setTimeout(resolve, 800))
+  const logs = await getLogsOfShipment(shipmentId)
+  console.log(logs?.data?.logs.messages);
+  const logContent = logs?.data?.logs.messages;
+  return logContent;
   
-  return [
-    {
-      id: 1,
-      timestamp: "2024-01-22 10:30:00",
-      field: "currentAppointmentDate",
-      oldValue: "2024-01-21",
-      newValue: "2024-01-22",
-      changedBy: "logistics@mcaffeine.com",
-      action: "Updated"
-    },
-    {
-      id: 2,
-      timestamp: "2024-01-20 14:15:00",
-      field: "poNumber",
-      oldValue: "PO-2024-TEMP",
-      newValue: "PO-2024-001",
-      changedBy: "admin@mcaffeine.com",
-      action: "Updated"
-    },
-    {
-      id: 3,
-      timestamp: "2024-01-19 09:45:00",
-      field: "statusWarehouse",
-      oldValue: "Pending",
-      newValue: "In Progress",
-      changedBy: "warehouse@mcaffeine.com",
-      action: "Updated"
-    },
-    {
-      id: 4,
-      timestamp: "2024-01-18 16:20:00",
-      field: "dispatchDate",
-      oldValue: "2024-01-19",
-      newValue: "2024-01-20",
-      changedBy: "planner@mcaffeine.com",
-      action: "Updated"
-    },
-    {
-      id: 5,
-      timestamp: "2024-01-17 11:00:00",
-      field: "firstAppointmentDateCOPT",
-      oldValue: "2024-01-20",
-      newValue: "2024-01-22",
-      changedBy: "copt@mcaffeine.com",
-      action: "Updated"
-    }
-  ]
+  // return [
+  //   {
+  //     id: 1,
+  //     timestamp: "2024-01-22 10:30:00",
+  //     field: "currentAppointmentDate",
+  //     oldValue: "2024-01-21",
+  //     newValue: "2024-01-22",
+  //     changedBy: "logistics@mcaffeine.com",
+  //     action: "Updated"
+  //   },
+  //   {
+  //     id: 2,
+  //     timestamp: "2024-01-20 14:15:00",
+  //     field: "poNumber",
+  //     oldValue: "PO-2024-TEMP",
+  //     newValue: "PO-2024-001",
+  //     changedBy: "admin@mcaffeine.com",
+  //     action: "Updated"
+  //   },
+  //   {
+  //     id: 3,
+  //     timestamp: "2024-01-19 09:45:00",
+  //     field: "statusWarehouse",
+  //     oldValue: "Pending",
+  //     newValue: "In Progress",
+  //     changedBy: "warehouse@mcaffeine.com",
+  //     action: "Updated"
+  //   },
+  //   {
+  //     id: 4,
+  //     timestamp: "2024-01-18 16:20:00",
+  //     field: "dispatchDate",
+  //     oldValue: "2024-01-19",
+  //     newValue: "2024-01-20",
+  //     changedBy: "planner@mcaffeine.com",
+  //     action: "Updated"
+  //   },
+  //   {
+  //     id: 5,
+  //     timestamp: "2024-01-17 11:00:00",
+  //     field: "firstAppointmentDateCOPT",
+  //     oldValue: "2024-01-20",
+  //     newValue: "2024-01-22",
+  //     changedBy: "copt@mcaffeine.com",
+  //     action: "Updated"
+  //   }
+  // ]
 }
 
 export default function ShipmentViewModal({
@@ -153,6 +160,7 @@ export default function ShipmentViewModal({
   }
 
   const getFieldLabel = (key) => {
+    if(!key) return "";
     const labelMap = {
       uid: 'UID',
       entryDate: 'Entry Date',
@@ -327,28 +335,26 @@ export default function ShipmentViewModal({
                       <p className="text-muted-foreground">No change logs available</p>
                     </div>
                   ) : (
-                    logs?.map((log) => (
-                      <Card key={log.id}>
+                    logs?.map((log, idx) => (
+                      <Card key={idx}>
                         <CardContent className="pt-4">
                           <div className="flex items-start justify-between">
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline">{log.action}</Badge>
-                                <span className="text-sm font-medium">{getFieldLabel(log.field)}</span>
+                                <Badge variant="outline">{log.action || "Updated"}</Badge>
+                                <span className="text-sm font-medium">{getFieldLabel(log?.field) || ""}</span>
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                <span className="font-medium">From:</span> {log.oldValue || 'Empty'} 
-                                <span className="mx-2">→</span> 
-                                <span className="font-medium">To:</span> {log.newValue}
+                              <div className="text-sm">
+                                <span>{log?.change}</span>
                               </div>
                               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <User className="h-3 w-3" />
-                                  {log.changedBy}
+                                  {log?.createdBy?.email}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
-                                  {new Date(log.timestamp).toLocaleString()}
+                                  {new Date(log?.timestamp)?.toLocaleString()}
                                 </span>
                               </div>
                             </div>

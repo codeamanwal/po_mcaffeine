@@ -29,6 +29,7 @@ async function createLog({shipmentId, createdBy, change, remark}){
       createdBy,
       change,
       remark,
+      timestamp: Date.now(),
     }
     const existingLog = await Log.findOne({where: {shipmentOrderId: shipmentId}});
     if(existingLog){

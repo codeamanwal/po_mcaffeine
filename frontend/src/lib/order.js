@@ -90,3 +90,12 @@ export async function updateSinglePoOrder (data){
         throw error
     }
 }
+
+export async function getLogsOfShipment(shipmentId){
+    try {
+        const res = await api.post("/api/v1/shipment/get-log", {shipmentId: shipmentId});
+        return res;
+    } catch (error) {
+        throw error
+    }
+}
