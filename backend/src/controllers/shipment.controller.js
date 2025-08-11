@@ -1,6 +1,8 @@
 import { sequelize } from "../db/postgresql.js";
 import {ShipmentOrder} from "../models/index.js";
 import {SkuOrder} from "../models/index.js";
+import Log from "../models/log.model.js";
+import User from "../models/user.model.js";
 
 function checkNullCond(value, prevValue) {
   // return true if prev == non-null and now == null
@@ -9,6 +11,48 @@ function checkNullCond(value, prevValue) {
     return false;
   }
   return value !== "" && value !== "null" && value !== "undefined" && (prevValue === null || prevValue === undefined || prevValue === "" || prevValue === "null" || prevValue === "undefined");
+}
+
+// log Controllers
+
+async function createLog({shipmentId, createdBy, change, remark}){
+  try {
+    console.log(createdBy, shipmentId, change, remark);
+    if(!shipmentId || !createdBy || !change || !remark){
+      throw "Provide required fields";
+    }
+    const user = await User.findByPk(createdBy.id);
+    if(!user){
+      throw "No such user!";
+    }
+    const newMsg = {
+      createdBy,
+      change,
+      remark,
+    }
+    const existingLog = await Log.findOne({where: {shipmentOrderId: shipmentId}});
+    if(existingLog){
+      // update the existing log
+      const log = await existingLog.update({ messages:[...existingLog.messages, newMsg]});
+    console.log("Updated the log: ", log);      
+      return log;
+    } 
+    // create new log
+    const log = await Log.create({shipmentOrderId:shipmentId, messages:[newMsg], createdBy:createdBy?.id});
+    console.log("Created new log: ", log);
+    return log;
+  } catch (error) {
+    throw error
+  }
+} 
+
+async function getLogsByShipment({shipmentId}){
+  try {
+    const log = await Log.findOne({where: {shipmentOrderId: shipmentId}});
+    return log || {};
+  } catch (error) {
+    throw error
+  }
 }
 
 async function createShipment(req, res) {
@@ -279,12 +323,29 @@ async function getAllData (req, res) {
 
 async function updateShipment(req, res) {
   try {
+    let isLog = false;
     const { uid, ...updateData } = req.body;
     const shipment = await ShipmentOrder.findOne({ where: { uid } });
     if (!shipment) {
       return res.status(404).json({ error: 'Shipment not found' });
     }
-    const updatedShipment = await shipment.update(updateData);
+    if(shipment?.dataValues?.currentAppointmentDate !== updateData.currentAppointmentDate){
+      isLog = true;
+    }
+      const updatedShipment = await shipment.update(updateData);
+    console.log("isLog: ",isLog);
+      // console.log("Previous Shipment:", shipment);
+    // console.log("Updated Shipment: ", updatedShipment);
+    if(isLog){
+      // console.log("Changing logs")
+      const logRes = await createLog({
+        shipmentId: shipment.uid,
+        createdBy: req.user,
+        change: `Appointment Date changed from ${shipment.currentAppointmentDate} to ${updatedShipment.currentAppointmentDate}`,
+        remark: `Changes in appointmant date!!`
+      })
+      console.log(logRes);
+    }
     return res.status(200).json({ msg: "Shipment updated successfully", shipment: updatedShipment });
   } catch (error) {
     console.error(error);
@@ -399,5 +460,6 @@ export const shipmentControllers = {
     updateShipment,
     updateBulkShipment,
     updateSkusBySipment,
+    getLogsByShipment
 };
 

@@ -5,7 +5,7 @@ export async function AuthMiddleware (req, res, next) {
         const token = req.headers.authorization.split(" ")[1];
         const decodedToken = verifyToken(token);
         req.user = decodedToken.user;
-        console.log(req.user);
+        // console.log(req.user);
         next();
     } catch (error) {
         console.log(error)

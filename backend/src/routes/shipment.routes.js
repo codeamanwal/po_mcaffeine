@@ -17,4 +17,16 @@ router.post("/update-shipment", shipmentControllers.updateShipment)
 router.post("/update-bulk-shipments", shipmentControllers.updateBulkShipment)
 router.post("/update-skus-by-shipment", shipmentControllers.updateSkusBySipment)
 
+router.post('/get-log', async (req, res) => {
+    try {
+        const {shipmentId} = req.body;
+        if(!shipmentId)
+            return res.status(400).json({msg: "No shipment Id is provided!"}); 
+        const logs = await shipmentControllers.getLogsByShipment({shipmentId})
+        return res.status(200).json({msg: "Logs fetched successfully", logs});
+    } catch (error) {
+        return res.status(500).json({msg:"Something went wrong while fetching logs!", error});
+    }
+})
+
 export const shipmentRouter = router
