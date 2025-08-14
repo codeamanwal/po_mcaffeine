@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "PO CMS Mcaffine",
+  title: "PO CMS Mcaffeine",
   description: "Central management system",
 };
 
