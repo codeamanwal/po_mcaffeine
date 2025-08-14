@@ -342,7 +342,7 @@ export default function ShipmentViewModal({
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <Badge variant="outline">{log.action || "Updated"}</Badge>
-                                <span className="text-sm font-medium">{getFieldLabel(log?.field) || ""}</span>
+                                <span className="text-sm font-medium">{getFieldLabel(log?.fieldName) || ""}</span>
                               </div>
                               <div className="text-sm">
                                 <span>{log?.change}</span>
