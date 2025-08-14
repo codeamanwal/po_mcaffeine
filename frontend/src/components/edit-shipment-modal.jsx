@@ -9,182 +9,35 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ScrollArea,ScrollBar } from "@/components/ui/scroll-area"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarIcon, AlertCircle, CheckCircle, Save, X, Shield, Warehouse, Truck } from "lucide-react"
+import { CalendarIcon, AlertCircle, CheckCircle, Save, X, Shield, Warehouse, Truck, Lock, Server } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/store/user-store"
 import { shipmentStatusDataType } from "@/constants/data_type"
 import { updateShipment } from "@/lib/order"
 
-// const shipmentStatusDataType = [
-//   { fieldName: "uid", label: "UID", id: "uid", type: "text" },
-//   { fieldName: "entryDate", label: "Entry Date", id: "entryDate", type: "date" },
-//   { fieldName: "poDate", label: "PO Date", id: "poDate", type: "date" },
-//   {
-//     fieldName: "facility",
-//     label: "Facility",
-//     id: "facility",
-//     type: "select",
-//     options: ["MUM_WAREHOUSE1", "MUM_WAREHOUSE2", "DEL_WAREHOUSE1", "BLR_WAREHOUSE1"],
-//   },
-//   {
-//     fieldName: "channel",
-//     label: "Channel",
-//     id: "channel",
-//     type: "select",
-//     options: ["Zepto", "Amazon", "Flipkart", "Nykaa", "BigBasket", "Swiggy Instamart", "Blinkit"],
-//   },
-//   {
-//     fieldName: "location",
-//     label: "Location",
-//     id: "location",
-//     type: "select",
-//     options: ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune"],
-//   },
-//   { fieldName: "poNumber", label: "PO Number", id: "poNumber", type: "text" },
-//   { fieldName: "totalUnits", label: "Total Units", id: "totalUnits", type: "number" },
-//   { fieldName: "brandName", label: "Brand Name", id: "brandName", type: "text" },
-//   { fieldName: "remarksPlanning", label: "Remarks (Planning)", id: "remarksPlanning", type: "text" },
-//   { fieldName: "specialRemarksCOPT", label: "Special Remarks (COPT)", id: "specialRemarksCOPT", type: "text" },
-//   { fieldName: "newShipmentReference", label: "New Shipment Reference", id: "newShipmentReference", type: "text" },
-//   {
-//     fieldName: "statusActive",
-//     label: "Status (Active/Inactive)",
-//     id: "statusActive",
-//     type: "select",
-//     options: ["Active", "Inactive"],
-//   },
-//   {
-//     fieldName: "statusPlanning",
-//     label: "Status (Planning)",
-//     id: "statusPlanning",
-//     type: "select",
-//     options: ["Confirmed", "Pending", "Cancelled", "In Progress"],
-//   },
-//   {
-//     fieldName: "statusWarehouse",
-//     label: "Status (Warehouse)",
-//     id: "statusWarehouse",
-//     type: "select",
-//     options: ["Ready", "Processing", "Dispatched", ""],
-//   },
-//   {
-//     fieldName: "statusLogistics",
-//     label: "Status (Logistics)",
-//     id: "statusLogistics",
-//     type: "select",
-//     options: ["0", "1", "2", "3"],
-//   },
-//   {
-//     fieldName: "channelInwardingRemarks",
-//     label: "Channel Inwarding Remarks",
-//     id: "channelInwardingRemarks",
-//     type: "text",
-//   },
-//   {
-//     fieldName: "dispatchRemarksLogistics",
-//     label: "Dispatch Remarks (Logistics)",
-//     id: "dispatchRemarksLogistics",
-//     type: "text",
-//   },
-//   {
-//     fieldName: "dispatchRemarksWarehouse",
-//     label: "Dispatch Remarks (Warehouse)",
-//     id: "dispatchRemarksWarehouse",
-//     type: "text",
-//   },
-//   {
-//     fieldName: "dispatchDateTentative",
-//     label: "Dispatch Date - Tentative (Planning)",
-//     id: "dispatchDateTentative",
-//     type: "date",
-//   },
-//   { fieldName: "workingDatePlanner", label: "Working Date (Planner)", id: "workingDatePlanner", type: "date" },
-//   { fieldName: "rtsDate", label: "RTS Date", id: "rtsDate", type: "date" },
-//   { fieldName: "dispatchDate", label: "Dispatch Date", id: "dispatchDate", type: "date" },
-//   {
-//     fieldName: "currentAppointmentDate",
-//     label: "Current Appointment Date",
-//     id: "currentAppointmentDate",
-//     type: "date",
-//   },
-//   {
-//     fieldName: "firstAppointmentDateCOPT",
-//     label: "First Appointment Date (COPT)",
-//     id: "firstAppointmentDateCOPT",
-//     type: "date",
-//   },
-//   { fieldName: "noOfBoxes", label: "No of Boxes", id: "noOfBoxes", type: "number" },
-//   { fieldName: "orderNo1", label: "Order No 1", id: "orderNo1", type: "text" },
-//   { fieldName: "orderNo2", label: "Order No 2", id: "orderNo2", type: "text" },
-//   { fieldName: "orderNo3", label: "Order No 3", id: "orderNo3", type: "text" },
-//   { fieldName: "poNumberInwardCWH", label: "PO Number (Inward - CWH)", id: "poNumberInwardCWH", type: "text" },
-//   { fieldName: "pickListNo", label: "Pick List No", id: "pickListNo", type: "text" },
-//   { fieldName: "workingTypeWarehouse", label: "Working Type (Warehouse)", id: "workingTypeWarehouse", type: "text" },
-//   {
-//     fieldName: "inventoryRemarksWarehouse",
-//     label: "Inventory Remarks (Warehouse)",
-//     id: "inventoryRemarksWarehouse",
-//     type: "text",
-//   },
-//   { fieldName: "b2bWorkingTeamRemarks", label: "B2B Working Team Remarks", id: "b2bWorkingTeamRemarks", type: "text" },
-//   { fieldName: "actualWeight", label: "Actual Weight", id: "actualWeight", type: "number" },
-//   { fieldName: "volumetricWeight", label: "Volumetric Weight", id: "volumetricWeight", type: "number" },
-//   {
-//     fieldName: "channelType",
-//     label: "Channel Type",
-//     id: "channelType",
-//     type: "select",
-//     options: ["Quick-commerce", "E-commerce", "Marketplace", "Retail"],
-//   },
-//   { fieldName: "firstTransporter", label: "1st Transporter (First Mile)", id: "firstTransporter", type: "text" },
-//   {
-//     fieldName: "firstDocketNo",
-//     label: "1st Docket No/ Vehicle Number (First Mile)",
-//     id: "firstDocketNo",
-//     type: "text",
-//   },
-//   { fieldName: "secondTransporter", label: "2nd Transporter (Mid Mile)", id: "secondTransporter", type: "text" },
-//   {
-//     fieldName: "secondDocketNo",
-//     label: "2nd Docket No/ Vehicle Number (Mid Mile)",
-//     id: "secondDocketNo",
-//     type: "text",
-//   },
-//   { fieldName: "thirdTransporter", label: "3rd Transporter (Last Mile)", id: "thirdTransporter", type: "text" },
-//   { fieldName: "thirdDocketNo", label: "3rd Docket No/ Vehicle Number (Last Mile)", id: "thirdDocketNo", type: "text" },
-//   { fieldName: "appointmentLetter", label: "Appointment Letter/STN", id: "appointmentLetter", type: "text" },
-//   { fieldName: "labelsLink", label: "Labels - Amazon/Flipkart (Link)", id: "labelsLink", type: "text" },
-//   { fieldName: "invoiceDate", label: "Invoice Date", id: "invoiceDate", type: "date" },
-//   { fieldName: "invoiceLink", label: "Invoice Link", id: "invoiceLink", type: "text" },
-//   { fieldName: "cnLink", label: "CN Link", id: "cnLink", type: "text" },
-//   { fieldName: "ewayLink", label: "E-Way Link", id: "ewayLink", type: "text" },
-//   { fieldName: "invoiceValue", label: "Invoice Value (Check with Invoice Link)", id: "invoiceValue", type: "number" },
-//   { fieldName: "remarksAccountsTeam", label: "Remarks by Accounts Team", id: "remarksAccountsTeam", type: "text" },
-//   { fieldName: "invoiceChallanNumber", label: "Invoice / Challan Number", id: "invoiceChallanNumber", type: "text" },
-//   { fieldName: "invoiceCheckedBy", label: "Invoice Checked By", id: "invoiceCheckedBy", type: "text" },
-//   { fieldName: "tallyCustomerName", label: "Tally Customer Name", id: "tallyCustomerName", type: "text" },
-//   { fieldName: "customerCode", label: "Customer Code", id: "customerCode", type: "text" },
-//   { fieldName: "poEntryCount", label: "PO Entry Count", id: "poEntryCount", type: "number" },
-//   { fieldName: "deliveryDate", label: "Delivery Date", id: "deliveryDate", type: "date" },
-//   { fieldName: "rescheduleLag", label: "Reschedule Lag (Remarks)", id: "rescheduleLag", type: "number" },
-//   { fieldName: "finalRemarks", label: "Final Remarks", id: "finalRemarks", type: "text" },
-//   { fieldName: "updatedGmv", label: "Updated GMV", id: "updatedGmv", type: "number" },
-//   { fieldName: "physicalWeight", label: "Physical Weight", id: "physicalWeight", type: "number" },
-// ]
+// Extended shipment data type with new appointment fields
+const extendedShipmentStatusDataType = [
+  ...shipmentStatusDataType,
+  { fieldName: "firstAppointmentDate", label: "First Appointment Date", id: "firstAppointmentDate", type: "date" },
+  { fieldName: "secondAppointmentDate", label: "Second Appointment Date", id: "secondAppointmentDate", type: "date" },
+  { fieldName: "thirdAppointmentDate", label: "Third Appointment Date", id: "thirdAppointmentDate", type: "date" },
+  { fieldName: "remarkAp1", label: "First Appointment Remark", id: "remarkAp1", type: "text" },
+  { fieldName: "remarkAp2", label: "Second Appointment Remark", id: "remarkAp2", type: "text" },
+  { fieldName: "remarkAp3", label: "Third Appointment Remark", id: "remarkAp3", type: "text" },
+]
 
 // Role-based field permissions
 const adminFields = [
-  "uid",
+  // "uid",
   "entryDate",
   "poDate",
   "facility",
   "channel",
   "location",
   "poNumber",
-  // "totalUnits",
   "brandName",
   "remarksPlanning",
   "specialRemarksCOPT",
@@ -213,7 +66,6 @@ const adminFields = [
   "tallyCustomerName",
   "customerCode",
   "poEntryCount",
-  // "updatedGmv",
 ]
 
 const warehouseFields = [
@@ -239,7 +91,13 @@ const warehouseFields = [
 const logisticsFields = [
   "statusLogistics",
   "dispatchRemarksLogistics",
-  "currentAppointmentDate",
+  "currentAppointmentDate", // Read-only field
+  "firstAppointmentDate",
+  "secondAppointmentDate",
+  "thirdAppointmentDate",
+  "remarkAp1",
+  "remarkAp2",
+  "remarkAp3",
   "deliveryDate",
   "rescheduleLag",
   "finalRemarks",
@@ -248,6 +106,7 @@ const logisticsFields = [
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
   const [formData, setFormData] = useState({})
+  const [originalData, setOriginalData] = useState({}) // Store original data to check if appointment dates were already filled
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -258,7 +117,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     if (shipmentData) {
       // Convert date strings to Date objects for date fields
       const processedData = { ...shipmentData }
-      shipmentStatusDataType.forEach((field) => {
+      extendedShipmentStatusDataType.forEach((field) => {
         if (field.type === "date" && processedData[field.fieldName]) {
           const dateValue = processedData[field.fieldName]
           if (dateValue && dateValue !== "1900/01/00" && dateValue !== "") {
@@ -288,6 +147,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         }
       })
       setFormData(processedData)
+      setOriginalData(processedData) // Store original data
     }
   }, [shipmentData])
 
@@ -317,7 +177,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     try {
       // Convert Date objects back to strings for saving
       const dataToSave = { ...formData }
-      shipmentStatusDataType.forEach((field) => {
+      extendedShipmentStatusDataType.forEach((field) => {
         if (field.type === "date" && dataToSave[field.fieldName] instanceof Date) {
           dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "yyyy-MM-dd")
         }
@@ -325,24 +185,11 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
       console.log("New Shipment Data:", dataToSave)
 
-      // Simulate API call
-      // await new Promise((resolve) => setTimeout(resolve, 1000))
-      // try {
-      //   const response = await updateShipment(dataToSave);
-      //   const result = await response.json();
-      //   console.log("API Response:", result);
-      // } catch (error) {
-      //   console.error("Error updating shipment:", error);
-      // }
-      const res = await updateShipment(dataToSave);
+      const res = await updateShipment(dataToSave)
       setSuccess("Shipment updated successfully!")
       console.log("Shipment updated successfully:", res.data)
       onSave()
       setSuccess("Shipment updated successfully!")
-
-      // setTimeout(() => {
-      //   onClose()
-      // }, 1500)
     } catch (err) {
       console.error("Error: ", err)
       setError("Failed to update shipment", err.message || err)
@@ -351,35 +198,138 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     setIsLoading(false)
   }
 
+  // Check if field is backend-controlled (like currentAppointmentDate)
+  const isBackendControlledField = (fieldName) => {
+    return fieldName === "currentAppointmentDate"
+  }
+
+  // Check if field is a sequential appointment date field
+  const isSequentialAppointmentField = (fieldName) => {
+    return ["firstAppointmentDate", "secondAppointmentDate", "thirdAppointmentDate"].includes(fieldName)
+  }
+
+  // Get the next available appointment date field that can be edited
+  const getNextAvailableAppointmentField = () => {
+    const hasFirstAppointment = formData.firstAppointmentDate && formData.firstAppointmentDate !== ""
+    const hasSecondAppointment = formData.secondAppointmentDate && formData.secondAppointmentDate !== ""
+    const hasThirdAppointment = formData.thirdAppointmentDate && formData.thirdAppointmentDate !== ""
+
+    if (!hasFirstAppointment) {
+      return "firstAppointmentDate"
+    } else if (!hasSecondAppointment) {
+      return "secondAppointmentDate"
+    } else if (!hasThirdAppointment) {
+      return "thirdAppointmentDate"
+    }
+    return null // All appointments are filled
+  }
+
+  // Check if appointment date field should be editable
+  const isAppointmentDateEditable = (fieldName) => {
+    if (!isSequentialAppointmentField(fieldName)) return true // Not an appointment field, so editable
+    const nextAvailable = getNextAvailableAppointmentField()
+    return nextAvailable === fieldName
+  }
+
+  // Check if appointment date is filled and locked
+  const isAppointmentDateFilled = (fieldName) => {
+    if (!isSequentialAppointmentField(fieldName)) return false // Not an appointment field
+    return formData[fieldName] && formData[fieldName] !== ""
+  }
+
+  // Check if remark field should be enabled (only when corresponding appointment date has data)
+  const isRemarkFieldEnabled = (remarkField) => {
+    const appointmentFieldMap = {
+      remarkAp1: "firstAppointmentDate",
+      remarkAp2: "secondAppointmentDate",
+      remarkAp3: "thirdAppointmentDate",
+    }
+
+    const correspondingAppointmentField = appointmentFieldMap[remarkField]
+    return formData[correspondingAppointmentField] && formData[correspondingAppointmentField] !== ""
+  }
+
   const renderField = (field) => {
     const value = formData[field.fieldName]
+    const isSequentialAppointment = isSequentialAppointmentField(field.fieldName)
+    const isRemarkField = ["remarkAp1", "remarkAp2", "remarkAp3"].includes(field.fieldName)
+    const isBackendControlled = isBackendControlledField(field.fieldName)
+    const isRemarkDisabled = isRemarkField && !isRemarkFieldEnabled(field.fieldName)
+
+    // For sequential appointment dates: check if it's editable based on sequence
+    const isAppointmentEditable = isSequentialAppointment ? isAppointmentDateEditable(field.fieldName) : true
+    const isAppointmentFilled = isSequentialAppointment ? isAppointmentDateFilled(field.fieldName) : false
+    const isAppointmentDisabled = isSequentialAppointment && !isAppointmentEditable && !isAppointmentFilled
 
     switch (field.type) {
       case "date":
+        // For regular date fields (not sequential appointments), they should be fully editable
+        const isRegularDateField = !isSequentialAppointment && !isBackendControlled
+        const shouldDisableDate =
+          isBackendControlled || (isSequentialAppointment && (isAppointmentFilled || isAppointmentDisabled))
+
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id} className="text-sm font-medium">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
               {field.label}
+              {isAppointmentFilled && <Lock className="h-3 w-3 text-gray-500" />}
+              {isBackendControlled && <Server className="h-3 w-3 text-blue-500" />}
+              {/* {isAppointmentDisabled && (
+                <span className="text-xs text-gray-500">(Waiting for previous appointment)</span>
+              )} */}
             </Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={cn("w-full h-10 justify-start text-left font-normal", !value && "text-muted-foreground")}
+                  disabled={shouldDisableDate}
+                  className={cn(
+                    "w-full h-10 justify-start text-left font-normal",
+                    !value && "text-muted-foreground",
+                    shouldDisableDate && "opacity-60 cursor-not-allowed bg-gray-50",
+                    isBackendControlled && "border-blue-200 bg-blue-50",
+                    isAppointmentDisabled && "border-gray-200 bg-gray-50",
+                    isSequentialAppointment &&
+                      isAppointmentEditable &&
+                      !isAppointmentFilled &&
+                      "border-green-200 bg-green-50",
+                  )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {value ? format(value, "PPP") : "Pick a date"}
+                  {isAppointmentFilled && <Lock className="ml-auto h-3 w-3" />}
+                  {isBackendControlled && <Server className="ml-auto h-3 w-3 text-blue-500" />}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={value}
-                  onSelect={(date) => handleInputChange(field.fieldName, date)}
-                  initialFocus
-                />
-              </PopoverContent>
+              {!shouldDisableDate && (
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={value}
+                    onSelect={(date) => handleInputChange(field.fieldName, date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              )}
             </Popover>
+            {/* {isAppointmentFilled && (
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                This appointment date is locked and cannot be changed
+              </p>
+            )} */}
+            {/* {isBackendControlled && (
+              <p className="text-xs text-blue-600 flex items-center gap-1">
+                <Server className="h-3 w-3" />
+                This field is automatically updated by the system
+              </p>
+            )} */}
+            {/* {isAppointmentDisabled && (
+              <p className="text-xs text-gray-500">Complete the previous appointment date first to enable this field</p>
+            )} */}
+            {isSequentialAppointment && isAppointmentEditable && !isAppointmentFilled && (
+              <p className="text-xs text-green-600">This is the next available appointment date to fill</p>
+            )}
           </div>
         )
 
@@ -424,16 +374,24 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       default:
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id} className="text-sm font-medium">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
               {field.label}
+              {/* {isRemarkDisabled && <span className="text-xs text-gray-500">(Requires appointment date)</span>} */}
             </Label>
             <Input
               id={field.id}
               type="text"
               value={value || ""}
+              disabled={isRemarkDisabled}
               onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
-              className="h-10"
+              className={cn("h-10", isRemarkDisabled && "opacity-60 cursor-not-allowed bg-gray-50")}
+              placeholder={isRemarkDisabled ? "Fill appointment date first" : ""}
             />
+            {/* {isRemarkDisabled && (
+              <p className="text-xs text-gray-500">
+                corresponding appointment date is not filled
+              </p>
+            )} */}
           </div>
         )
     }
@@ -456,13 +414,13 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         allowedFields = adminFields
     }
 
-    return shipmentStatusDataType.filter((field) => allowedFields.includes(field.fieldName))
+    return extendedShipmentStatusDataType.filter((field) => allowedFields.includes(field.fieldName))
   }
 
   const getAvailableTabs = () => {
     const tabs = []
 
-    if (user?.role === "superadmin" ) {
+    if (user?.role === "superadmin") {
       tabs.push(
         { value: "admin", label: "Admin", icon: Shield, count: adminFields.length },
         { value: "warehouse", label: "Warehouse", icon: Warehouse, count: warehouseFields.length },

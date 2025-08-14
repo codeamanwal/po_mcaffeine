@@ -15,7 +15,7 @@ function checkNullCond(value, prevValue) {
 
 // log Controllers
 
-async function createLog({shipmentId, createdBy, change, remark}){
+async function createLog({shipmentId, createdBy, fieldName, change, remark}){
   try {
     console.log(createdBy, shipmentId, change, remark);
     if(!shipmentId || !createdBy || !change || !remark){
@@ -26,6 +26,8 @@ async function createLog({shipmentId, createdBy, change, remark}){
       throw "No such user!";
     }
     const newMsg = {
+      fieldName: fieldName || "",
+      remark: remark || "",
       createdBy,
       change,
       remark,
@@ -249,7 +251,7 @@ async function getSkusByShipment(req, res) {
 
 async function getAllShipments(req, res){
     try {
-        const shipments = await ShipmentOrder.findAll({});
+        const shipments = await ShipmentOrder.findAll({order: [['uid', 'DESC']]});
         return res.status(200).json({msg:"Data fetched successfully", shipments, success: true, status: 200});
     } catch (error) {
         console.log(error)
@@ -274,7 +276,8 @@ async function getAllSkuOrders(req, res) {
       include: [{
         model: ShipmentOrder,
         as: 'shipmentOrder',
-      }]
+      }],
+      order: [['shipmentOrderId', 'DESC']]
     });
 
     const skuDataList = skuOrders.map(sku => {
@@ -298,7 +301,8 @@ async function getAllData (req, res) {
       include: [{
         model: SkuOrder,
         as: 'skuOrders',
-      }]
+      }],
+      order: [['uid', 'DESC']]
     });
 
     const skuOrders = await SkuOrder.findAll({
@@ -325,15 +329,41 @@ async function getAllData (req, res) {
 async function updateShipment(req, res) {
   try {
     let isLog = false;
-    const { uid, ...updateData } = req.body;
+    let changedField = "";
+    let new_remark = "";
+    let change = "";
+
+    let { uid, ...updateData } = req.body;
     const shipment = await ShipmentOrder.findOne({ where: { uid } });
+
     if (!shipment) {
       return res.status(404).json({ error: 'Shipment not found' });
     }
+    if(shipment?.dataValues?.firstAppointmentDate !== updateData.firstAppointmentDate){
+      changedField = "First Appointment date"
+      updateData.currentAppointmentDate = updateData.firstAppointmentDate
+      new_remark = updateData.remarkAp1
+      change = `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`
+    } 
+    else if (shipment?.dataValues?.secondAppointmentDate !== updateData.secondAppointmentDate){
+      changedField = "Second Appointment date"
+      updateData.currentAppointmentDate = updateData.secondAppointmentDate
+      new_remark = updateData.remarkAp2
+      change = `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`
+    }
+    else if(shipment?.dataValues?.thirdAppointmentDate !== updateData.thirdAppointmentDate){
+      changedField = "Third Appointment date"
+      updateData.currentAppointmentDate = updateData.thirdAppointmentDate
+      new_remark = updateData.remarkAp3
+      change = `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`
+    }
+
     if(shipment?.dataValues?.currentAppointmentDate !== updateData.currentAppointmentDate){
       isLog = true;
     }
-      const updatedShipment = await shipment.update(updateData);
+    
+    const updatedShipment = await shipment.update(updateData);
+    
     console.log("isLog: ",isLog);
       // console.log("Previous Shipment:", shipment);
     // console.log("Updated Shipment: ", updatedShipment);
@@ -342,8 +372,9 @@ async function updateShipment(req, res) {
       const logRes = await createLog({
         shipmentId: shipment.uid,
         createdBy: req.user,
-        change: `Appointment Date changed from ${shipment.currentAppointmentDate} to ${updatedShipment.currentAppointmentDate}`,
-        remark: `Changes in appointmant date!!`
+        fieldName: changedField,
+        change: change,
+        remark: new_remark || "No new remark provided!",
       })
       console.log(logRes);
     }

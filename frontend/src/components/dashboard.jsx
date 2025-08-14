@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Database, Edit, Edit2, Edit3, Eye, Package, Trash } from "lucide-react"
+import { Database, Edit, Edit2, Edit3, Eye, Package, Trash, MoreHorizontal } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import NavigationHeader from "@/components/header"
@@ -20,6 +20,7 @@ import SkuLevelEditModal from "./sku-level-edit-modal"
 import { Input } from "./ui/input"
 import { Select } from "./ui/select"
 import ShipmentViewModal from "./view-shipment-modal"
+import { DropdownMenu, DropdownMenuTrigger,DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "./ui/dropdown-menu"
 
 // Sample data based on provided format
 const poData = [
@@ -382,55 +383,61 @@ export default function DashboardPage({ onNavigate }) {
           
           {/* Shipment table  */}
           <TabsContent value="shipment-status">
-            <Card className="shadow-lg">
-              <CardHeader className="pb-6">
-                <CardTitle className="flex items-center justify-between text-xl">
-                  <span>Shipment Status Data</span>
-
+          <Card className="shadow-lg">
+            <CardHeader className="pb-6">
+              <CardTitle className="flex items-center justify-between text-xl">
+                <span>Shipment Status Data</span>
+                <div className="flex items-center gap-3">
                   <Badge
                     variant="secondary"
                     className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-sm px-3 py-1"
                   >
                     {shipmentStatusData.length} Records
                   </Badge>
-                  <Button className={"bg-blue-500 text-white hover:bg-blue-600"} onClick={() => {setShipmentBulkEditModal(true)}}>
-                    <Edit className="h-5 w-5" /> Bulk Edit
+                  <Button
+                    className="bg-blue-500 text-white hover:bg-blue-600"
+                    onClick={() => {
+                      setShipmentBulkEditModal(true)
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Bulk Edit
                   </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
                 <ScrollArea className="w-full">
-                  <div className="">
+                  <div className="relative">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-                          {
-                            <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead>
-                          }
-                          {
-                            shipmentStatusDataType.map((item, idx) => (
-                              <TableHead key={idx} className="font-semibold mx-1 border-1 border-x-white py-1">{item.label}</TableHead>
-                            ))
-                          }
-                          
+                          {shipmentStatusDataType.map((item, idx) => (
+                            <TableHead
+                              key={idx}
+                              className="font-semibold mx-1 border-1 border-x-white py-3 whitespace-nowrap"
+                            >
+                              {item.label}
+                            </TableHead>
+                          ))}
+                          {/* Spacer for sticky action column */}
+                          <TableHead className="w-32"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {shipmentStatusData.map((row, index) => (
                           <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <TableCell className="mx-2 py-1 flex flex-row">
-                              <span onClick={() => handleEditSkuShipment(row)}><Edit3 /></span>
-                              <span onClick={() => handleViewShipment(row)}><Eye className="text-blue-500 h-6 w-6" /></span>
-                              <span onClick={() => handleEditShipment(row)}><Edit className="text-blue-500 h-6 w-6"  /></span>
-                              <span onClick={() => handleDeleteShipment(row)}><Trash className="text-red-500 h-6 w-6 mx-1" /></span>
+                            {shipmentStatusDataType.map((item, idx) => (
+                              <TableCell key={idx} className="mx-1 border-1 border-x-white py-3 whitespace-nowrap">
+                                {row[item.fieldName]}
+                              </TableCell>
+                            ))}
+                            <TableCell className="min-w-32 mx-1 border-1 border-x-white py-3 whitespace-nowrap">
+                                {}
                             </TableCell>
-                            {
-                              shipmentStatusDataType.map((item, idx) => (
-                                <TableCell key={idx} className="mx-1 border-1 border-x-white py-1">
-                                  {row[item.fieldName]}
-                                </TableCell>
-                              ))
-                            }
+                            {/* Spacer for sticky action column */}
+                            <TableCell className="w-32"></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -438,9 +445,63 @@ export default function DashboardPage({ onNavigate }) {
                   </div>
                   <ScrollBar orientation="horizontal" />
                 </ScrollArea>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
+                {/* Sticky Action Column */}
+                <div className="absolute top-0 right-0 bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800 shadow-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
+                        <TableHead className="font-semibold py-3 px-4 w-32 text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {shipmentStatusData.map((row, index) => (
+                        <TableRow
+                          key={index}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+                        >
+                          <TableCell className="py-[0.26rem] px-2 w-28">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="p-0 m-0 flex flex-row">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-5 w-5" />
+                                  <span className="hidden md:block">Action</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => handleViewShipment(row)} className="cursor-pointer">
+                                  <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditSkuShipment(row)} className="cursor-pointer">
+                                  <Package className="mr-2 h-4 w-4 text-green-500" />
+                                  Edit SKU Level
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditShipment(row)} className="cursor-pointer">
+                                  <Edit className="mr-2 h-4 w-4 text-orange-500" />
+                                  Edit Shipment
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteShipment(row)}
+                                  className="cursor-pointer text-red-600 focus:text-red-600"
+                                >
+                                  <Trash className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
         </Tabs>
 
         <EditOrderModal 

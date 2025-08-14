@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Loader2, Eye, History, AlertCircle, Calendar, Package, User, MapPin } from 'lucide-react'
+import { Loader2, Eye, History, AlertCircle, Calendar, Package, User, MapPin, Pen } from 'lucide-react'
 import { get } from 'react-hook-form'
 import api from '@/hooks/axios'
 import { getLogsOfShipment } from '@/lib/order'
@@ -347,6 +347,10 @@ export default function ShipmentViewModal({
                               <div className="text-sm">
                                 <span>{log?.change}</span>
                               </div>
+                              <span className="flex items-center gap-1 text-xs text-black/90">
+                                  <Pen className="h-3 w-3 text-blue-500" />
+                                  <span className='text-blue-500'>Remark: </span>{log?.remark}
+                                </span>
                               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <User className="h-3 w-3" />
