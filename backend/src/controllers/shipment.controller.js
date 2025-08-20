@@ -332,6 +332,7 @@ async function updateShipment(req, res) {
     let changedField = "";
     let new_remark = "";
     let change = "";
+    let logs = [];
 
     let { uid, ...updateData } = req.body;
     const shipment = await ShipmentOrder.findOne({ where: { uid } });
@@ -357,9 +358,28 @@ async function updateShipment(req, res) {
       new_remark = updateData.remarkAp3
       change = `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`
     }
+    if(shipment.dataValues?.poNumber != updateData?.poNumber){
+      isLog = true;
+      const new_log = {
+        shipmentId: shipment.uid,
+        createdBy: req.user,
+        fieldName: "Po Number",
+        change: `Po number changed from ${shipment.dataValues?.poNumber} to ${updateData?.poNumber}`,
+        remark: "No remark provided!",
+      }
+      logs = [...logs, new_log]
+    }
 
     if(shipment?.dataValues?.currentAppointmentDate !== updateData.currentAppointmentDate){
       isLog = true;
+      const new_log = {
+        shipmentId: shipment.uid,
+        createdBy: req.user,
+        fieldName: changedField,
+        change: change,
+        remark: new_remark || "No new remark provided!",
+      }
+      logs = [...logs, new_log]
     }
     
     const updatedShipment = await shipment.update(updateData);
@@ -369,14 +389,9 @@ async function updateShipment(req, res) {
     // console.log("Updated Shipment: ", updatedShipment);
     if(isLog){
       // console.log("Changing logs")
-      const logRes = await createLog({
-        shipmentId: shipment.uid,
-        createdBy: req.user,
-        fieldName: changedField,
-        change: change,
-        remark: new_remark || "No new remark provided!",
+      logs.map(async (log) =>{
+        await createLog(log)
       })
-      console.log(logRes);
     }
     return res.status(200).json({ msg: "Shipment updated successfully", shipment: updatedShipment });
   } catch (error) {

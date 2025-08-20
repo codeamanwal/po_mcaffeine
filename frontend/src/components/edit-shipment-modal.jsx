@@ -18,6 +18,8 @@ import { useUserStore } from "@/store/user-store"
 import { shipmentStatusDataType } from "@/constants/data_type"
 import { updateShipment } from "@/lib/order"
 
+import { toast } from "sonner"
+
 // Extended shipment data type with new appointment fields
 const extendedShipmentStatusDataType = [
   ...shipmentStatusDataType,
@@ -190,9 +192,11 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       console.log("Shipment updated successfully:", res.data)
       onSave()
       setSuccess("Shipment updated successfully!")
+      toast.success("Shipment updated successfully!")
     } catch (err) {
       console.error("Error: ", err)
       setError("Failed to update shipment", err.message || err)
+      toast.error("Failed to update shipment", err.message || err)
     }
 
     setIsLoading(false)

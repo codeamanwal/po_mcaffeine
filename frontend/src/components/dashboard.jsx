@@ -293,6 +293,18 @@ export default function DashboardPage({ onNavigate }) {
     }
   }
 
+  async function onSavingUpdate() {
+    setSelectedShipment({});
+    setSelectedOrder({});
+    setShipmentEditModal(false);
+    // setShipmentBulkEditModal(false);
+    setShipmentViewModal(false);
+    setSkuEditModal(false);
+    setEditModal(false);
+    await getPoFormateData();
+    await getShipmentData();
+  }
+
   useEffect(() => {
     getPoFormateData()
     getShipmentData()
@@ -508,33 +520,33 @@ export default function DashboardPage({ onNavigate }) {
           isOpen={isEditModal}
           onClose={()=>{setEditModal(false)}}
           orderData={selectedOrder}
-          onSave={() => {onUpdateSingleOrder(selectedOrder);setSelectedOrder({})}}
+          onSave={() => {onSavingUpdate()}}
         />
 
         <EditShipmentModal 
           isOpen={isShipmentEditModal}
           onClose={()=>{setShipmentEditModal(false)}}
           shipmentData={selectedShipment}
-          onSave={() => {}}
+          onSave={() => {onSavingUpdate()}}
         />
 
         <BulkUpdateShipmentModal 
           isOpen={isShipmentBulkEditModal}
           onClose={()=>{setShipmentBulkEditModal(false)}}
           shipmentData={selectedShipment}
-          onSave={() => {}}
+          onSave={() => {onSavingUpdate()}}
         />
 
         <SkuLevelEditModal 
           isOpen={isSkuEditModal}
           onClose={()=>{setSkuEditModal(false)}}
           shipmentId={selectedShipment.uid}
-          onSave={() => {}}
+          onSave={() => {onSavingUpdate()}}
         />
 
         <ShipmentViewModal 
           isOpen={isShipmentViewModal}
-          onClose={() => {setShipmentViewModal(false)}}
+          onClose={() => {setShipmentViewModal(false); setSelectedShipment({})}}
           shipment={selectedShipment}
           shipmentId={selectedShipment.uid}
           poNumber={selectedShipment.poNumber}

@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { useUserStore } from "@/store/user-store"
 import { getSkuOrdersByShipment, updateSkusByShipment } from "@/lib/order"
 
+import { toast } from "sonner"
 
 // Mock API functions - replace with actual API calls
 const fetchShipmentSkuData = async (shipmentId) => {
@@ -182,6 +183,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
 
     setIsUpdating(true)
     setError("")
+    setSuccess("")
 
     try {
       // Validate changes
@@ -207,13 +209,14 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
       }
 
       setSuccess("SKU orders updated successfully")
-      
+      toast.success("SKU orders updated successfully")
       setTimeout(() => {
         onClose()
         resetModal()
       }, 2000)
     } catch (err) {
       setError("Failed to update SKU orders. Please try again.")
+      toast.error("Failed to update SKU orders", err?.message || err)
     }
 
     setIsUpdating(false)
@@ -244,6 +247,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
     return editedSkus.reduce((totals, sku) => ({
       totalQty: totals.totalQty + sku.qty,
       totalGmv: totals.totalGmv + sku.gmv,
+      // totalGmv: (sku.gmv/sku.qty)*(totals.totalQty + sku.qty) || 0,
       totalPoValue: totals.totalPoValue + sku.poValue,
       totalWeight: totals.totalWeight + sku.actualWeight
     }), { totalQty: 0, totalGmv: 0, totalPoValue: 0, totalWeight: 0 })
