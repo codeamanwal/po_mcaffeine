@@ -21,13 +21,13 @@ import { updateBulkShipment } from "@/lib/order"
 // Field definitions with role permissions and CSV headers
 const fieldDefinitions = {
   // Admin fields
-  entryDate: { 
-    label: "Entry Date", 
-    csvHeader: "Entry Date", 
-    roles: ["superadmin", "admin"], 
-    type: "date",
-    category: "admin"
-  },
+  // entryDate: { 
+  //   label: "Entry Date", 
+  //   csvHeader: "Entry Date", 
+  //   roles: ["superadmin", "admin"], 
+  //   type: "date",
+  //   category: "admin"
+  // },
   poDate: { 
     label: "PO Date", 
     csvHeader: "PO Date", 

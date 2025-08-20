@@ -34,7 +34,7 @@ const extendedShipmentStatusDataType = [
 // Role-based field permissions
 const adminFields = [
   // "uid",
-  "entryDate",
+  // "entryDate",
   "poDate",
   "facility",
   "channel",
