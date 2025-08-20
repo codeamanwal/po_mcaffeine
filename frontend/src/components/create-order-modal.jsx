@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { CalendarIcon, AlertCircle, CheckCircle, Plus, Trash2, Package, ShoppingCart, X } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { createShipmentOrder } from "@/lib/order"
 
 const brands = ["mCaffine", "MCaffeine", "Other Brand"]
 const facilities = ["Delhi WH1", "Mumbai WH1", "Mumbai WH2", "Bangalore WH1", "Hyderabad WH1", "Chennai WH1"]
@@ -145,9 +146,9 @@ export default function CreateShipmentModal({ isOpen, onClose, onSave }) {
       // Format data for API
       const apiData = {
         shipmentOrder: {
-          entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "yyyy-MM-dd") : "",
+          entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "dd-MM-yyyy") : "",
           brand: shipmentOrder.brand,
-          poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "yyyy-MM-dd") : "",
+          poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "dd-MM-yyyy") : "",
           facility: shipmentOrder.facility,
           channel: shipmentOrder.channel,
           location: shipmentOrder.location,
@@ -165,7 +166,8 @@ export default function CreateShipmentModal({ isOpen, onClose, onSave }) {
       }
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // await new Promise((resolve) => setTimeout(resolve, 1500))
+      const res = await createShipmentOrder(apiData)
 
       onSave(apiData)
       setSuccess("Shipment order created successfully!")

@@ -244,7 +244,7 @@ export default function ShipmentViewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-h-[90vh] overflow-auto">
+      <DialogContent className="md:w-[70vw] w-full max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5" />
@@ -298,7 +298,7 @@ export default function ShipmentViewModal({
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
                           {fields.map((field) => (
                             <div key={field} className="space-y-1">
                               <label className="text-sm font-medium text-muted-foreground">

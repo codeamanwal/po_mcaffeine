@@ -25,6 +25,7 @@ import {
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import NavigationHeader from "@/components/header"
+import { createShipmentOrder } from "@/lib/order"
 
 
 
@@ -158,9 +159,9 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       // Format data for API
       const apiData = {
         shipmentOrder: {
-          entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "yyyy-MM-dd") : "",
-          brand: shipmentOrder.brand,
-          poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "yyyy-MM-dd") : "",
+          entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "dd-MM-yyyy") : "",
+          brandName: shipmentOrder.brand,
+          poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "dd-MM-yyyy") : "",
           facility: shipmentOrder.facility,
           channel: shipmentOrder.channel,
           location: shipmentOrder.location,
@@ -178,9 +179,10 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       }
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
+      // await new Promise((resolve) => setTimeout(resolve, 1500))
+      const res = await createShipmentOrder(apiData)
       console.log("Order created:", apiData)
+      console.log("res:", res.data)
       setSuccess("Shipment order created successfully!")
 
       // Reset form after success

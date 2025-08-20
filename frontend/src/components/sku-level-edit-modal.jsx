@@ -148,9 +148,9 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
     
     if (user?.role === "superadmin") {
       fields.push(
-        { key: "poValue", label: "PO Value", type: "number", icon: DollarSign, color: "text-green-600" },
+        // { key: "poValue", label: "PO Value", type: "number", icon: DollarSign, color: "text-green-600" },
         { key: "qty", label: "Quantity", type: "number", icon: Package, color: "text-blue-600" },
-        { key: "gmv", label: "GMV", type: "number", icon: Calculator, color: "text-purple-600" }
+        // { key: "gmv", label: "GMV", type: "number", icon: Calculator, color: "text-purple-600" }
       )
     } else if (user?.role === "warehouse") {
       fields.push(
@@ -158,7 +158,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
       )
     } else if (user?.role === "admin") {
       fields.push(
-        { key: "gmv", label: "GMV", type: "number", icon: Calculator, color: "text-purple-600" }
+        // { key: "gmv", label: "GMV", type: "number", icon: Calculator, color: "text-purple-600" }
       )
     }
     
@@ -345,7 +345,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
             )} */}
 
             {/* Editable Fields Legend */}
-            {editableFields.length > 0 && shipmentData && !isLoading && (
+            {/* {editableFields.length > 0 && shipmentData && !isLoading && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Editable Fields</CardTitle>
@@ -364,7 +364,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )} */}
 
             {/* SKU Orders Table */}
             {shipmentData && !isLoading && (
@@ -398,9 +398,9 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
                         <TableRow>
                           <TableHead className="w-16">Sr No</TableHead>
                           <TableHead className="min-w-[250px]">SKU Details</TableHead>
-                          <TableHead className="w-24 text-center">Channel Qty</TableHead>
+                          {/* <TableHead className="w-24 text-center">Channel Qty</TableHead>
                           <TableHead className="w-24 text-center">Weight (kg)</TableHead>
-                          <TableHead className="w-32">Accounts Working</TableHead>
+                          <TableHead className="w-32">Accounts Working</TableHead> */}
                           {editableFields.map(field => (
                             <TableHead key={field.key} className="w-32 text-center">
                               <div className="flex items-center justify-center space-x-1">
@@ -428,7 +428,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-center">
+                              {/* <TableCell className="text-center">
                                 <Badge variant="outline" className="font-mono">
                                   {sku.channelInwardingQuantity}
                                 </Badge>
@@ -438,7 +438,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
                               </TableCell>
                               <TableCell>
                                 <span className="text-sm">{sku.accountsWorking || "-"}</span>
-                              </TableCell>
+                              </TableCell> */}
                               {editableFields.map(field => {
                                 const hasChanged = original && sku[field.key] !== original[field.key]
                                 return (

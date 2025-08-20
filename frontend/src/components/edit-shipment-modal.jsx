@@ -179,7 +179,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       const dataToSave = { ...formData }
       extendedShipmentStatusDataType.forEach((field) => {
         if (field.type === "date" && dataToSave[field.fieldName] instanceof Date) {
-          dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "yyyy-MM-dd")
+          dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "dd-MM-yyyy")
         }
       })
 
@@ -441,7 +441,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
+      <DialogContent className="max-w-[70vw] max-h-[95vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Save className="h-5 w-5" />
@@ -482,7 +482,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
             {availableTabs.map((tab) => (
               <TabsContent key={tab?.value} value={tab?.value}>
                 <ScrollArea className="max-h-[60vh] pr-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh]">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-h-[60vh]">
                     {getFieldsByRole(tab?.value).map((field) => (
                       <div key={field?.fieldName}>{renderField(field)}</div>
                     ))}
