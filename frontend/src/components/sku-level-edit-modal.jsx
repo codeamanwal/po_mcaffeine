@@ -109,6 +109,7 @@ const updateShipmentSkuData = async (shipmentId, skuOrders) => {
 }
 
 export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave }) {
+  const [initialskus, setInitialSkus] = useState([]);
   const [shipmentData, setShipmentData] = useState(null)
   const [editedSkus, setEditedSkus] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -136,6 +137,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
       console.log(data.data);
       setShipmentData({skuOrders:data?.data?.skus})
       setEditedSkus([...data?.data?.skus])
+      setInitialSkus([...data?.data?.skus])
     } catch (err) {
       setError("Failed to fetch shipment data. Please try again.")
     }
@@ -168,15 +170,22 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
 
   const handleFieldChange = (skuIndex, field, value) => {
     setEditedSkus(prev => {
+      const or = initialskus
       const updated = [...prev]
       const numValue = parseFloat(value) || 0
       updated[skuIndex] = {
         ...updated[skuIndex],
-        [field]: field === "qty" ? Math.floor(numValue) : numValue
+        [field]: field === "qty" ? Math.floor(numValue) : numValue,
+      }
+      updated[skuIndex] = {
+        ...updated[skuIndex],
+        "gmv":(or[skuIndex]["gmv"] / or[skuIndex]["qty"])*(updated[skuIndex]["qty"]),
+        "poValue":(or[skuIndex].poValue / or[skuIndex].qty)*(updated[skuIndex].qty),
       }
       return updated
     })
   }
+
 
   const handleSave = async () => {
     if (!shipmentData || !shipmentId) return
@@ -216,7 +225,8 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
       }, 2000)
     } catch (err) {
       setError("Failed to update SKU orders. Please try again.")
-      toast.error("Failed to update SKU orders", err?.message || err)
+      console.error(err)
+      toast.error(`Failed to update SKU orders: ${err.message || err}`)
     }
 
     setIsUpdating(false)
@@ -253,6 +263,7 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave 
     }), { totalQty: 0, totalGmv: 0, totalPoValue: 0, totalWeight: 0 })
   }
 
+  
   const totals = calculateTotals()
 
   return (
