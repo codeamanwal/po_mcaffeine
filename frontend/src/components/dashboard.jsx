@@ -351,6 +351,7 @@ export default function DashboardPage({ onNavigate }) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="relative">
                 <ScrollArea className="w-full">
                   <div className="min-w-[2000px]">
                     <Table>
@@ -362,6 +363,7 @@ export default function DashboardPage({ onNavigate }) {
                             ))
                           }
                             {/* <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead> */}
+                            <TableCell className="w-32 no-wrap">{" "}</TableCell>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -382,6 +384,11 @@ export default function DashboardPage({ onNavigate }) {
                                 </>
                               }
                             </TableCell> */}
+                            <TableCell className="min-w-32 mx-1 border-1 border-x-white py-3 whitespace-nowrap">
+                                {}
+                            </TableCell>
+                            {/* Spacer for sticky action column */}
+                            <TableCell className="w-32"></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -389,6 +396,61 @@ export default function DashboardPage({ onNavigate }) {
                   </div>
                   <ScrollBar orientation="horizontal" />
                 </ScrollArea>
+
+                {/* Sticky Action Column */}
+                <div className="absolute top-0 right-0 bg-white dark:bg-gray-950 shadow-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
+                        <TableHead className="font-semibold py-2 px-4 w-32 text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {poFormatData.map((row, index) => (
+                        <TableRow
+                          key={index}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800 border-none"
+                        >
+                          <TableCell className="py-0 px-2 w-28 border-none">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="py-0 my-[-0.23rem] flex flex-row">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-5 w-5 my-0" />
+                                  <span className="hidden md:block py-0 my-0">Action</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => handleViewShipment(row)} className="cursor-pointer">
+                                  <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                  View Details
+                                </DropdownMenuItem>
+                                {/* <DropdownMenuItem onClick={() => handleEditSkuShipment(row)} className="cursor-pointer">
+                                  <Package className="mr-2 h-4 w-4 text-green-500" />
+                                  Edit SKU Level
+                                </DropdownMenuItem> */}
+                                {/* <DropdownMenuItem onClick={() => handleEditShipment(row)} className="cursor-pointer">
+                                  <Edit className="mr-2 h-4 w-4 text-orange-500" />
+                                  Edit Shipment
+                                </DropdownMenuItem> */}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteOrder(row)}
+                                  className="cursor-pointer text-red-600 focus:text-red-600"
+                                >
+                                  <Trash className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
