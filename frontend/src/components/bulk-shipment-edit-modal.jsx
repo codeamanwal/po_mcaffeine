@@ -11,411 +11,421 @@ import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Upload, Download, FileText, AlertCircle, CheckCircle, X, Eye, Save, Shield, Warehouse, Truck, Database } from 'lucide-react'
+import {
+  Upload,
+  Download,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  X,
+  Eye,
+  Shield,
+  Warehouse,
+  Truck,
+  Database,
+} from "lucide-react"
 import { useUserStore } from "@/store/user-store"
 import { Label } from "./ui/label"
-import { Erica_One } from "next/font/google"
 import { updateBulkShipment } from "@/lib/order"
-
 
 // Field definitions with role permissions and CSV headers
 const fieldDefinitions = {
   // Admin fields
-  // entryDate: { 
-  //   label: "Entry Date", 
-  //   csvHeader: "Entry Date", 
-  //   roles: ["superadmin", "admin"], 
+  // entryDate: {
+  //   label: "Entry Date",
+  //   csvHeader: "Entry Date",
+  //   roles: ["superadmin", "admin"],
   //   type: "date",
   //   category: "admin"
   // },
-  poDate: { 
-    label: "PO Date", 
-    csvHeader: "PO Date", 
-    roles: ["superadmin", "admin"], 
+  poDate: {
+    label: "PO Date",
+    csvHeader: "PO Date",
+    roles: ["superadmin", "admin"],
     type: "date",
-    category: "admin"
+    category: "admin",
   },
-  facility: { 
-    label: "Facility", 
-    csvHeader: "Facility", 
-    roles: ["superadmin", "admin"], 
+  facility: {
+    label: "Facility",
+    csvHeader: "Facility",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  channel: { 
-    label: "Channel", 
-    csvHeader: "Channel", 
-    roles: ["superadmin", "admin"], 
+  channel: {
+    label: "Channel",
+    csvHeader: "Channel",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  location: { 
-    label: "Location", 
-    csvHeader: "Location", 
-    roles: ["superadmin", "admin"], 
+  location: {
+    label: "Location",
+    csvHeader: "Location",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  brandName: { 
-    label: "Brand Name", 
-    csvHeader: "Brand Name", 
-    roles: ["superadmin", "admin"], 
+  brandName: {
+    label: "Brand Name",
+    csvHeader: "Brand Name",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  remarksPlanning: { 
-    label: "Remarks (Planning)", 
-    csvHeader: "Remarks (Planning)", 
-    roles: ["superadmin", "admin"], 
+  remarksPlanning: {
+    label: "Remarks (Planning)",
+    csvHeader: "Remarks (Planning)",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  specialRemarksCOPT: { 
-    label: "Special Remarks (COPT)", 
-    csvHeader: "Special Remarks (COPT)", 
-    roles: ["superadmin", "admin"], 
+  specialRemarksCOPT: {
+    label: "Special Remarks (COPT)",
+    csvHeader: "Special Remarks (COPT)",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  newShipmentReference: { 
-    label: "New Shipment Reference", 
-    csvHeader: "New Shipment Reference", 
-    roles: ["superadmin", "admin"], 
+  newShipmentReference: {
+    label: "New Shipment Reference",
+    csvHeader: "New Shipment Reference",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  statusActive: { 
-    label: "Status (Active/Inactive)", 
-    csvHeader: "Status (Active/Inactive)", 
-    roles: ["superadmin", "admin"], 
+  statusActive: {
+    label: "Status (Active/Inactive)",
+    csvHeader: "Status (Active/Inactive)",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  statusPlanning: { 
-    label: "Status (Planning)", 
-    csvHeader: "Status (Planning)", 
-    roles: ["superadmin", "admin"], 
+  statusPlanning: {
+    label: "Status (Planning)",
+    csvHeader: "Status (Planning)",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  channelInwardingRemarks: { 
-    label: "Channel Inwarding Remarks", 
-    csvHeader: "Channel Inwarding Remarks", 
-    roles: ["superadmin", "admin"], 
+  channelInwardingRemarks: {
+    label: "Channel Inwarding Remarks",
+    csvHeader: "Channel Inwarding Remarks",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  dispatchDateTentative: { 
-    label: "Dispatch Date Tentative", 
-    csvHeader: "Dispatch Date Tentative", 
-    roles: ["superadmin", "admin"], 
+  dispatchDateTentative: {
+    label: "Dispatch Date Tentative",
+    csvHeader: "Dispatch Date Tentative",
+    roles: ["superadmin", "admin"],
     type: "date",
-    category: "admin"
+    category: "admin",
   },
-  workingDatePlanner: { 
-    label: "Working Date (Planner)", 
-    csvHeader: "Working Date (Planner)", 
-    roles: ["superadmin", "admin"], 
+  workingDatePlanner: {
+    label: "Working Date (Planner)",
+    csvHeader: "Working Date (Planner)",
+    roles: ["superadmin", "admin"],
     type: "date",
-    category: "admin"
+    category: "admin",
   },
-  firstAppointmentDateCOPT: { 
-    label: "First Appointment Date (COPT)", 
-    csvHeader: "First Appointment Date (COPT)", 
-    roles: ["superadmin", "admin"], 
+  firstAppointmentDateCOPT: {
+    label: "First Appointment Date (COPT)",
+    csvHeader: "First Appointment Date (COPT)",
+    roles: ["superadmin", "admin"],
     type: "date",
-    category: "admin"
+    category: "admin",
   },
-  orderNo1: { 
-    label: "Order No 1", 
-    csvHeader: "Order No 1", 
-    roles: ["superadmin", "admin"], 
+  orderNo1: {
+    label: "Order No 1",
+    csvHeader: "Order No 1",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  orderNo2: { 
-    label: "Order No 2", 
-    csvHeader: "Order No 2", 
-    roles: ["superadmin", "admin"], 
+  orderNo2: {
+    label: "Order No 2",
+    csvHeader: "Order No 2",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  orderNo3: { 
-    label: "Order No 3", 
-    csvHeader: "Order No 3", 
-    roles: ["superadmin", "admin"], 
+  orderNo3: {
+    label: "Order No 3",
+    csvHeader: "Order No 3",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  channelType: { 
-    label: "Channel Type", 
-    csvHeader: "Channel Type", 
-    roles: ["superadmin", "admin"], 
+  channelType: {
+    label: "Channel Type",
+    csvHeader: "Channel Type",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  appointmentLetter: { 
-    label: "Appointment Letter/STN", 
-    csvHeader: "Appointment Letter/STN", 
-    roles: ["superadmin", "admin"], 
+  appointmentLetter: {
+    label: "Appointment Letter/STN",
+    csvHeader: "Appointment Letter/STN",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  labelsLink: { 
-    label: "Labels", 
-    csvHeader: "Labels", 
-    roles: ["superadmin", "admin"], 
+  labelsLink: {
+    label: "Labels",
+    csvHeader: "Labels",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  invoiceDate: { 
-    label: "Invoice Date", 
-    csvHeader: "Invoice Date", 
-    roles: ["superadmin", "admin"], 
+  invoiceDate: {
+    label: "Invoice Date",
+    csvHeader: "Invoice Date",
+    roles: ["superadmin", "admin"],
     type: "date",
-    category: "admin"
+    category: "admin",
   },
-  invoiceLink: { 
-    label: "Invoice Link", 
-    csvHeader: "Invoice Link", 
-    roles: ["superadmin", "admin"], 
+  invoiceLink: {
+    label: "Invoice Link",
+    csvHeader: "Invoice Link",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  cnLink: { 
-    label: "CN Link", 
-    csvHeader: "CN Link", 
-    roles: ["superadmin", "admin"], 
+  cnLink: {
+    label: "CN Link",
+    csvHeader: "CN Link",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  ewayLink: { 
-    label: "E-Way Link", 
-    csvHeader: "E-Way Link", 
-    roles: ["superadmin", "admin"], 
+  ewayLink: {
+    label: "E-Way Link",
+    csvHeader: "E-Way Link",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  invoiceValue: { 
-    label: "Invoice Value", 
-    csvHeader: "Invoice Value (Check with Invoice Link)", 
-    roles: ["superadmin", "admin"], 
+  invoiceValue: {
+    label: "Invoice Value",
+    csvHeader: "Invoice Value (Check with Invoice Link)",
+    roles: ["superadmin", "admin"],
     type: "number",
-    category: "admin"
+    category: "admin",
   },
-  remarksAccountsTeam: { 
-    label: "Remarks by Accounts Team", 
-    csvHeader: "Remarks by Accounts Team", 
-    roles: ["superadmin", "admin"], 
+  remarksAccountsTeam: {
+    label: "Remarks by Accounts Team",
+    csvHeader: "Remarks by Accounts Team",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  invoiceChallanNumber: { 
-    label: "Invoice / Challan Number", 
-    csvHeader: "Invoice / Challan Number", 
-    roles: ["superadmin", "admin"], 
+  invoiceChallanNumber: {
+    label: "Invoice / Challan Number",
+    csvHeader: "Invoice / Challan Number",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  invoiceCheckedBy: { 
-    label: "Invoice Checked By", 
-    csvHeader: "Invoice Checked By", 
-    roles: ["superadmin", "admin"], 
+  invoiceCheckedBy: {
+    label: "Invoice Checked By",
+    csvHeader: "Invoice Checked By",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  tallyCustomerName: { 
-    label: "Tally Customer Name", 
-    csvHeader: "Tally Customer Name", 
-    roles: ["superadmin", "admin"], 
+  tallyCustomerName: {
+    label: "Tally Customer Name",
+    csvHeader: "Tally Customer Name",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  customerCode: { 
-    label: "Customer Code", 
-    csvHeader: "Customer Code", 
-    roles: ["superadmin", "admin"], 
+  customerCode: {
+    label: "Customer Code",
+    csvHeader: "Customer Code",
+    roles: ["superadmin", "admin"],
     type: "text",
-    category: "admin"
+    category: "admin",
   },
-  poEntryCount: { 
-    label: "PO Entry Count", 
-    csvHeader: "PO Entry Count", 
-    roles: ["superadmin", "admin"], 
+  poEntryCount: {
+    label: "PO Entry Count",
+    csvHeader: "PO Entry Count",
+    roles: ["superadmin", "admin"],
     type: "number",
-    category: "admin"
+    category: "admin",
   },
-  updatedGmv: { 
-    label: "Updated GMV", 
-    csvHeader: "Updated GMV", 
-    roles: ["superadmin", "admin"], 
+  updatedGmv: {
+    label: "Updated GMV",
+    csvHeader: "Updated GMV",
+    roles: ["superadmin", "admin"],
     type: "number",
-    category: "admin"
+    category: "admin",
   },
 
   // Warehouse fields
-  statusWarehouse: { 
-    label: "Status (Warehouse)", 
-    csvHeader: "Status (Warehouse)", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  statusWarehouse: {
+    label: "Status (Warehouse)",
+    csvHeader: "Status (Warehouse)",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  dispatchRemarksWarehouse: { 
-    label: "Dispatch Remarks (Warehouse)", 
-    csvHeader: "Dispatch Remarks (Warehouse)", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  dispatchRemarksWarehouse: {
+    label: "Dispatch Remarks (Warehouse)",
+    csvHeader: "Dispatch Remarks (Warehouse)",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  rtsDate: { 
-    label: "RTS Date", 
-    csvHeader: "RTS Date", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  rtsDate: {
+    label: "RTS Date",
+    csvHeader: "RTS Date",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "date",
-    category: "warehouse"
+    category: "warehouse",
   },
-  dispatchDate: { 
-    label: "Dispatch Date", 
-    csvHeader: "Dispatch Date", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  dispatchDate: {
+    label: "Dispatch Date",
+    csvHeader: "Dispatch Date",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "date",
-    category: "warehouse"
+    category: "warehouse",
   },
-  noOfBoxes: { 
-    label: "No Of Boxes", 
-    csvHeader: "No Of Boxes", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  noOfBoxes: {
+    label: "No Of Boxes",
+    csvHeader: "No Of Boxes",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "number",
-    category: "warehouse"
+    category: "warehouse",
   },
-  pickListNo: { 
-    label: "Pick List No", 
-    csvHeader: "Pick List No", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  pickListNo: {
+    label: "Pick List No",
+    csvHeader: "Pick List No",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  workingTypeWarehouse: { 
-    label: "Working Type (Warehouse)", 
-    csvHeader: "Working Type (Warehouse)", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  workingTypeWarehouse: {
+    label: "Working Type (Warehouse)",
+    csvHeader: "Working Type (Warehouse)",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  inventoryRemarksWarehouse: { 
-    label: "Inventory Remarks Warehouse", 
-    csvHeader: "Inventory Remarks Warehouse", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  inventoryRemarksWarehouse: {
+    label: "Inventory Remarks Warehouse",
+    csvHeader: "Inventory Remarks Warehouse",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  b2bWorkingTeamRemarks: { 
-    label: "B2B Working Team Remarks", 
-    csvHeader: "B2B Working Team Remarks", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  b2bWorkingTeamRemarks: {
+    label: "B2B Working Team Remarks",
+    csvHeader: "B2B Working Team Remarks",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  volumetricWeight: { 
-    label: "Volumetric Weight", 
-    csvHeader: "Volumetric Weight", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  volumetricWeight: {
+    label: "Volumetric Weight",
+    csvHeader: "Volumetric Weight",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "number",
-    category: "warehouse"
+    category: "warehouse",
   },
-  firstTransporter: { 
-    label: "First Transporter", 
-    csvHeader: "First Transporter", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  firstTransporter: {
+    label: "First Transporter",
+    csvHeader: "First Transporter",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  firstDocketNo: { 
-    label: "First Docket No", 
-    csvHeader: "First Docket No", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  firstDocketNo: {
+    label: "First Docket No",
+    csvHeader: "First Docket No",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  secondTransporter: { 
-    label: "Second Transporter", 
-    csvHeader: "Second Transporter", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  secondTransporter: {
+    label: "Second Transporter",
+    csvHeader: "Second Transporter",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  secondDocketNo: { 
-    label: "Second Docket No", 
-    csvHeader: "Second Docket No", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  secondDocketNo: {
+    label: "Second Docket No",
+    csvHeader: "Second Docket No",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  thirdTransporter: { 
-    label: "Third Transporter", 
-    csvHeader: "Third Transporter", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  thirdTransporter: {
+    label: "Third Transporter",
+    csvHeader: "Third Transporter",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
-  thirdDocketNo: { 
-    label: "Third Docket No", 
-    csvHeader: "Third Docket No", 
-    roles: ["superadmin", "admin", "warehouse"], 
+  thirdDocketNo: {
+    label: "Third Docket No",
+    csvHeader: "Third Docket No",
+    roles: ["superadmin", "admin", "warehouse"],
     type: "text",
-    category: "warehouse"
+    category: "warehouse",
   },
 
   // Logistics fields
-  statusLogistics: { 
-    label: "Status (Logistics)", 
-    csvHeader: "Status (Logistics)", 
-    roles: ["superadmin", "admin", "logistics"], 
+  statusLogistics: {
+    label: "Status (Logistics)",
+    csvHeader: "Status (Logistics)",
+    roles: ["superadmin", "admin", "logistics"],
     type: "text",
-    category: "logistics"
+    category: "logistics",
   },
-  dispatchRemarksLogistics: { 
-    label: "Dispatch Remarks (Logistics)", 
-    csvHeader: "Dispatch Remarks (Logistics)", 
-    roles: ["superadmin", "admin", "logistics"], 
+  dispatchRemarksLogistics: {
+    label: "Dispatch Remarks (Logistics)",
+    csvHeader: "Dispatch Remarks (Logistics)",
+    roles: ["superadmin", "admin", "logistics"],
     type: "text",
-    category: "logistics"
+    category: "logistics",
   },
-  currentAppointmentDate: { 
-    label: "Current Appointment Date", 
-    csvHeader: "Current Appointment Date", 
-    roles: ["superadmin", "admin", "logistics"], 
+  currentAppointmentDate: {
+    label: "Current Appointment Date",
+    csvHeader: "Current Appointment Date",
+    roles: ["superadmin", "admin", "logistics"],
     type: "date",
-    category: "logistics"
+    category: "logistics",
   },
-  deliveryDate: { 
-    label: "Delivery Date", 
-    csvHeader: "Delivery Date", 
-    roles: ["superadmin", "admin", "logistics"], 
+  deliveryDate: {
+    label: "Delivery Date",
+    csvHeader: "Delivery Date",
+    roles: ["superadmin", "admin", "logistics"],
     type: "date",
-    category: "logistics"
+    category: "logistics",
   },
-  rescheduleLag: { 
-    label: "Reschedule Lag (Remarks)", 
-    csvHeader: "Reschedule Lag (Remarks)", 
-    roles: ["superadmin", "admin", "logistics"], 
+  rescheduleLag: {
+    label: "Reschedule Lag (Remarks)",
+    csvHeader: "Reschedule Lag (Remarks)",
+    roles: ["superadmin", "admin", "logistics"],
     type: "number",
-    category: "logistics"
+    category: "logistics",
   },
-  finalRemarks: { 
-    label: "Final Remarks", 
-    csvHeader: "Final Remarks", 
-    roles: ["superadmin", "admin", "logistics"], 
+  finalRemarks: {
+    label: "Final Remarks",
+    csvHeader: "Final Remarks",
+    roles: ["superadmin", "admin", "logistics"],
     type: "text",
-    category: "logistics"
+    category: "logistics",
   },
-  physicalWeight: { 
-    label: "Physical Weight", 
-    csvHeader: "Physical Weight", 
-    roles: ["superadmin", "admin", "logistics"], 
+  physicalWeight: {
+    label: "Physical Weight",
+    csvHeader: "Physical Weight",
+    roles: ["superadmin", "admin", "logistics"],
     type: "number",
-    category: "logistics"
+    category: "logistics",
   },
 }
 
@@ -434,10 +444,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
   const getAvailableFields = () => {
     if (!user?.role) return []
-    
-    return Object.entries(fieldDefinitions).filter(([_, field]) => 
-      field.roles.includes(user.role)
-    )
+
+    return Object.entries(fieldDefinitions).filter(([_, field]) => field.roles.includes(user.role))
   }
 
   const getFieldsByCategory = (category) => {
@@ -445,11 +453,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
   }
 
   const handleFieldToggle = (fieldName) => {
-    setSelectedFields(prev => 
-      prev.includes(fieldName) 
-        ? prev.filter(f => f !== fieldName)
-        : [...prev, fieldName]
-    )
+    setSelectedFields((prev) => (prev.includes(fieldName) ? prev.filter((f) => f !== fieldName) : [...prev, fieldName]))
   }
 
   const downloadTemplate = () => {
@@ -458,13 +462,16 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       return
     }
 
-    const headers = ["UID", "PO Number", ...selectedFields.map(field => fieldDefinitions[field].csvHeader)]
-    
-    // Sample data rows
-    const sampleData = [
-      `135290,3100495853,${selectedFields.map(() => "").join(",")}`,
-    //   `135291,3100495854,${selectedFields.map(() => "").join(",")}`,
-    ]
+    // Sort selected fields based on their original order in fieldDefinitions
+    const fieldDefinitionKeys = Object.keys(fieldDefinitions)
+    const sortedSelectedFields = selectedFields.sort((a, b) => {
+      return fieldDefinitionKeys.indexOf(a) - fieldDefinitionKeys.indexOf(b)
+    })
+
+    const headers = ["UID", "PO Number", ...sortedSelectedFields.map((field) => fieldDefinitions[field].csvHeader)]
+
+    // Sample data rows - also use sorted order for consistency
+    const sampleData = [`135290,3100495853,${sortedSelectedFields.map(() => "").join(",")}`]
 
     const csvContent = [headers.join(","), ...sampleData].join("\n")
     const blob = new Blob([csvContent], { type: "text/csv" })
@@ -512,8 +519,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
   }
 
   const parseCSV = (csvText) => {
-    const lines = csvText.split("\n").filter(line => line.trim())
-    const headers = lines[0].split(",").map(h => h.trim().replace(/"/g, ""))
+    const lines = csvText.split("\n").filter((line) => line.trim())
+    const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
     // Validate required headers
     if (!headers.includes("UID") || !headers.includes("PO Number")) {
@@ -521,8 +528,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     }
 
     // Validate selected field headers
-    const expectedHeaders = selectedFields.map(field => fieldDefinitions[field].csvHeader)
-    const missingHeaders = expectedHeaders.filter(header => !headers.includes(header))
+    const expectedHeaders = selectedFields.map((field) => fieldDefinitions[field].csvHeader)
+    const missingHeaders = expectedHeaders.filter((header) => !headers.includes(header))
     if (missingHeaders.length > 0) {
       throw new Error(`Missing required columns: ${missingHeaders.join(", ")}`)
     }
@@ -530,8 +537,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     const updates = []
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(",").map(v => v.trim().replace(/"/g, ""))
-      
+      const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""))
+
       const update = {
         uid: Number.parseInt(values[headers.indexOf("UID")]) || null,
         poNumber: values[headers.indexOf("PO Number")] || "",
@@ -540,13 +547,17 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       }
 
       // Parse selected fields
-      selectedFields.forEach(fieldName => {
+      selectedFields.forEach((fieldName) => {
         const fieldDef = fieldDefinitions[fieldName]
         const headerIndex = headers.indexOf(fieldDef.csvHeader)
         const value = values[headerIndex] || ""
 
         if (fieldDef.type === "number") {
-          update[fieldName] = value ? (fieldName.includes("Weight") ? Number.parseFloat(value) : Number.parseInt(value)) : null
+          update[fieldName] = value
+            ? fieldName.includes("Weight")
+              ? Number.parseFloat(value)
+              : Number.parseInt(value)
+            : null
         } else {
           update[fieldName] = value
         }
@@ -563,7 +574,6 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       }
 
       updates.push(update)
-    //   console.log(updates);
     }
 
     return updates
@@ -590,59 +600,50 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
   const handleUploadUpdates = async () => {
     try {
-      let validUpdates = parsedUpdates.filter(update => update.status === "valid")
+      const validUpdates = parsedUpdates.filter((update) => update.status === "valid")
       if (validUpdates.length === 0) {
         setError("No valid updates to upload")
         return
       }
 
       // Prepare data to send in bulk to backend
-      let data = [];
+      let data = []
       validUpdates.forEach((item) => {
-        // validUpdates = {...validUpdates[0]};
-        // console.log("valid updates: ", validUpdates)
-        let {errors, status, ...extractedFields} = item;
-        // console.log("extractedFields: ", extractedFields);
+        const { errors, status, ...extractedFields } = item
         // final only field with data inside them
-        let cleanedData = {};
+        const cleanedData = {}
         for (const [key, value] of Object.entries(extractedFields)) {
-          if (
-            value !== null &&
-            value !== undefined &&
-            value !== '' &&
-            !(typeof value === 'number' && isNaN(value))
-          ) {
-            cleanedData[key] = value;
+          if (value !== null && value !== undefined && value !== "" && !(typeof value === "number" && isNaN(value))) {
+            cleanedData[key] = value
           }
         }
-        // console.log("newExtractedFields: ", cleanedData);
-        data = [...data, cleanedData];
+        data = [...data, cleanedData]
       })
-      
+
       setIsUploading(true)
       setUploadProgress(0)
-  
+
       // Simulate upload progress
       for (let i = 0; i <= 100; i += 10) {
         setUploadProgress(i)
-        const res = await updateBulkShipment(data);
-        console.log(res.data);
+        const res = await updateBulkShipment(data)
+        console.log(res.data)
       }
-  
+
       onSave(validUpdates)
       setSuccess(`Successfully updated ${validUpdates.length} shipments`)
       setIsUploading(false)
       setUploadProgress(0)
-  
+
       // Reset after success
       setTimeout(() => {
         resetForm()
         onClose()
       }, 3000)
     } catch (error) {
-      console.error("Eroor: ", error);
+      console.error("Eroor: ", error)
       setError("Error: ", error.response.msg || error.message)
-    } 
+    }
   }
 
   const resetForm = () => {
@@ -657,15 +658,19 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     }
   }
 
-  const validUpdatesCount = parsedUpdates.filter(update => update.status === "valid").length
-  const errorUpdatesCount = parsedUpdates.filter(update => update.status === "error").length
+  const validUpdatesCount = parsedUpdates.filter((update) => update.status === "valid").length
+  const errorUpdatesCount = parsedUpdates.filter((update) => update.status === "error").length
 
   const getCategoryIcon = (category) => {
     switch (category) {
-      case "admin": return Shield
-      case "warehouse": return Warehouse
-      case "logistics": return Truck
-      default: return Database
+      case "admin":
+        return Shield
+      case "warehouse":
+        return Warehouse
+      case "logistics":
+        return Truck
+      default:
+        return Database
     }
   }
 
@@ -793,7 +798,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                         Selected Fields ({selectedFields.length})
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        {selectedFields.map(fieldName => (
+                        {selectedFields.map((fieldName) => (
                           <Badge key={fieldName} variant="secondary" className="bg-blue-100 text-blue-800">
                             {fieldDefinitions[fieldName].label}
                           </Badge>
@@ -866,13 +871,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                     </div>
                   </div>
 
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
+                  <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
 
                   {file && (
                     <div className="mt-6 flex justify-center">
@@ -938,10 +937,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                           <TableHead>Status</TableHead>
                           <TableHead>UID</TableHead>
                           <TableHead>PO Number</TableHead>
-                          {selectedFields.map(fieldName => (
-                            <TableHead key={fieldName}>
-                              {fieldDefinitions[fieldName].label}
-                            </TableHead>
+                          {selectedFields.map((fieldName) => (
+                            <TableHead key={fieldName}>{fieldDefinitions[fieldName].label}</TableHead>
                           ))}
                           <TableHead>Errors</TableHead>
                         </TableRow>
@@ -965,29 +962,24 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                             </TableCell>
                             <TableCell className="font-mono">{update.uid}</TableCell>
                             <TableCell className="font-mono">{update.poNumber}</TableCell>
-                            {selectedFields.map(fieldName => (
-                              <TableCell key={fieldName}>
-                                {update[fieldName] || "-"}
-                              </TableCell>
+                            {selectedFields.map((fieldName) => (
+                              <TableCell key={fieldName}>{update[fieldName] || "-"}</TableCell>
                             ))}
                             <TableCell>
                               {update.errors && update.errors.length > 0 && (
-                                <div className="text-xs text-red-600 dark:text-red-400">
-                                  {update.errors.join(", ")}
-                                </div>
+                                <div className="text-xs text-red-600 dark:text-red-400">{update.errors.join(", ")}</div>
                               )}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                    {/* <ScrollBar orientation="horizontal" /> */}
                   </ScrollArea>
                 </CardContent>
               </Card>
             )}
           </div>
-        <ScrollBar orientation="horizontal" />
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
         <div className="flex justify-end space-x-4 pt-4 border-t">
