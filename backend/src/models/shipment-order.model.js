@@ -70,7 +70,10 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
   rescheduleLag: { type: DataTypes.INTEGER },
   finalRemarks: { type: DataTypes.TEXT },
   updatedGmv: { type: DataTypes.FLOAT },
-  physicalWeight: { type: DataTypes.FLOAT }
+  physicalWeight: { type: DataTypes.FLOAT },
+  // apointment dates
+  allAppointmentDate: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
+  appointmentRemarks: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
 }, {
   timestamps: true,
   tableName: 'shipment_orders'

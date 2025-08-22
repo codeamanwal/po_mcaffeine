@@ -11,30 +11,53 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarIcon, AlertCircle, CheckCircle, Save, X, Shield, Warehouse, Truck, Lock, Server } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import {
+  CalendarIcon,
+  AlertCircle,
+  CheckCircle,
+  Save,
+  X,
+  Shield,
+  Warehouse,
+  Truck,
+  Server,
+  Plus,
+  Lock,
+  Clock,
+} from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/store/user-store"
 import { shipmentStatusDataType } from "@/constants/data_type"
 import { updateShipment } from "@/lib/order"
-
 import { toast } from "sonner"
 
-// Extended shipment data type with new appointment fields
+// Extended shipment data type with dynamic appointment fields
 const extendedShipmentStatusDataType = [
   ...shipmentStatusDataType,
-  { fieldName: "firstAppointmentDate", label: "First Appointment Date", id: "firstAppointmentDate", type: "date" },
-  { fieldName: "secondAppointmentDate", label: "Second Appointment Date", id: "secondAppointmentDate", type: "date" },
-  { fieldName: "thirdAppointmentDate", label: "Third Appointment Date", id: "thirdAppointmentDate", type: "date" },
-  { fieldName: "remarkAp1", label: "First Appointment Remark", id: "remarkAp1", type: "text" },
-  { fieldName: "remarkAp2", label: "Second Appointment Remark", id: "remarkAp2", type: "text" },
-  { fieldName: "remarkAp3", label: "Third Appointment Remark", id: "remarkAp3", type: "text" },
+  {
+    fieldName: "allAppointmentDate",
+    label: "Previous Appointments",
+    id: "allAppointmentDate",
+    type: "appointment_display",
+  },
+  {
+    fieldName: "newAppointmentDate",
+    label: "Add New Appointment Date",
+    id: "newAppointmentDate",
+    type: "new_appointment_date",
+  },
+  {
+    fieldName: "newAppointmentRemark",
+    label: "New Appointment Remark",
+    id: "newAppointmentRemark",
+    type: "new_appointment_remark",
+  },
 ]
 
 // Role-based field permissions
 const adminFields = [
-  // "uid",
-  // "entryDate",
   "poDate",
   "facility",
   "channel",
@@ -94,12 +117,9 @@ const logisticsFields = [
   "statusLogistics",
   "dispatchRemarksLogistics",
   "currentAppointmentDate", // Read-only field
-  "firstAppointmentDate",
-  "secondAppointmentDate",
-  "thirdAppointmentDate",
-  "remarkAp1",
-  "remarkAp2",
-  "remarkAp3",
+  "allAppointmentDate",
+  "newAppointmentDate",
+  "newAppointmentRemark",
   "deliveryDate",
   "rescheduleLag",
   "finalRemarks",
@@ -108,7 +128,10 @@ const logisticsFields = [
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
   const [formData, setFormData] = useState({})
-  const [originalData, setOriginalData] = useState({}) // Store original data to check if appointment dates were already filled
+  const [originalData, setOriginalData] = useState({})
+  const [appointments, setAppointments] = useState([])
+  const [newAppointmentDate, setNewAppointmentDate] = useState(null)
+  const [newAppointmentRemark, setNewAppointmentRemark] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -119,18 +142,21 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     if (shipmentData) {
       // Convert date strings to Date objects for date fields
       const processedData = { ...shipmentData }
+
+      // Process regular date fields
       extendedShipmentStatusDataType.forEach((field) => {
-        if (field.type === "date" && processedData[field.fieldName]) {
+        if (field.type === "date" && field.fieldName in processedData) {
           const dateValue = processedData[field.fieldName]
-          if (dateValue && dateValue !== "1900/01/00" && dateValue !== "") {
+          // Check if dateValue exists and is not empty/invalid
+          if (dateValue && typeof dateValue === "string" && dateValue !== "1900/01/00" && dateValue.trim() !== "") {
             try {
-              // Handle different date formats
               let parsedDate
               if (dateValue.includes("/")) {
                 const [year, month, day] = dateValue.split("/")
                 parsedDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
               } else if (dateValue.includes("-")) {
-                parsedDate = new Date(dateValue)
+                const [day, month, year] = dateValue.split("-")
+                parsedDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
               } else {
                 parsedDate = new Date(dateValue)
               }
@@ -148,8 +174,52 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           }
         }
       })
+
+      // Process appointment arrays from the database structure
+      const appointmentDates = processedData.allAppointmentDate || []
+      const appointmentRemarks = processedData.appointmentRemarks || []
+
+      console.log("Raw appointment data:", { appointmentDates, appointmentRemarks })
+
+      // Convert appointment dates to Date objects and pair with remarks
+      const processedAppointments = appointmentDates
+        .map((dateStr, index) => {
+          let parsedDate = null
+          if (dateStr && typeof dateStr === "string" && dateStr !== "1900/01/00" && dateStr.trim() !== "") {
+            try {
+              // Handle DD-MM-YYYY format from database
+              if (dateStr.includes("-")) {
+                const [day, month, year] = dateStr.split("-")
+                parsedDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
+              } else if (dateStr.includes("/")) {
+                const [year, month, day] = dateStr.split("/")
+                parsedDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
+              } else {
+                parsedDate = new Date(dateStr)
+              }
+
+              if (isNaN(parsedDate.getTime())) {
+                parsedDate = null
+              }
+            } catch {
+              parsedDate = null
+            }
+          }
+
+          return {
+            id: index,
+            date: parsedDate,
+            remark: appointmentRemarks[index] || `Appointment ${index + 1}`,
+            isFirst: index === 0,
+          }
+        })
+        .filter((apt) => apt.date !== null)
+
+      console.log("Processed appointments:", processedAppointments)
+
+      setAppointments(processedAppointments)
       setFormData(processedData)
-      setOriginalData(processedData) // Store original data
+      setOriginalData(processedData)
     }
   }, [shipmentData])
 
@@ -171,32 +241,94 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     }))
   }
 
+  const getCurrentAppointmentDate = () => {
+    const validAppointments = appointments.filter((apt) => apt.date !== null)
+    if (validAppointments.length === 0) return null
+
+    // Return the latest appointment date
+    return validAppointments.reduce((latest, current) => {
+      if (!latest.date) return current
+      return current.date > latest.date ? current : latest
+    })
+  }
+
   const handleSave = async () => {
     setIsLoading(true)
     setError("")
     setSuccess("")
 
     try {
+      // Validate new appointment if partially filled
+      if (newAppointmentDate && !newAppointmentRemark.trim()) {
+        setError("Remark is required when adding a new appointment date")
+        setIsLoading(false)
+        return
+      }
+
+      if (!newAppointmentDate && newAppointmentRemark.trim()) {
+        setError("Appointment date is required when adding a remark")
+        setIsLoading(false)
+        return
+      }
+
       // Convert Date objects back to strings for saving
       const dataToSave = { ...formData }
+
+      // Process regular date fields
       extendedShipmentStatusDataType.forEach((field) => {
         if (field.type === "date" && dataToSave[field.fieldName] instanceof Date) {
           dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "dd-MM-yyyy")
         }
       })
 
-      console.log("New Shipment Data:", dataToSave)
+      // Handle appointments - always preserve existing ones
+      let finalAppointmentDates = []
+      let finalAppointmentRemarks = []
+
+      // First, add all existing appointments
+      if (appointments.length > 0) {
+        finalAppointmentDates = appointments.map((apt) => format(apt.date, "dd-MM-yyyy"))
+        finalAppointmentRemarks = appointments.map((apt) => apt.remark)
+      }
+
+      // Then, add new appointment if provided (push to existing arrays)
+      if (newAppointmentDate && newAppointmentRemark.trim()) {
+        finalAppointmentDates.push(format(newAppointmentDate, "dd-MM-yyyy"))
+        finalAppointmentRemarks.push(newAppointmentRemark.trim())
+
+        // Update current appointment date to the new one (latest)
+        dataToSave.currentAppointmentDate = format(newAppointmentDate, "dd-MM-yyyy")
+      } else if (appointments.length > 0) {
+        // If no new appointment, set current appointment date to the latest existing one
+        const currentAppointment = getCurrentAppointmentDate()
+        if (currentAppointment) {
+          dataToSave.currentAppointmentDate = format(currentAppointment.date, "dd-MM-yyyy")
+        }
+      }
+
+      // Always set the appointment arrays (even if empty)
+      dataToSave.allAppointmentDate = finalAppointmentDates
+      dataToSave.appointmentRemarks = finalAppointmentRemarks
+
+      console.log("Saving appointment data:", {
+        allAppointmentDate: finalAppointmentDates,
+        appointmentRemarks: finalAppointmentRemarks,
+        currentAppointmentDate: dataToSave.currentAppointmentDate,
+      })
 
       const res = await updateShipment(dataToSave)
       setSuccess("Shipment updated successfully!")
       console.log("Shipment updated successfully:", res.data)
       onSave()
-      setSuccess("Shipment updated successfully!")
       toast.success("Shipment updated successfully!")
+
+      // Reset new appointment fields after successful save
+      setNewAppointmentDate(null)
+      setNewAppointmentRemark("")
     } catch (err) {
       console.error("Error: ", err)
-      setError("Failed to update shipment", err.message || err)
-      toast.error("Failed to update shipment", err.message || err)
+      setError("Failed to update shipment: " + (err.message || err))
+      toast.error("Failed to update shipment: " + (err.message || err))
     }
 
     setIsLoading(false)
@@ -207,80 +339,114 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     return fieldName === "currentAppointmentDate"
   }
 
-  // Check if field is a sequential appointment date field
-  const isSequentialAppointmentField = (fieldName) => {
-    return ["firstAppointmentDate", "secondAppointmentDate", "thirdAppointmentDate"].includes(fieldName)
-  }
-
-  // Get the next available appointment date field that can be edited
-  const getNextAvailableAppointmentField = () => {
-    const hasFirstAppointment = formData.firstAppointmentDate && formData.firstAppointmentDate !== ""
-    const hasSecondAppointment = formData.secondAppointmentDate && formData.secondAppointmentDate !== ""
-    const hasThirdAppointment = formData.thirdAppointmentDate && formData.thirdAppointmentDate !== ""
-
-    if (!hasFirstAppointment) {
-      return "firstAppointmentDate"
-    } else if (!hasSecondAppointment) {
-      return "secondAppointmentDate"
-    } else if (!hasThirdAppointment) {
-      return "thirdAppointmentDate"
-    }
-    return null // All appointments are filled
-  }
-
-  // Check if appointment date field should be editable
-  const isAppointmentDateEditable = (fieldName) => {
-    if (!isSequentialAppointmentField(fieldName)) return true // Not an appointment field, so editable
-    const nextAvailable = getNextAvailableAppointmentField()
-    return nextAvailable === fieldName
-  }
-
-  // Check if appointment date is filled and locked
-  const isAppointmentDateFilled = (fieldName) => {
-    if (!isSequentialAppointmentField(fieldName)) return false // Not an appointment field
-    return formData[fieldName] && formData[fieldName] !== ""
-  }
-
-  // Check if remark field should be enabled (only when corresponding appointment date has data)
-  const isRemarkFieldEnabled = (remarkField) => {
-    const appointmentFieldMap = {
-      remarkAp1: "firstAppointmentDate",
-      remarkAp2: "secondAppointmentDate",
-      remarkAp3: "thirdAppointmentDate",
-    }
-
-    const correspondingAppointmentField = appointmentFieldMap[remarkField]
-    return formData[correspondingAppointmentField] && formData[correspondingAppointmentField] !== ""
-  }
-
   const renderField = (field) => {
     const value = formData[field.fieldName]
-    const isSequentialAppointment = isSequentialAppointmentField(field.fieldName)
-    const isRemarkField = ["remarkAp1", "remarkAp2", "remarkAp3"].includes(field.fieldName)
     const isBackendControlled = isBackendControlledField(field.fieldName)
-    const isRemarkDisabled = isRemarkField && !isRemarkFieldEnabled(field.fieldName)
 
-    // For sequential appointment dates: check if it's editable based on sequence
-    const isAppointmentEditable = isSequentialAppointment ? isAppointmentDateEditable(field.fieldName) : true
-    const isAppointmentFilled = isSequentialAppointment ? isAppointmentDateFilled(field.fieldName) : false
-    const isAppointmentDisabled = isSequentialAppointment && !isAppointmentEditable && !isAppointmentFilled
+    // Handle appointment display
+    if (field.type === "appointment_display") {
+      return (
+        <div className="space-y-2 md:col-span-4">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            {field.label} ({appointments.length} total)
+          </Label>
+          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900 max-h-40 overflow-y-auto">
+            {appointments.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">No appointments scheduled yet</p>
+            ) : (
+              <div className="space-y-3">
+                {appointments.map((appointment, index) => (
+                  <div
+                    key={appointment.id}
+                    className="flex items-start justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Lock className="h-4 w-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{format(appointment.date, "dd MMM yyyy")}</span>
+                          <Badge variant={appointment.isFirst ? "default" : "secondary"} className="text-xs">
+                            {appointment.isFirst ? "First" : `#${index + 1}`}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">{format(appointment.date, "EEEE, dd MMMM yyyy")}</p>
+                      </div>
+                    </div>
+                    <div className="text-right max-w-xs">
+                      <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{appointment.remark}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Added {appointment.isFirst ? "initially" : `as appointment ${index + 1}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    // Handle new appointment date
+    if (field.type === "new_appointment_date") {
+      return (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Plus className="h-4 w-4 text-green-600" />
+            {field.label}
+          </Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full h-10 justify-start text-left font-normal",
+                  !newAppointmentDate && "text-muted-foreground",
+                  "border-green-200 hover:border-green-300",
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {newAppointmentDate ? format(newAppointmentDate, "dd MMM yyyy") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar mode="single" selected={newAppointmentDate} onSelect={setNewAppointmentDate} initialFocus />
+            </PopoverContent>
+          </Popover>
+          <p className="text-xs text-green-600">Add one new appointment at a time</p>
+        </div>
+      )
+    }
+
+    // Handle new appointment remark
+    if (field.type === "new_appointment_remark") {
+      return (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            {field.label}
+            <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            value={newAppointmentRemark}
+            onChange={(e) => setNewAppointmentRemark(e.target.value)}
+            placeholder="Enter remark for new appointment (required)"
+            className="h-10"
+          />
+          <p className="text-xs text-gray-500">Remark is mandatory for new appointments</p>
+        </div>
+      )
+    }
 
     switch (field.type) {
       case "date":
-        // For regular date fields (not sequential appointments), they should be fully editable
-        const isRegularDateField = !isSequentialAppointment && !isBackendControlled
-        const shouldDisableDate =
-          isBackendControlled || (isSequentialAppointment && (isAppointmentFilled || isAppointmentDisabled))
+        const shouldDisableDate = isBackendControlled
 
         return (
           <div className="space-y-2">
             <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
               {field.label}
-              {isAppointmentFilled && <Lock className="h-3 w-3 text-gray-500" />}
               {isBackendControlled && <Server className="h-3 w-3 text-blue-500" />}
-              {/* {isAppointmentDisabled && (
-                <span className="text-xs text-gray-500">(Waiting for previous appointment)</span>
-              )} */}
             </Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -292,16 +458,10 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                     !value && "text-muted-foreground",
                     shouldDisableDate && "opacity-60 cursor-not-allowed bg-gray-50",
                     isBackendControlled && "border-blue-200 bg-blue-50",
-                    isAppointmentDisabled && "border-gray-200 bg-gray-50",
-                    isSequentialAppointment &&
-                      isAppointmentEditable &&
-                      !isAppointmentFilled &&
-                      "border-green-200 bg-green-50",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {value ? format(value, "PPP") : "Pick a date"}
-                  {isAppointmentFilled && <Lock className="ml-auto h-3 w-3" />}
                   {isBackendControlled && <Server className="ml-auto h-3 w-3 text-blue-500" />}
                 </Button>
               </PopoverTrigger>
@@ -316,23 +476,11 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 </PopoverContent>
               )}
             </Popover>
-            {/* {isAppointmentFilled && (
-              <p className="text-xs text-gray-500 flex items-center gap-1">
-                <Lock className="h-3 w-3" />
-                This appointment date is locked and cannot be changed
-              </p>
-            )} */}
-            {/* {isBackendControlled && (
+            {isBackendControlled && (
               <p className="text-xs text-blue-600 flex items-center gap-1">
                 <Server className="h-3 w-3" />
                 This field is automatically updated by the system
               </p>
-            )} */}
-            {/* {isAppointmentDisabled && (
-              <p className="text-xs text-gray-500">Complete the previous appointment date first to enable this field</p>
-            )} */}
-            {isSequentialAppointment && isAppointmentEditable && !isAppointmentFilled && (
-              <p className="text-xs text-green-600">This is the next available appointment date to fill</p>
             )}
           </div>
         )
@@ -378,24 +526,16 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       default:
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
+            <Label htmlFor={field.id} className="text-sm font-medium">
               {field.label}
-              {/* {isRemarkDisabled && <span className="text-xs text-gray-500">(Requires appointment date)</span>} */}
             </Label>
             <Input
               id={field.id}
               type="text"
               value={value || ""}
-              disabled={isRemarkDisabled}
               onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
-              className={cn("h-10", isRemarkDisabled && "opacity-60 cursor-not-allowed bg-gray-50")}
-              placeholder={isRemarkDisabled ? "Fill appointment date first" : ""}
+              className="h-10"
             />
-            {/* {isRemarkDisabled && (
-              <p className="text-xs text-gray-500">
-                corresponding appointment date is not filled
-              </p>
-            )} */}
           </div>
         )
     }
@@ -488,7 +628,12 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 <ScrollArea className="max-h-[60vh] pr-4">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-h-[60vh]">
                     {getFieldsByRole(tab?.value).map((field) => (
-                      <div key={field?.fieldName}>{renderField(field)}</div>
+                      <div
+                        key={field?.fieldName}
+                        className={field.type === "appointment_display" ? "md:col-span-4" : ""}
+                      >
+                        {renderField(field)}
+                      </div>
                     ))}
                   </div>
                   <ScrollBar orientation="vertical" />

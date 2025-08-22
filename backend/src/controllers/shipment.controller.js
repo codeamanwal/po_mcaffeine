@@ -329,9 +329,6 @@ async function getAllData (req, res) {
 async function updateShipment(req, res) {
   try {
     let isLog = false;
-    let changedField = "";
-    let new_remark = "";
-    let change = "";
     let logs = [];
 
     let { uid, ...updateData } = req.body;
@@ -340,24 +337,20 @@ async function updateShipment(req, res) {
     if (!shipment) {
       return res.status(404).json({ error: 'Shipment not found' });
     }
-    if(shipment?.dataValues?.firstAppointmentDate !== updateData.firstAppointmentDate){
-      changedField = "First Appointment date"
-      updateData.currentAppointmentDate = updateData.firstAppointmentDate
-      new_remark = updateData.remarkAp1
-      change = `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`
+    // check log for 
+    if(shipment?.dataValues?.allAppointmentDate?.length !== updateData.allAppointmentDate.length){
+      const len = updateData.allAppointmentDate.length;
+      updateData.currentAppointmentDate = updateData.allAppointmentDate[len-1];
+      isLog = true;
+      const new_log = {
+        shipmentId: shipment.uid,
+        createdBy: req.user,
+        fieldName: "Appointment Date",
+        change: `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`,
+        remark:  updateData.appointmentRemarks[len-1] || "No remark provided",
+      }
+      logs = [...logs, new_log]
     } 
-    else if (shipment?.dataValues?.secondAppointmentDate !== updateData.secondAppointmentDate){
-      changedField = "Second Appointment date"
-      updateData.currentAppointmentDate = updateData.secondAppointmentDate
-      new_remark = updateData.remarkAp2
-      change = `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`
-    }
-    else if(shipment?.dataValues?.thirdAppointmentDate !== updateData.thirdAppointmentDate){
-      changedField = "Third Appointment date"
-      updateData.currentAppointmentDate = updateData.thirdAppointmentDate
-      new_remark = updateData.remarkAp3
-      change = `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`
-    }
     if(shipment.dataValues?.poNumber != updateData?.poNumber){
       isLog = true;
       const new_log = {
@@ -366,18 +359,6 @@ async function updateShipment(req, res) {
         fieldName: "Po Number",
         change: `Po number changed from ${shipment.dataValues?.poNumber} to ${updateData?.poNumber}`,
         remark: "No remark provided!",
-      }
-      logs = [...logs, new_log]
-    }
-
-    if(shipment?.dataValues?.currentAppointmentDate !== updateData.currentAppointmentDate){
-      isLog = true;
-      const new_log = {
-        shipmentId: shipment.uid,
-        createdBy: req.user,
-        fieldName: changedField,
-        change: change,
-        remark: new_remark || "No new remark provided!",
       }
       logs = [...logs, new_log]
     }
