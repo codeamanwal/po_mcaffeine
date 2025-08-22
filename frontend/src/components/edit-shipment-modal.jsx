@@ -140,6 +140,8 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   useEffect(() => {
     if (shipmentData) {
+      setSuccess("");
+      setError("");
       // Convert date strings to Date objects for date fields
       const processedData = { ...shipmentData }
 

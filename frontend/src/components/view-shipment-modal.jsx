@@ -138,7 +138,17 @@ export default function ShipmentViewModal({
     }
     
     if (key.includes('Date') || key.includes('date')) {
-      return new Date(value).toLocaleDateString()
+      console.log(key, ": ", value)
+      // format as value is in "dd-mm-yyyy" format
+      const [day, month, year] = value.split('-');
+      const dateObj = new Date(`${year}-${month}-${day}`); // ISO format
+
+      // Format it nicely using toLocaleDateString
+      return dateObj.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
     }
     
     if (key.includes('Link') || key.includes('link')) {
@@ -185,7 +195,7 @@ export default function ShipmentViewModal({
       rtsDate: 'RTS Date',
       dispatchDate: 'Dispatch Date',
       currentAppointmentDate: 'Current Appointment Date',
-      firstAppointmentDateCOPT: 'First Appointment Date (COPT)',
+      // firstAppointmentDateCOPT: 'First Appointment Date (COPT)',
       noOfBoxes: 'Number of Boxes',
       orderNo1: 'Order No 1',
       orderNo2: 'Order No 2',
