@@ -478,12 +478,6 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 </PopoverContent>
               )}
             </Popover>
-            {isBackendControlled && (
-              <p className="text-xs text-blue-600 flex items-center gap-1">
-                <Server className="h-3 w-3" />
-                This field is automatically updated by the system
-              </p>
-            )}
           </div>
         )
 
@@ -612,7 +606,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6">
               {availableTabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -628,11 +622,11 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
             {availableTabs.map((tab) => (
               <TabsContent key={tab?.value} value={tab?.value}>
                 <ScrollArea className="max-h-[60vh] pr-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-h-[60vh]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-h-[60vh]">
                     {getFieldsByRole(tab?.value).map((field) => (
                       <div
                         key={field?.fieldName}
-                        className={field.type === "appointment_display" ? "md:col-span-4" : ""}
+                        className={field.type === "appointment_display" ? "col-span-1 md:col-span-2 lg:col-span-4" : ""}
                       >
                         {renderField(field)}
                       </div>
