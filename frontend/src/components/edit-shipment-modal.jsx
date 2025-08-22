@@ -58,16 +58,16 @@ const extendedShipmentStatusDataType = [
 
 // Role-based field permissions
 const adminFields = [
-  "poDate",
+  // "poDate",
   "facility",
   "channel",
   "location",
   "poNumber",
-  "brandName",
+  // "brandName",
   "remarksPlanning",
   "specialRemarksCOPT",
-  "newShipmentReference",
-  "statusActive",
+  // "newShipmentReference",
+  // "statusActive",
   "statusPlanning",
   "channelInwardingRemarks",
   "dispatchDateTentative",
@@ -78,19 +78,19 @@ const adminFields = [
   "orderNo3",
   "poNumberInwardCWH",
   "channelType",
-  "appointmentLetter",
+  // "appointmentLetter",
   "labelsLink",
-  "invoiceDate",
-  "invoiceLink",
-  "cnLink",
-  "ewayLink",
+  // "invoiceDate",
+  // "invoiceLink",
+  // "cnLink",
+  // "ewayLink",
   "invoiceValue",
-  "remarksAccountsTeam",
-  "invoiceChallanNumber",
-  "invoiceCheckedBy",
-  "tallyCustomerName",
-  "customerCode",
-  "poEntryCount",
+  // "remarksAccountsTeam",
+  // "invoiceChallanNumber",
+  // "invoiceCheckedBy",
+  // "tallyCustomerName",
+  // "customerCode",
+  // "poEntryCount",
 ]
 
 const warehouseFields = [
@@ -100,7 +100,7 @@ const warehouseFields = [
   "dispatchDate",
   "noOfBoxes",
   "pickListNo",
-  "workingTypeWarehouse",
+  // "workingTypeWarehouse",
   "inventoryRemarksWarehouse",
   "b2bWorkingTeamRemarks",
   "actualWeight",
@@ -124,6 +124,7 @@ const logisticsFields = [
   "rescheduleLag",
   "finalRemarks",
   "physicalWeight",
+  "tentativeDeliveryDate"
 ]
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
@@ -338,7 +339,9 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   // Check if field is backend-controlled (like currentAppointmentDate)
   const isBackendControlledField = (fieldName) => {
-    return fieldName === "currentAppointmentDate"
+    if (fieldName === "currentAppointmentDate") return true;
+    if (fieldName === "deliveryDate" && originalData["statusLogistics"] !== "Delivered") return true;
+    return false;
   }
 
   const renderField = (field) => {
@@ -440,15 +443,21 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       )
     }
 
+    // Handle deliveryDate
+    // if(field.fieldName === "deliveryDate"){
+
+    // }
+
     switch (field.type) {
       case "date":
+        // const isDeliveryDate = field.fieldName === "deliveryDate" && formData["statusLogistics"] === "" ? true : false;
         const shouldDisableDate = isBackendControlled
 
         return (
           <div className="space-y-2">
             <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
               {field.label}
-              {isBackendControlled && <Server className="h-3 w-3 text-blue-500" />}
+              {/* {isBackendControlled && <Server className="h-3 w-3 text-blue-500" />} */}
             </Label>
             <Popover>
               <PopoverTrigger asChild>
