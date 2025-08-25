@@ -1178,6 +1178,7 @@ export default function DashboardPage({ onNavigate }) {
           onClose={() => {
             setSkuEditModal(false)
           }}
+          shipment = {selectedShipment}
           shipmentId={selectedShipment.uid}
           onSave={() => {
             onSavingUpdate()
