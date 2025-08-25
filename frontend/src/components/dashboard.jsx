@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Database, Edit, Eye, Package, Trash, MoreHorizontal, Search } from "lucide-react"
+import { Database, Edit, Eye, Package, Trash, MoreHorizontal, Search, Download, Calendar, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import NavigationHeader from "@/components/header"
@@ -18,6 +18,9 @@ import { useRouter } from "next/navigation"
 import BulkUpdateShipmentModal from "@/components/bulk-shipment-edit-modal"
 import SkuLevelEditModal from "@/components/sku-level-edit-modal"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import ShipmentViewModal from "@/components/view-shipment-modal"
 import {
   DropdownMenu,
@@ -26,15 +29,17 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { format, parse } from "date-fns"
+import { cn } from "@/lib/utils"
 
 // Sample data based on provided format
 const poData = [
   {
-    entryDate: "2024-12-04",
+    entryDate: "04-12-2024",
     brand: "MCaffeine",
     channel: "Zepto",
     location: "Hyderabad",
-    poDate: "3-Dec-2024",
+    poDate: "03-12-2024",
     poNumber: "3100495853",
     srNo: 1,
     skuName: "mCaffeine Naked & Raw Coffee Espresso Body Wash",
@@ -50,9 +55,9 @@ const poData = [
     facility: "MUM_WAREHOUSE2",
     accountsWorking: 0,
     channelInwardingQuantity: "",
-    workingDate: "1900/01/00",
+    workingDate: "01-01-1900",
     dispatchDate: "",
-    currentAppointmentDate: "1900/01/00",
+    currentAppointmentDate: "01-01-1900",
     statusPlanning: "Confirmed",
     statusWarehouse: "",
     statusLogistics: "0",
@@ -71,11 +76,11 @@ const poData = [
     check: "",
   },
   {
-    entryDate: "2024-12-04",
+    entryDate: "04-12-2024",
     brand: "MCaffeine",
     channel: "Zepto",
     location: "Hyderabad",
-    poDate: "3-Dec-2024",
+    poDate: "03-12-2024",
     poNumber: "3100495853",
     srNo: 2,
     skuName: "Green Tea Hydrogel Under Eye Patches",
@@ -91,9 +96,9 @@ const poData = [
     facility: "MUM_WAREHOUSE2",
     accountsWorking: 0,
     channelInwardingQuantity: "",
-    workingDate: "1900/01/00",
+    workingDate: "01-01-1900",
     dispatchDate: "",
-    currentAppointmentDate: "1900/01/00",
+    currentAppointmentDate: "01-01-1900",
     statusPlanning: "Confirmed",
     statusWarehouse: "",
     statusLogistics: "0",
@@ -116,8 +121,8 @@ const poData = [
 const shipmentData = [
   {
     uid: 135290,
-    entryDate: "2024/12/04",
-    poDate: "2024/12/03",
+    entryDate: "04-12-2024",
+    poDate: "03-12-2024",
     facility: "MUM_WAREHOUSE2",
     channel: "Zepto",
     location: "Hyderabad",
@@ -137,7 +142,7 @@ const shipmentData = [
     dispatchDateTentative: "",
     workingDatePlanner: "",
     rtsDate: "",
-    dispatchDate: "1900/01/00",
+    dispatchDate: "01-01-1900",
     currentAppointmentDate: "",
     firstAppointmentDate: "",
     noOfBoxes: "",
@@ -184,15 +189,15 @@ const shipmentData = [
     updatedPoValue: "2024120409",
     poValue: "3100495853_|Active",
     gmv: "#REF!",
-    rescheduleLag: "1900/01/00",
-    finalRemarks: "1900/01/00",
-    updatedGmv: "1900/01/00",
+    rescheduleLag: "01-01-1900",
+    finalRemarks: "01-01-1900",
+    updatedGmv: "01-01-1900",
     physicalWeight: 839,
     rivigoTatIp: 232042,
     criticalDispatchDate: 232042,
     coptFinalRemark: 342657,
     updatedExpiry: "0/0/0",
-    check1: "1900/01/00",
+    check1: "01-01-1900",
     check2: 342657,
     uid2: 152,
     check: 4,
@@ -201,9 +206,7 @@ const shipmentData = [
 
 export default function DashboardPage({ onNavigate }) {
   const router = useRouter()
-
   const { isDarkMode, setIsDarkMode } = useThemeStore()
-
   const [activeTab, setActiveTab] = useState("po-format")
 
   const [poFormatData, setPoFormatData] = useState([])
@@ -213,15 +216,72 @@ export default function DashboardPage({ onNavigate }) {
   const [poSearchTerm, setPoSearchTerm] = useState("")
   const [shipmentSearchTerm, setShipmentSearchTerm] = useState("")
 
+  // Filter states for PO Format
+  const [poFilters, setPoFilters] = useState({
+    entryDateFrom: null,
+    entryDateTo: null,
+    brand: "",
+    channel: "",
+    location: "",
+    poDateFrom: null,
+    poDateTo: null,
+    skuCode: "",
+    workingDateFrom: null,
+    workingDateTo: null,
+    dispatchDateFrom: null,
+    dispatchDateTo: null,
+    currentAppointmentDateFrom: null,
+    currentAppointmentDateTo: null,
+    statusPlanning: "",
+    statusWarehouse: "",
+    statusLogistics: "",
+  })
+
+  // Filter states for Shipment
+  const [shipmentFilters, setShipmentFilters] = useState({
+    entryDateFrom: null,
+    entryDateTo: null,
+    brand: "",
+    channel: "",
+    location: "",
+    poDateFrom: null,
+    poDateTo: null,
+    currentAppointmentDateFrom: null,
+    currentAppointmentDateTo: null,
+    statusPlanning: "",
+    statusWarehouse: "",
+    statusLogistics: "",
+  })
+
   const [isEditModal, setEditModal] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState({})
-
   const [selectedShipment, setSelectedShipment] = useState({})
-  // shipment actions
   const [isShipmentEditModal, setShipmentEditModal] = useState(false)
   const [isShipmentBulkEditModal, setShipmentBulkEditModal] = useState(false)
   const [isShipmentViewModal, setShipmentViewModal] = useState(false)
   const [isSkuEditModal, setSkuEditModal] = useState(false)
+
+  // Utility function to parse DD-MM-YYYY date strings
+  const parseDate = (dateStr) => {
+    if (!dateStr || dateStr === "01-01-1900" || dateStr === "" || dateStr === "0") return null
+    try {
+      return parse(dateStr, "dd-MM-yyyy", new Date())
+    } catch {
+      return null
+    }
+  }
+
+  // Utility function to format date to DD-MM-YYYY
+  const formatDate = (date) => {
+    if (!date) return ""
+    return format(date, "dd-MM-yyyy")
+  }
+
+  // Get unique values for dropdown filters
+  const getUniqueValues = (data, field) => {
+    const values = data.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
+    return [...new Set(values)].sort()
+  }
 
   async function getPoFormateData() {
     try {
@@ -241,25 +301,173 @@ export default function DashboardPage({ onNavigate }) {
       setShipmentStatusData(res.data.shipments)
     } catch (error) {
       console.log(error)
+      setShipmentStatusData(shipmentData)
     }
   }
 
-  // Filter functions
+  // Enhanced filter function for PO data
   const filteredPoData = poFormatData.filter((item) => {
+    // Search filter
     const searchLower = poSearchTerm.toLowerCase()
-    return (
+    const matchesSearch =
+      !poSearchTerm ||
       item.poNumber?.toString().toLowerCase().includes(searchLower) ||
       item.skuCode?.toString().toLowerCase().includes(searchLower)
-    )
+
+    // Date filters
+    const entryDate = parseDate(item.entryDate)
+    const poDate = parseDate(item.poDate)
+    const workingDate = parseDate(item.workingDate)
+    const dispatchDate = parseDate(item.dispatchDate)
+    const currentAppointmentDate = parseDate(item.currentAppointmentDate)
+
+    const matchesFilters =
+      (!poFilters.entryDateFrom || (entryDate && entryDate >= poFilters.entryDateFrom)) &&
+      (!poFilters.entryDateTo || (entryDate && entryDate <= poFilters.entryDateTo)) &&
+      (!poFilters.brand || item.brandName === poFilters.brand) &&
+      (!poFilters.channel || item.channel === poFilters.channel) &&
+      (!poFilters.location || item.location === poFilters.location) &&
+      (!poFilters.poDateFrom || (poDate && poDate >= poFilters.poDateFrom)) &&
+      (!poFilters.poDateTo || (poDate && poDate <= poFilters.poDateTo)) &&
+      (!poFilters.skuCode || item.skuCode?.toLowerCase().includes(poFilters.skuCode.toLowerCase())) &&
+      (!poFilters.workingDateFrom || (workingDate && workingDate >= poFilters.workingDateFrom)) &&
+      (!poFilters.workingDateTo || (workingDate && workingDate <= poFilters.workingDateTo)) &&
+      (!poFilters.dispatchDateFrom || (dispatchDate && dispatchDate >= poFilters.dispatchDateFrom)) &&
+      (!poFilters.dispatchDateTo || (dispatchDate && dispatchDate <= poFilters.dispatchDateTo)) &&
+      (!poFilters.currentAppointmentDateFrom ||
+        (currentAppointmentDate && currentAppointmentDate >= poFilters.currentAppointmentDateFrom)) &&
+      (!poFilters.currentAppointmentDateTo ||
+        (currentAppointmentDate && currentAppointmentDate <= poFilters.currentAppointmentDateTo)) &&
+      (!poFilters.statusPlanning || item.statusPlanning === poFilters.statusPlanning) &&
+      (!poFilters.statusWarehouse || item.statusWarehouse === poFilters.statusWarehouse) &&
+      (!poFilters.statusLogistics || item.statusLogistics === poFilters.statusLogistics)
+
+    return matchesSearch && matchesFilters
   })
 
+  // Enhanced filter function for Shipment data
   const filteredShipmentData = shipmentStatusData.filter((item) => {
+    // Search filter
     const searchLower = shipmentSearchTerm.toLowerCase()
-    return (
+    const matchesSearch =
+      !shipmentSearchTerm ||
       item.poNumber?.toString().toLowerCase().includes(searchLower) ||
       item.uid?.toString().toLowerCase().includes(searchLower)
-    )
+
+    // Date filters
+    const entryDate = parseDate(item.entryDate)
+    const poDate = parseDate(item.poDate)
+    const currentAppointmentDate = parseDate(item.currentAppointmentDate)
+
+    const matchesFilters =
+      (!shipmentFilters.entryDateFrom || (entryDate && entryDate >= shipmentFilters.entryDateFrom)) &&
+      (!shipmentFilters.entryDateTo || (entryDate && entryDate <= shipmentFilters.entryDateTo)) &&
+      (!shipmentFilters.brand || item.brandName === shipmentFilters.brand) &&
+      (!shipmentFilters.channel || item.channel === shipmentFilters.channel) &&
+      (!shipmentFilters.location || item.location === shipmentFilters.location) &&
+      (!shipmentFilters.poDateFrom || (poDate && poDate >= shipmentFilters.poDateFrom)) &&
+      (!shipmentFilters.poDateTo || (poDate && poDate <= shipmentFilters.poDateTo)) &&
+      (!shipmentFilters.currentAppointmentDateFrom ||
+        (currentAppointmentDate && currentAppointmentDate >= shipmentFilters.currentAppointmentDateFrom)) &&
+      (!shipmentFilters.currentAppointmentDateTo ||
+        (currentAppointmentDate && currentAppointmentDate <= shipmentFilters.currentAppointmentDateTo)) &&
+      (!shipmentFilters.statusPlanning || item.statusPlanning === shipmentFilters.statusPlanning) &&
+      (!shipmentFilters.statusWarehouse || item.statusWarehouse === shipmentFilters.statusWarehouse) &&
+      (!shipmentFilters.statusLogistics || item.statusLogistics === shipmentFilters.statusLogistics)
+
+    return matchesSearch && matchesFilters
   })
+
+  // CSV Export function - only export visible table columns
+  const exportToCSV = (data, filename, dataType) => {
+    if (data.length === 0) return
+
+    // Get only the fields that are visible in the table
+    const visibleFields = dataType.map((item) => item.fieldName)
+    const headers = dataType.map((item) => item.label)
+
+    const csvContent = [
+      headers.join(","),
+      ...data.map((row) =>
+        visibleFields
+          .map((fieldName) => {
+            const value = row[fieldName] || ""
+            return typeof value === "string" && value.includes(",") ? `"${value}"` : value
+          })
+          .join(","),
+      ),
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+    link.setAttribute("href", url)
+    link.setAttribute("download", filename)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  // Clear filters functions
+  const clearPoFilters = () => {
+    setPoFilters({
+      entryDateFrom: null,
+      entryDateTo: null,
+      brand: "",
+      channel: "",
+      location: "",
+      poDateFrom: null,
+      poDateTo: null,
+      skuCode: "",
+      workingDateFrom: null,
+      workingDateTo: null,
+      dispatchDateFrom: null,
+      dispatchDateTo: null,
+      currentAppointmentDateFrom: null,
+      currentAppointmentDateTo: null,
+      statusPlanning: "",
+      statusWarehouse: "",
+      statusLogistics: "",
+    })
+    setPoSearchTerm("")
+  }
+
+  const clearShipmentFilters = () => {
+    setShipmentFilters({
+      entryDateFrom: null,
+      entryDateTo: null,
+      brand: "",
+      channel: "",
+      location: "",
+      poDateFrom: null,
+      poDateTo: null,
+      currentAppointmentDateFrom: null,
+      currentAppointmentDateTo: null,
+      statusPlanning: "",
+      statusWarehouse: "",
+      statusLogistics: "",
+    })
+    setShipmentSearchTerm("")
+  }
+
+  // Date picker component
+  const DatePicker = ({ date, onDateChange, placeholder }) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
+        >
+          <Calendar className="mr-2 h-4 w-4" />
+          {date ? formatDate(date) : placeholder}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <CalendarComponent mode="single" selected={date} onSelect={onDateChange} initialFocus />
+      </PopoverContent>
+    </Popover>
+  )
 
   function handleEditOrder(data) {
     console.log(data)
@@ -269,7 +477,6 @@ export default function DashboardPage({ onNavigate }) {
 
   function handleDeleteOrder(data) {
     console.log("Delete order:", data)
-    // Implement delete functionality here
   }
 
   function handleViewShipment(data) {
@@ -292,13 +499,11 @@ export default function DashboardPage({ onNavigate }) {
 
   function handleDeleteShipment(data) {
     console.log("Delete Shipment:", data)
-    // Implement delete functionality here
   }
 
   async function onUpdateSingleOrder(data) {
     try {
       let updatedData = localStorage.getItem("orderData")
-      // console.log("Updated Data: ", updatedData);
       updatedData = JSON.parse(updatedData)
       console.log("Parsed Data: ", updatedData)
       const res = await updateSinglePoOrder(updatedData)
@@ -317,7 +522,6 @@ export default function DashboardPage({ onNavigate }) {
     setSelectedShipment({})
     setSelectedOrder({})
     setShipmentEditModal(false)
-    // setShipmentBulkEditModal(false);
     setShipmentViewModal(false)
     setSkuEditModal(false)
     setEditModal(false)
@@ -334,7 +538,6 @@ export default function DashboardPage({ onNavigate }) {
     <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
       <NavigationHeader currentPage="dashboard" onNavigate={onNavigate} />
 
-      {/* Main Content */}
       <main className="container mx-auto p-6">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Data Management Dashboard</h2>
@@ -353,7 +556,7 @@ export default function DashboardPage({ onNavigate }) {
             </TabsTrigger>
           </TabsList>
 
-          {/* po format table  */}
+          {/* PO Format Table */}
           <TabsContent value="po-format">
             <Card className="shadow-lg">
               <CardHeader className="pb-6">
@@ -366,26 +569,194 @@ export default function DashboardPage({ onNavigate }) {
                     >
                       {filteredPoData.length} of {poFormatData.length} Records
                     </Badge>
+                    <Button
+                      onClick={() => exportToCSV(filteredPoData, "po-format-data.csv", poFormatDataType)}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </Button>
                   </div>
                 </CardTitle>
-                {/* Search Input for PO Format */}
-                <div className="flex items-center space-x-2 mt-4">
-                  <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search by PO Number or SKU Code..."
-                      value={poSearchTerm}
-                      onChange={(e) => setPoSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  {poSearchTerm && (
-                    <Button variant="outline" size="sm" onClick={() => setPoSearchTerm("")}>
-                      Clear
+
+                {/* Search and Filters */}
+                <div className="space-y-4">
+                  {/* Search */}
+                  <div className="flex items-center space-x-2">
+                    <div className="relative flex-1 max-w-sm">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search by PO Number or SKU Code..."
+                        value={poSearchTerm}
+                        onChange={(e) => setPoSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Button variant="outline" onClick={clearPoFilters}>
+                      <X className="h-4 w-4 mr-2" />
+                      Clear All
                     </Button>
-                  )}
+                  </div>
+
+                  {/* Filters */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {/* Entry Date Range */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Entry Date From</label>
+                      <DatePicker
+                        date={poFilters.entryDateFrom}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, entryDateFrom: date }))}
+                        placeholder="From date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Entry Date To</label>
+                      <DatePicker
+                        date={poFilters.entryDateTo}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, entryDateTo: date }))}
+                        placeholder="To date"
+                      />
+                    </div>
+
+                    {/* Brand */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Brand</label>
+                      <Select
+                        value={poFilters.brand}
+                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, brand: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Brands</SelectItem> */}
+                          {getUniqueValues(poFormatData, "brandName").map((brand) => (
+                            <SelectItem key={brand} value={brand}>
+                              {brand}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Channel */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Channel</label>
+                      <Select
+                        value={poFilters.channel}
+                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, channel: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select channel" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Channels</SelectItem> */}
+                          {getUniqueValues(poFormatData, "channel").map((channel) => (
+                            <SelectItem key={channel} value={channel}>
+                              {channel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Location */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Location</label>
+                      <Select
+                        value={poFilters.location}
+                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, location: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Locations</SelectItem> */}
+                          {getUniqueValues(poFormatData, "location").map((location) => (
+                            <SelectItem key={location} value={location}>
+                              {location}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* SKU Code */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">SKU Code</label>
+                      <Input
+                        placeholder="Enter SKU code"
+                        value={poFilters.skuCode}
+                        onChange={(e) => setPoFilters((prev) => ({ ...prev, skuCode: e.target.value }))}
+                      />
+                    </div>
+
+                    {/* Status Planning */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Status Planning</label>
+                      <Select
+                        value={poFilters.statusPlanning}
+                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusPlanning: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Status</SelectItem> */}
+                          {getUniqueValues(poFormatData, "statusPlanning").map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Warehouse */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Status Warehouse</label>
+                      <Select
+                        value={poFilters.statusWarehouse}
+                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusWarehouse: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Status</SelectItem> */}
+                          {getUniqueValues(poFormatData, "statusWarehouse").map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Logistics */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Status Logistics</label>
+                      <Select
+                        value={poFilters.statusLogistics}
+                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusLogistics: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Status</SelectItem> */}
+                          {getUniqueValues(poFormatData, "statusLogistics").map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
+
               <CardContent>
                 <div className="relative">
                   <ScrollArea className="w-full">
@@ -398,7 +769,6 @@ export default function DashboardPage({ onNavigate }) {
                                 {item.label}
                               </TableHead>
                             ))}
-                            {/* <TableHead key="action" className="font-semibold mx-1 border-1 border-x-white py-1"> Action </TableHead> */}
                             <TableCell className="w-32 no-wrap"> </TableCell>
                           </TableRow>
                         </TableHeader>
@@ -410,19 +780,9 @@ export default function DashboardPage({ onNavigate }) {
                                   {row[item.fieldName]}
                                 </TableCell>
                               ))}
-
-                              {/* <TableCell className="mx-1 flex flex-row space-x-2 cursor-pointer">
-                              {
-                                <>
-                                <span onClick={() => handleEditOrder(row)}><Edit className="h-6 w-6 text-blue-500" /></span>
-                                <span onClick={() => handleDeleteOrder(row)}><Trash className="h-6 w-6 text-red-500"/></span>
-                                </>
-                              }
-                            </TableCell> */}
                               <TableCell className="min-w-32 mx-1 border-1 border-x-white py-3 whitespace-nowrap">
                                 {}
                               </TableCell>
-                              {/* Spacer for sticky action column */}
                               <TableCell className="w-32"></TableCell>
                             </TableRow>
                           ))}
@@ -457,14 +817,6 @@ export default function DashboardPage({ onNavigate }) {
                                     <Eye className="mr-2 h-4 w-4 text-blue-500" />
                                     View Details
                                   </DropdownMenuItem>
-                                  {/* <DropdownMenuItem onClick={() => handleEditSkuShipment(row)} className="cursor-pointer">
-                                  <Package className="mr-2 h-4 w-4 text-green-500" />
-                                  Edit SKU Level
-                                </DropdownMenuItem> */}
-                                  {/* <DropdownMenuItem onClick={() => handleEditShipment(row)} className="cursor-pointer">
-                                  <Edit className="mr-2 h-4 w-4 text-orange-500" />
-                                  Edit Shipment
-                                </DropdownMenuItem> */}
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onClick={() => handleDeleteOrder(row)}
@@ -486,7 +838,7 @@ export default function DashboardPage({ onNavigate }) {
             </Card>
           </TabsContent>
 
-          {/* Shipment table  */}
+          {/* Shipment Table */}
           <TabsContent value="shipment-status">
             <Card className="shadow-lg">
               <CardHeader className="pb-6">
@@ -500,6 +852,15 @@ export default function DashboardPage({ onNavigate }) {
                       {filteredShipmentData.length} of {shipmentStatusData.length} Records
                     </Badge>
                     <Button
+                      onClick={() =>
+                        exportToCSV(filteredShipmentData, "shipment-status-data.csv", shipmentStatusDataType)
+                      }
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </Button>
+                    <Button
                       className="bg-blue-500 text-white hover:bg-blue-600"
                       onClick={() => {
                         setShipmentBulkEditModal(true)
@@ -510,24 +871,175 @@ export default function DashboardPage({ onNavigate }) {
                     </Button>
                   </div>
                 </CardTitle>
-                {/* Search Input for Shipment */}
-                <div className="flex items-center space-x-2 mt-4">
-                  <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search by PO Number or UID..."
-                      value={shipmentSearchTerm}
-                      onChange={(e) => setShipmentSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  {shipmentSearchTerm && (
-                    <Button variant="outline" size="sm" onClick={() => setShipmentSearchTerm("")}>
-                      Clear
+
+                {/* Search and Filters */}
+                <div className="space-y-4">
+                  {/* Search */}
+                  <div className="flex items-center space-x-2">
+                    <div className="relative flex-1 max-w-sm">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search by PO Number or UID..."
+                        value={shipmentSearchTerm}
+                        onChange={(e) => setShipmentSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Button variant="outline" onClick={clearShipmentFilters}>
+                      <X className="h-4 w-4 mr-2" />
+                      Clear All
                     </Button>
-                  )}
+                  </div>
+
+                  {/* Filters */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {/* Entry Date Range */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Entry Date From</label>
+                      <DatePicker
+                        date={shipmentFilters.entryDateFrom}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateFrom: date }))}
+                        placeholder="From date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Entry Date To</label>
+                      <DatePicker
+                        date={shipmentFilters.entryDateTo}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateTo: date }))}
+                        placeholder="To date"
+                      />
+                    </div>
+
+                    {/* Brand */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Brand</label>
+                      <Select
+                        value={shipmentFilters.brand}
+                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, brand: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Brands</SelectItem> */}
+                          {getUniqueValues(shipmentStatusData, "brandName").map((brand) => (
+                            <SelectItem key={brand} value={brand}>
+                              {brand}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Channel */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Channel</label>
+                      <Select
+                        value={shipmentFilters.channel}
+                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, channel: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select channel" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Channels</SelectItem> */}
+                          {getUniqueValues(shipmentStatusData, "channel").map((channel) => (
+                            <SelectItem key={channel} value={channel}>
+                              {channel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Location */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Location</label>
+                      <Select
+                        value={shipmentFilters.location}
+                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, location: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Locations</SelectItem> */}
+                          {getUniqueValues(shipmentStatusData, "location").map((location) => (
+                            <SelectItem key={location} value={location}>
+                              {location}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Planning */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Status Planning</label>
+                      <Select
+                        value={shipmentFilters.statusPlanning}
+                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusPlanning: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Status</SelectItem> */}
+                          {getUniqueValues(shipmentStatusData, "statusPlanning").map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Warehouse */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Status Warehouse</label>
+                      <Select
+                        value={shipmentFilters.statusWarehouse}
+                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusWarehouse: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Status</SelectItem> */}
+                          {getUniqueValues(shipmentStatusData, "statusWarehouse").map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Logistics */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Status Logistics</label>
+                      <Select
+                        value={shipmentFilters.statusLogistics}
+                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusLogistics: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* <SelectItem value="all">All Status</SelectItem> */}
+                          {getUniqueValues(shipmentStatusData, "statusLogistics").map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
+
               <CardContent>
                 <div className="relative">
                   <ScrollArea className="w-full">
@@ -543,7 +1055,6 @@ export default function DashboardPage({ onNavigate }) {
                                 {item.label}
                               </TableHead>
                             ))}
-                            {/* Spacer for sticky action column */}
                             <TableHead className="w-32"></TableHead>
                           </TableRow>
                         </TableHeader>
@@ -558,7 +1069,6 @@ export default function DashboardPage({ onNavigate }) {
                               <TableCell className="min-w-32 mx-1 border-1 border-x-white py-3 whitespace-nowrap">
                                 {}
                               </TableCell>
-                              {/* Spacer for sticky action column */}
                               <TableCell className="w-32"></TableCell>
                             </TableRow>
                           ))}
@@ -629,6 +1139,7 @@ export default function DashboardPage({ onNavigate }) {
           </TabsContent>
         </Tabs>
 
+        {/* Modals */}
         <EditOrderModal
           isOpen={isEditModal}
           onClose={() => {
