@@ -149,89 +149,6 @@ const updateShipmentSkuData = async (shipmentId, skuOrders) => {
   console.log(`Updating shipment ${shipmentId} with SKU data:`, skuOrders)
 }
 
-// Confirmation Dialog Component
-function EditConfirmationDialog({ isOpen, onClose, onConfirm, field, isLoading }) {
-  const [selectedReason, setSelectedReason] = useState("")
-  const [comments, setComments] = useState("")
-
-  const handleConfirm = () => {
-    if (!selectedReason) {
-      toast.error("Please select a reason for editing")
-      return
-    }
-    onConfirm(selectedReason, comments)
-    setSelectedReason("")
-    setComments("")
-  }
-
-  const handleClose = () => {
-    onClose()
-    setSelectedReason("")
-    setComments("")
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
-            <span>Confirm Edit</span>
-          </DialogTitle>
-          <DialogDescription>
-            You are about to edit PO level {field}. Please provide a reason for this change.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="reason">Reason for Edit *</Label>
-            <Select value={selectedReason} onValueChange={setSelectedReason}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a reason..." />
-              </SelectTrigger>
-              <SelectContent>
-                {EDIT_REASONS.map((reason) => (
-                  <SelectItem key={reason} value={reason}>
-                    {reason}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="comments">Additional Comments</Label>
-            <Textarea
-              id="comments"
-              placeholder="Any additional details..."
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button onClick={handleConfirm} disabled={!selectedReason || isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Confirming...
-              </>
-            ) : (
-              "Confirm Edit"
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave, shipment }) {
   const [initialskus, setInitialSkus] = useState([])
   const [shipmentData, setShipmentData] = useState(null)
@@ -240,8 +157,8 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave,
   const [isUpdating, setIsUpdating] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [pendingEdit, setPendingEdit] = useState(null)
+  const [editReason, setEditReason] = useState("")
+  const [editComments, setEditComments] = useState("")
   const { user } = useUserStore()
 
   // Fetch shipment data when modal opens
@@ -318,26 +235,6 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave,
   }
 
   const handleFieldChange = (skuIndex, field, value) => {
-    const editableFields = getEditableFields()
-    const fieldConfig = editableFields.find((f) => f.key === field)
-
-    // If field requires confirmation and user is admin, show confirmation dialog
-    if (fieldConfig?.requiresConfirmation && user?.role === "admin") {
-      setPendingEdit({
-        skuIndex,
-        field,
-        value,
-        fieldLabel: fieldConfig.label,
-      })
-      setShowConfirmDialog(true)
-      return
-    }
-
-    // Apply the change directly for warehouse users or non-confirmation fields
-    applyFieldChange(skuIndex, field, value)
-  }
-
-  const applyFieldChange = (skuIndex, field, value) => {
     setEditedSkus((prev) => {
       const original = initialskus[skuIndex]
       const updated = [...prev]
@@ -377,27 +274,49 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave,
     })
   }
 
-  const handleConfirmEdit = (reason, comments) => {
-    if (pendingEdit) {
-      // Log the edit reason and comments for audit trail
-      console.log("Edit confirmed:", {
-        ...pendingEdit,
-        reason,
-        comments,
-        user: user?.email,
-        timestamp: new Date().toISOString(),
-      })
-
-      applyFieldChange(pendingEdit.skuIndex, pendingEdit.field, pendingEdit.value)
-      setPendingEdit(null)
-      setShowConfirmDialog(false)
-
-      toast.success(`${pendingEdit.fieldLabel} updated successfully`)
+  // Check if admin/superadmin has made changes that require reasons
+  const hasAdminChanges = () => {
+    if (user?.role !== "admin" && user?.role !== "superadmin") {
+      return false
     }
+
+    return editedSkus.some((sku, index) => {
+      const original = shipmentData?.skuOrders[index]
+      if (!original) return false
+      return sku.gmv !== original.gmv || sku.poValue !== original.poValue
+    })
+  }
+
+  // Get list of changed fields that require reasons
+  const getChangedFieldsRequiringReasons = () => {
+    if (user?.role !== "admin" && user?.role !== "superadmin") {
+      return []
+    }
+
+    const changedFields = []
+    editedSkus.forEach((sku, index) => {
+      const original = shipmentData?.skuOrders[index]
+      if (original) {
+        if (sku.gmv !== original.gmv) {
+          changedFields.push(`SKU ${sku.srNo} - GMV`)
+        }
+        if (sku.poValue !== original.poValue) {
+          changedFields.push(`SKU ${sku.srNo} - PO Value`)
+        }
+      }
+    })
+    return changedFields
   }
 
   const handleSave = async () => {
     if (!shipmentData || !shipmentId) return
+
+    // Validate that admin/superadmin provides reason for GMV/PO Value changes
+    if (hasAdminChanges() && !editReason) {
+      setError("Please provide a reason for GMV/PO Value changes")
+      toast.error("Please provide a reason for GMV/PO Value changes")
+      return
+    }
 
     setIsUpdating(true)
     setError("")
@@ -423,8 +342,29 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave,
         return
       }
 
+      // Include edit reasons in the update payload
+      const updatePayload = {
+        shipmentId: shipmentId,
+        skus: editedSkus,
+        editReason: editReason,
+        editComments: editComments,
+        updatedBy: user?.email,
+        updatedAt: new Date().toISOString(),
+        changedFields: getChangedFieldsRequiringReasons(),
+      }
+
+      // Log the edit for audit trail
+      console.log("SKU Edit:", {
+        shipmentId,
+        changedFields: getChangedFieldsRequiringReasons(),
+        reason: editReason,
+        comments: editComments,
+        user: user?.email,
+        timestamp: new Date().toISOString(),
+      })
+
       // Update via API
-      await updateSkusByShipment({ shipmentId: shipmentId, skus: editedSkus })
+      await updateSkusByShipment(updatePayload)
 
       // Call parent callback if provided
       if (onSave) {
@@ -451,8 +391,8 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave,
     setEditedSkus([])
     setError("")
     setSuccess("")
-    setPendingEdit(null)
-    setShowConfirmDialog(false)
+    setEditReason("")
+    setEditComments("")
   }
 
   const handleClose = () => {
@@ -527,344 +467,401 @@ export default function SkuLevelEditModal({ isOpen, onClose, shipmentId, onSave,
   const fillRateUnits = totals.totalQty > 0 ? (totals.totalUpdatedQty / totals.totalQty) * 100 : 0
   const fillRateGmv = totals.totalGmv > 0 ? (totals.totalUpdatedGmv / totals.totalGmv) * 100 : 0
 
+  const adminChanges = hasAdminChanges()
+  const changedFields = getChangedFieldsRequiringReasons()
+
   return (
-    <>
-      <Dialog className={"w-[70vw] max-w-[80vw]"} open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <Package className="h-5 w-5" />
-              <span>SKU Level Edit</span>
-              {shipment && (
-                <Badge variant="outline" className="ml-2">
-                  {shipment.poNumber}
-                </Badge>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              {isLoading
-                ? "Loading shipment data..."
-                : editableFields.length > 0
-                  ? `Edit ${editableFields.map((f) => f.label).join(", ")} for individual SKU orders`
-                  : "No editable fields available for your role"}
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog className={"w-[70vw] max-w-[80vw]"} open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <Package className="h-5 w-5" />
+            <span>SKU Level Edit</span>
+            {shipment && (
+              <Badge variant="outline" className="ml-2">
+                {shipment.poNumber}
+              </Badge>
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            {isLoading
+              ? "Loading shipment data..."
+              : editableFields.length > 0
+                ? `Edit ${editableFields.map((f) => f.label).join(", ")} for individual SKU orders`
+                : "No editable fields available for your role"}
+          </DialogDescription>
+        </DialogHeader>
 
-          <ScrollArea className="max-h-[75vh] pr-4">
-            <div className="space-y-6">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+        <ScrollArea className="max-h-[75vh] pr-4">
+          <div className="space-y-6">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-              {success && (
-                <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>{success}</AlertDescription>
-                </Alert>
-              )}
+            {success && (
+              <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            )}
 
-              {/* Loading State */}
-              {isLoading && (
-                <Card>
-                  <CardContent className="flex items-center justify-center py-12">
-                    <div className="flex flex-col items-center space-y-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                      <p className="text-sm text-gray-500">Loading shipment data...</p>
+            {/* Loading State */}
+            {isLoading && (
+              <Card>
+                <CardContent className="flex items-center justify-center py-12">
+                  <div className="flex flex-col items-center space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <p className="text-sm text-gray-500">Loading shipment data...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Basic Details Section */}
+            {shipmentData && !isLoading && (
+              <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+                <CardHeader>
+                  <CardTitle className="text-lg text-blue-900 dark:text-blue-100">
+                    Basic Details (Original Values)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Channel</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">{shipment.channel}</div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Basic Details Section */}
-              {shipmentData && !isLoading && (
-                <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-blue-900 dark:text-blue-100">
-                      Basic Details (Original Values)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">Channel</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">{shipment.channel}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">Location</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">{shipment.location}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">PO Date</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">{shipment.poDate}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">PO Number</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">{shipment.poNumber}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">Quantity</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">
-                          {originalTotals.totalQty.toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">GMV</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">
-                          ₹{originalTotals.totalGmv.toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">PO Value</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">
-                          ₹{originalTotals.totalPoValue.toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">Fill Rate (Units)</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">
-                          {originalTotals.totalQty > 0
-                            ? ((originalTotals.totalUpdatedQty / originalTotals.totalQty) * 100).toFixed(1)
-                            : 0}
-                          %
-                        </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Location</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">{shipment.location}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">PO Date</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">{shipment.poDate}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">PO Number</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">{shipment.poNumber}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Quantity</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">
+                        {originalTotals.totalQty.toLocaleString()}
                       </div>
                     </div>
-                    <Separator className="my-4" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600 dark:text-gray-400">Fill Rate (GMV)</Label>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100">
-                          {originalTotals.totalGmv > 0
-                            ? ((originalTotals.totalUpdatedGmv / originalTotals.totalGmv) * 100).toFixed(1)
-                            : 0}
-                          %
-                        </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">GMV</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">
+                        ₹{originalTotals.totalGmv.toLocaleString()}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">PO Value</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">
+                        ₹{originalTotals.totalPoValue.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Fill Rate (Units)</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">
+                        {originalTotals.totalQty > 0
+                          ? ((originalTotals.totalUpdatedQty / originalTotals.totalQty) * 100).toFixed(1)
+                          : 0}
+                        %
+                      </div>
+                    </div>
+                  </div>
+                  <Separator className="my-4" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Fill Rate (GMV)</Label>
+                      <div className="font-semibold text-blue-900 dark:text-blue-100">
+                        {originalTotals.totalGmv > 0
+                          ? ((originalTotals.totalUpdatedGmv / originalTotals.totalGmv) * 100).toFixed(1)
+                          : 0}
+                        %
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-              {/* SKU Orders Table */}
-              {shipmentData && !isLoading && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
+            {/* SKU Orders Table */}
+            {shipmentData && !isLoading && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Package className="h-5 w-5" />
+                      <span>SKU Orders</span>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm">
                       <div className="flex items-center space-x-2">
-                        <Package className="h-5 w-5" />
-                        <span>SKU Orders</span>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Package className="h-4 w-4 text-blue-600" />
-                          <span>
-                            Total Qty: <strong>{totals.totalQty}</strong>
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Calculator className="h-4 w-4 text-purple-600" />
-                          <span>
-                            Total GMV: <strong>₹{totals.totalGmv.toLocaleString()}</strong>
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-green-600" />
-                          <span>
-                            Total PO Value: <strong>₹{totals.totalPoValue.toLocaleString()}</strong>
-                          </span>
-                        </div>
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="w-full">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-16">Sr No</TableHead>
-                            <TableHead className="min-w-[250px]">SKU Details</TableHead>
-                            {editableFields.map((field) => (
-                              <TableHead key={field.key} className="w-32 text-center">
-                                <div className="flex items-center justify-center space-x-1">
-                                  <field.icon className={`h-4 w-4 ${field.color}`} />
-                                  <span>{field.label}</span>
-                                </div>
-                              </TableHead>
-                            ))}
-                            <TableHead className="w-24 text-center">SKU Fill Rate</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {editedSkus.map((sku, index) => {
-                            const original = shipmentData.skuOrders[index]
-                            const skuFillRate = sku.gmv > 0 ? ((sku.gmv || 0) / initialskus[index].gmv) * 100 : 0
-
-                            return (
-                              <TableRow key={sku.id} className="group">
-                                <TableCell className="font-mono text-sm text-center">{sku.srNo}</TableCell>
-                                <TableCell>
-                                  <div className="space-y-1">
-                                    <div className="font-medium text-sm">{sku.skuName}</div>
-                                    <div className="text-xs text-gray-500 space-y-0.5">
-                                      <div>
-                                        SKU Code: <span className="font-mono">{sku.skuCode}</span>
-                                      </div>
-                                      <div>
-                                        Channel Code: <span className="font-mono">{sku.channelSkuCode}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                {editableFields.map((field) => {
-                                  const hasChanged = original && sku[field.key] !== original[field.key]
-                                  return (
-                                    <TableCell key={field.key}>
-                                      <div className="relative">
-                                        <Input
-                                          type="number"
-                                          value={sku[field.key] || 0}
-                                          onChange={(e) => handleFieldChange(index, field.key, e.target.value)}
-                                          className={`text-center font-mono ${
-                                            hasChanged
-                                              ? "border-orange-300 bg-orange-50 dark:border-orange-600 dark:bg-orange-950"
-                                              : ""
-                                          }`}
-                                          step={field.key.includes("Qty") ? "1" : "0.01"}
-                                          min="0"
-                                          disabled={isUpdating}
-                                        />
-                                        {hasChanged && (
-                                          <div className="absolute -top-1 -right-1">
-                                            <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
-                                          </div>
-                                        )}
-                                        {field.requiresConfirmation && (
-                                          <Edit className="absolute -top-1 -left-1 h-3 w-3 text-red-500" />
-                                        )}
-                                      </div>
-                                      {hasChanged && original && (
-                                        <div className="text-xs text-gray-500 mt-1 text-center">
-                                          Was: {original[field.key]}
-                                        </div>
-                                      )}
-                                    </TableCell>
-                                  )
-                                })}
-                                <TableCell className="text-center">
-                                  <Badge
-                                    variant={
-                                      skuFillRate >= 90 ? "default" : skuFillRate >= 70 ? "secondary" : "destructive"
-                                    }
-                                    className="font-mono"
-                                  >
-                                    {skuFillRate.toFixed(1)}%
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
-                        </TableBody>
-                      </Table>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Changes Summary */}
-              {hasChanges && !isLoading && (
-                <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <AlertCircle className="h-5 w-5 text-orange-600" />
-                        <span className="font-medium text-orange-900 dark:text-orange-100">
-                          Changes detected in{" "}
-                          {
-                            editedSkus.filter((sku, index) => {
-                              const original = shipmentData?.skuOrders[index]
-                              return (
-                                original &&
-                                (sku.poValue !== original.poValue ||
-                                  sku.qty !== original.qty ||
-                                  sku.gmv !== original.gmv ||
-                                  sku.updatedQty !== original.updatedQty ||
-                                  sku.updatedGmv !== original.updatedGmv ||
-                                  sku.updatedPoValue !== original.updatedPoValue)
-                              )
-                            }).length
-                          }{" "}
-                          SKU orders
+                        <Package className="h-4 w-4 text-blue-600" />
+                        <span>
+                          Total Qty: <strong>{totals.totalQty}</strong>
                         </span>
                       </div>
-                      <div className="text-sm text-orange-700 dark:text-orange-300">Review changes before saving</div>
+                      <div className="flex items-center space-x-2">
+                        <Calculator className="h-4 w-4 text-purple-600" />
+                        <span>
+                          Total GMV: <strong>₹{totals.totalGmv.toLocaleString()}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="h-4 w-4 text-green-600" />
+                        <span>
+                          Total PO Value: <strong>₹{totals.totalPoValue.toLocaleString()}</strong>
+                        </span>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="w-full">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">Sr No</TableHead>
+                          <TableHead className="min-w-[250px]">SKU Details</TableHead>
+                          {editableFields.map((field) => (
+                            <TableHead key={field.key} className="w-32 text-center">
+                              <div className="flex items-center justify-center space-x-1">
+                                <field.icon className={`h-4 w-4 ${field.color}`} />
+                                <span>{field.label}</span>
+                              </div>
+                            </TableHead>
+                          ))}
+                          <TableHead className="w-24 text-center">SKU Fill Rate</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {editedSkus.map((sku, index) => {
+                          const original = shipmentData.skuOrders[index]
+                          const skuFillRate = sku.gmv > 0 ? ((sku.gmv || 0) / initialskus[index].gmv) * 100 : 0
 
-              {/* Update Progress */}
-              {isUpdating && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-center space-x-4">
-                      <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                      <span className="text-sm font-medium">Updating SKU orders...</span>
+                          return (
+                            <TableRow key={sku.id} className="group">
+                              <TableCell className="font-mono text-sm text-center">{sku.srNo}</TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="font-medium text-sm">{sku.skuName}</div>
+                                  <div className="text-xs text-gray-500 space-y-0.5">
+                                    <div>
+                                      SKU Code: <span className="font-mono">{sku.skuCode}</span>
+                                    </div>
+                                    <div>
+                                      Channel Code: <span className="font-mono">{sku.channelSkuCode}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              {editableFields.map((field) => {
+                                const hasChanged = original && sku[field.key] !== original[field.key]
+                                const requiresReason =
+                                  hasChanged &&
+                                  field.requiresConfirmation &&
+                                  (user?.role === "admin" || user?.role === "superadmin")
+
+                                return (
+                                  <TableCell key={field.key}>
+                                    <div className="relative">
+                                      <Input
+                                        type="number"
+                                        value={sku[field.key] || 0}
+                                        onChange={(e) => handleFieldChange(index, field.key, e.target.value)}
+                                        className={`text-center font-mono ${
+                                          hasChanged
+                                            ? requiresReason && !editReason
+                                              ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950"
+                                              : "border-orange-300 bg-orange-50 dark:border-orange-600 dark:bg-orange-950"
+                                            : ""
+                                        }`}
+                                        step={field.key.includes("Qty") ? "1" : "0.01"}
+                                        min="0"
+                                        disabled={isUpdating}
+                                      />
+                                      {hasChanged && (
+                                        <div className="absolute -top-1 -right-1">
+                                          <div
+                                            className={`h-2 w-2 rounded-full ${
+                                              requiresReason && !editReason ? "bg-red-500" : "bg-orange-500"
+                                            }`}
+                                          ></div>
+                                        </div>
+                                      )}
+                                      {field.requiresConfirmation && (
+                                        <Edit className="absolute -top-1 -left-1 h-3 w-3 text-red-500" />
+                                      )}
+                                    </div>
+                                    {hasChanged && original && (
+                                      <div className="text-xs text-gray-500 mt-1 text-center">
+                                        Was: {original[field.key]}
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                )
+                              })}
+                              <TableCell className="text-center">
+                                <Badge
+                                  variant={
+                                    skuFillRate >= 90 ? "default" : skuFillRate >= 70 ? "secondary" : "destructive"
+                                  }
+                                  className="font-mono"
+                                >
+                                  {skuFillRate.toFixed(1)}%
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Changes Summary */}
+            {hasChanges && !isLoading && (
+              <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="h-5 w-5 text-orange-600" />
+                      <span className="font-medium text-orange-900 dark:text-orange-100">
+                        Changes detected in{" "}
+                        {
+                          editedSkus.filter((sku, index) => {
+                            const original = shipmentData?.skuOrders[index]
+                            return (
+                              original &&
+                              (sku.poValue !== original.poValue ||
+                                sku.qty !== original.qty ||
+                                sku.gmv !== original.gmv ||
+                                sku.updatedQty !== original.updatedQty ||
+                                sku.updatedGmv !== original.updatedGmv ||
+                                sku.updatedPoValue !== original.updatedPoValue)
+                            )
+                          }).length
+                        }{" "}
+                        SKU orders
+                      </span>
                     </div>
-                    <Progress value={66} className="mt-4" />
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+                    <div className="text-sm text-orange-700 dark:text-orange-300">Review changes before saving</div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-sm text-gray-500">
-              {editableFields.length === 0
-                ? "No editable fields available for your role"
-                : `You can edit: ${editableFields.map((f) => f.label).join(", ")}`}
-            </div>
-            <div className="flex space-x-3">
-              <Button variant="outline" onClick={handleClose} disabled={isUpdating}>
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={!hasChanges || isUpdating || editableFields.length === 0 || isLoading}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                {isUpdating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
+            {/* Reason Section for Admin/Superadmin */}
+            {adminChanges && (
+              <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-red-900 dark:text-red-100">
+                    <AlertTriangle className="h-5 w-5" />
+                    <span>Reason Required for Changes</span>
+                  </CardTitle>
+                  <div className="text-sm text-red-700 dark:text-red-300">
+                    You have made changes to the following fields: <strong>{changedFields.join(", ")}</strong>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="edit-reason" className="text-red-900 dark:text-red-100">
+                      Reason for Edit *
+                    </Label>
+                    <Select value={editReason} onValueChange={setEditReason}>
+                      <SelectTrigger className="border-red-300 focus:border-red-500">
+                        <SelectValue placeholder="Select a reason..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EDIT_REASONS.map((reason) => (
+                          <SelectItem key={reason} value={reason}>
+                            {reason}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="edit-comments" className="text-red-900 dark:text-red-100">
+                      Additional Comments
+                    </Label>
+                    <Textarea
+                      id="edit-comments"
+                      placeholder="Any additional details about the changes..."
+                      value={editComments}
+                      onChange={(e) => setEditComments(e.target.value)}
+                      rows={3}
+                      className="border-red-300 focus:border-red-500"
+                    />
+                  </div>
+
+                  {!editReason && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>Please select a reason before saving the changes.</AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Update Progress */}
+            {isUpdating && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-center space-x-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                    <span className="text-sm font-medium">Updating SKU orders...</span>
+                  </div>
+                  <Progress value={66} className="mt-4" />
+                </CardContent>
+              </Card>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
-      {/* Edit Confirmation Dialog */}
-      <EditConfirmationDialog
-        isOpen={showConfirmDialog}
-        onClose={() => {
-          setShowConfirmDialog(false)
-          setPendingEdit(null)
-        }}
-        onConfirm={handleConfirmEdit}
-        field={pendingEdit?.fieldLabel}
-        isLoading={false}
-      />
-    </>
+        <div className="flex justify-between items-center pt-4 border-t">
+          <div className="text-sm text-gray-500">
+            {editableFields.length === 0
+              ? "No editable fields available for your role"
+              : `You can edit: ${editableFields.map((f) => f.label).join(", ")}`}
+          </div>
+          <div className="flex space-x-3">
+            <Button variant="outline" onClick={handleClose} disabled={isUpdating}>
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={
+                !hasChanges || isUpdating || editableFields.length === 0 || isLoading || (adminChanges && !editReason)
+              }
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
