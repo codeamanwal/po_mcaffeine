@@ -331,8 +331,21 @@ async function updateShipment(req, res) {
     let isLog = false;
     let logs = [];
 
-    let { uid, ...updateData } = req.body;
+    let { uid, poEditAudit, ...updateData } = req.body;
     const shipment = await ShipmentOrder.findOne({ where: { uid } });
+
+    if(poEditAudit){
+      console.log("poEdit: ", poEditAudit)
+      const po_log = {
+        shipmentId: shipment.uid,
+        createdBy: req.user,
+        fieldName: "Po Number",
+        change: `Po number changed from ${poEditAudit.originalPoNumber} to ${poEditAudit?.newPoNumber}`,
+        remark: `${poEditAudit.reason}! ${poEditAudit.comments}`,
+      }
+      isLog = true;
+      logs = [...logs, po_log]
+    }
 
     if (!shipment) {
       return res.status(404).json({ error: 'Shipment not found' });
@@ -350,17 +363,6 @@ async function updateShipment(req, res) {
         remark:  updateData.appointmentRemarks[len-1] || "No remark provided",
       }
       logs = [...logs, new_log]
-    } 
-    if(shipment.dataValues?.poNumber != updateData?.poNumber){
-      isLog = true;
-      const new_log = {
-        shipmentId: shipment.uid,
-        createdBy: req.user,
-        fieldName: "Po Number",
-        change: `Po number changed from ${shipment.dataValues?.poNumber} to ${updateData?.poNumber}`,
-        remark: "No remark provided!",
-      }
-      logs = [...logs, new_log]
     }
     
     const updatedShipment = await shipment.update(updateData);
@@ -368,7 +370,7 @@ async function updateShipment(req, res) {
     console.log("isLog: ",isLog);
       // console.log("Previous Shipment:", shipment);
     // console.log("Updated Shipment: ", updatedShipment);
-    if(isLog){
+    if(isLog || logs.length > 0){
       // console.log("Changing logs")
       logs.map(async (log) =>{
         await createLog(log)
