@@ -471,9 +471,9 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     const headers = ["UID", "PO Number", ...sortedSelectedFields.map((field) => fieldDefinitions[field].csvHeader)]
 
     // Sample data rows - also use sorted order for consistency
-    const sampleData = [`135290,3100495853,${sortedSelectedFields.map(() => "").join(",")}`]
+    // const sampleData = [`135290,3100495853,${sortedSelectedFields.map(() => "").join(",")}`]
 
-    const csvContent = [headers.join(","), ...sampleData].join("\n")
+    const csvContent = [headers.join(",")].join("\n")
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement("a")
