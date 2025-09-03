@@ -1046,7 +1046,7 @@ export default function DashboardPage({ onNavigate }) {
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
-                          {/* <SelectItem value="all">All Status</SelectItem> */}
+                          <SelectItem value={null}>All Status</SelectItem>
                           {getUniqueValues(shipmentStatusData, "statusLogistics").map((status) => (
                             <SelectItem key={status} value={status}>
                               {status}
