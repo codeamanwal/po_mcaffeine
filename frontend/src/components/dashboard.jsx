@@ -1130,7 +1130,7 @@ export default function DashboardPage({ onNavigate }) {
                                     className="cursor-pointer"
                                   >
                                     <Package className="mr-2 h-4 w-4 text-green-500" />
-                                    Edit SKU Level
+                                    Update SKU Level
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleEditShipment(row)} className="cursor-pointer">
                                     <Edit className="mr-2 h-4 w-4 text-orange-500" />
