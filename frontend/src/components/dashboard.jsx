@@ -621,22 +621,30 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Brand */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Brand</label>
-                      <Select
-                        value={poFilters.brand}
-                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, brand: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select brand" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Brands</SelectItem> */}
-                          {getUniqueValues(poFormatData, "brandName").map((brand) => (
-                            <SelectItem key={brand} value={brand}>
-                              {brand}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div>
+                        <Select
+                          value={poFilters.brand}
+                          onOpenChange={(open) => {
+                            if (open) {
+                              setPoFilters((prev) => ({ ...prev, brand: "" }));
+                            }
+                          }}
+                          onValueChange={(value) =>
+                            setPoFilters((prev) => ({ ...prev, brand: value }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getUniqueValues(poFormatData, "brandName").map((brand) => (
+                              <SelectItem key={brand} value={brand}>
+                                {brand}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
                     {/* Channel */}
@@ -644,6 +652,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Channel</label>
                       <Select
                         value={poFilters.channel}
+                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, channel: "" }));}}}
                         onValueChange={(value) => setPoFilters((prev) => ({ ...prev, channel: value }))}
                       >
                         <SelectTrigger>
@@ -664,6 +673,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Location</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, location: "" }));}}}
                         value={poFilters.location}
                         onValueChange={(value) => setPoFilters((prev) => ({ ...prev, location: value }))}
                       >
@@ -695,6 +705,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Status Planning</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, statusPlanning: "" }));}}}
                         value={poFilters.statusPlanning}
                         onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusPlanning: value }))}
                       >
@@ -716,6 +727,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Status Warehouse</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, statusWarehouse: "" }));}}}
                         value={poFilters.statusWarehouse}
                         onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusWarehouse: value }))}
                       >
@@ -737,6 +749,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Status Logistics</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, statusLogistics: "" }));}}}
                         value={poFilters.statusLogistics}
                         onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusLogistics: value }))}
                       >
@@ -915,6 +928,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Brand</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, brand: "" }));}}}
                         value={shipmentFilters.brand}
                         onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, brand: value }))}
                       >
@@ -936,6 +950,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Channel</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, channel: "" }));}}}
                         value={shipmentFilters.channel}
                         onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, channel: value }))}
                       >
@@ -957,6 +972,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Location</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, location: "" }));}}}
                         value={shipmentFilters.location}
                         onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, location: value }))}
                       >
@@ -978,6 +994,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Status Planning</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, statusPlanning: "" }));}}}
                         value={shipmentFilters.statusPlanning}
                         onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusPlanning: value }))}
                       >
@@ -999,6 +1016,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Status Warehouse</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, statusWarehouse: "" }));}}}
                         value={shipmentFilters.statusWarehouse}
                         onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusWarehouse: value }))}
                       >
@@ -1020,6 +1038,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Status Logistics</label>
                       <Select
+                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, statusLogistics: "" }));}}}
                         value={shipmentFilters.statusLogistics}
                         onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusLogistics: value }))}
                       >
