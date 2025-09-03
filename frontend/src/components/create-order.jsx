@@ -40,7 +40,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
     entryDate: new Date(),
     brand: "",
     poDate: undefined,
-    facility: "",
+    // facility: "",
     channel: "",
     location: "",
     poNumber: "",
@@ -162,7 +162,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
           entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "dd-MM-yyyy") : "",
           brandName: shipmentOrder.brand,
           poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "dd-MM-yyyy") : "",
-          facility: shipmentOrder.facility,
+          // facility: shipmentOrder.facility,
           channel: shipmentOrder.channel,
           location: shipmentOrder.location,
           poNumber: shipmentOrder.poNumber,
@@ -201,7 +201,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       entryDate: new Date(),
       brand: "",
       poDate: undefined,
-      facility: "",
+      // facility: "",
       channel: "",
       location: "",
       poNumber: "",
@@ -294,6 +294,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                               "w-full h-10 justify-start text-left font-normal",
                               !shipmentOrder.entryDate && "text-muted-foreground",
                             )}
+                            disabled={true}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "PPP") : "Pick entry date"}
@@ -358,7 +359,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label className="text-sm font-medium">Facility *</Label>
                       <Select
                         value={shipmentOrder.facility}
@@ -375,7 +376,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
+                    </div> */}
 
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Channel *</Label>
@@ -440,14 +441,6 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                       <Package className="h-5 w-5" />
                       <span>SKU Orders ({skuOrders.length})</span>
                     </CardTitle>
-                    <Button
-                      type="button"
-                      onClick={addSkuOrder}
-                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add SKU
-                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -553,6 +546,15 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                       </div>
                     </div>
                   ))}
+
+                  <Button
+                      type="button"
+                      onClick={addSkuOrder}
+                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add SKU
+                    </Button>
 
                   {/* Totals Summary */}
                   <Separator />
