@@ -63,7 +63,7 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
     const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
     const expectedHeaders = [
-      "Entry Date",
+      // "Entry Date",
       "Brand",
       "Channel",
       "Location",
@@ -89,7 +89,7 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""))
       const order = {
-        entryDate: values[headers.indexOf("Entry Date")] || "",
+        entryDate: `${String(new Date().getDate()).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`,
         brand: values[headers.indexOf("Brand")] || "",
         channel: values[headers.indexOf("Channel")] || "",
         location: values[headers.indexOf("Location")] || "",
@@ -203,7 +203,7 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
 
   const downloadTemplate = () => {
     const headers = [
-      "Entry Date",
+      // "Entry Date",
       "Brand",
       "Channel",
       "Location",
@@ -219,8 +219,8 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
     ]
 
     const sampleData = [
-      "2024-12-04,MCaffeine,Zepto,Hyderabad,2024-12-03,3100495853,1,mCaffeine Naked & Raw Coffee Espresso Body Wash,15MCaf177,8906129573451,24,11976,8024",
-      "2024-12-04,MCaffeine,Zepto,Hyderabad,2024-12-03,3100495853,2,Green Tea Hydrogel Under Eye Patches,15MCaf225,8906129573468,22,10978,7355",
+      "MCaffeine,Zepto,Hyderabad,27-12-2024,3100495853,1,mCaffeine Naked & Raw Coffee Espresso Body Wash,15MCaf177,8906129573451,24,11976,8024",
+      "MCaffeine,Zepto,Hyderabad,27-12-2024,3100495853,2,Green Tea Hydrogel Under Eye Patches,15MCaf225,8906129573468,22,10978,7355",
     ]
 
     const csvContent = [headers.join(","), ...sampleData].join("\n")
