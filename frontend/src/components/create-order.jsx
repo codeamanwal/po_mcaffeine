@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import {
   CalendarIcon,
   AlertCircle,
@@ -21,26 +22,124 @@ import {
   ShoppingCart,
   ArrowLeft,
   Save,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-import NavigationHeader from "@/components/header"
 import { createShipmentOrder } from "@/lib/order"
 
+// import master sheet
+import { master_sku_code_options } from "@/constants/sku_code_options"
 
-
+// Channel SKU mapping
+const channelSkuMapping = {
+  Amazon: {
+    mCaf121: "AMZ-mCaf121",
+    mCaf122: "AMZ-mCaf122",
+    mCaf123: "AMZ-mCaf123",
+    mCaf124: "AMZ-mCaf124",
+    mCaf125: "AMZ-mCaf125",
+  },
+  Flipkart: {
+    mCaf121: "FK-mCaf121",
+    mCaf122: "FK-mCaf122",
+    mCaf123: "FK-mCaf123",
+    mCaf124: "FK-mCaf124",
+    mCaf125: "FK-mCaf125",
+  },
+  Nykaa: {
+    mCaf121: "NYK-mCaf121",
+    mCaf122: "NYK-mCaf122",
+    mCaf123: "NYK-mCaf123",
+    mCaf124: "NYK-mCaf124",
+    mCaf125: "NYK-mCaf125",
+  },
+  Zepto: {
+    mCaf121: "ZPT-mCaf121",
+    mCaf122: "ZPT-mCaf122",
+    mCaf123: "ZPT-mCaf123",
+    mCaf124: "ZPT-mCaf124",
+    mCaf125: "ZPT-mCaf125",
+  },
+  BigBasket: {
+    mCaf121: "BB-mCaf121",
+    mCaf122: "BB-mCaf122",
+    mCaf123: "BB-mCaf123",
+    mCaf124: "BB-mCaf124",
+    mCaf125: "BB-mCaf125",
+  },
+  "Swiggy Instamart": {
+    mCaf121: "SWG-mCaf121",
+    mCaf122: "SWG-mCaf122",
+    mCaf123: "SWG-mCaf123",
+    mCaf124: "SWG-mCaf124",
+    mCaf125: "SWG-mCaf125",
+  },
+  Blinkit: {
+    mCaf121: "BLK-mCaf121",
+    mCaf122: "BLK-mCaf122",
+    mCaf123: "BLK-mCaf123",
+    mCaf124: "BLK-mCaf124",
+    mCaf125: "BLK-mCaf125",
+  },
+}
 
 const brands = ["mCaffine", "MCaffeine", "Other Brand"]
 const facilities = ["Delhi WH1", "Mumbai WH1", "Mumbai WH2", "Bangalore WH1", "Hyderabad WH1", "Chennai WH1"]
 const channels = ["Amazon", "Flipkart", "Zepto", "Nykaa", "BigBasket", "Swiggy Instamart", "Blinkit"]
 const locations = ["New Delhi", "Mumbai", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune"]
 
+// Searchable Select Component
+function SearchableSelect({ value, onValueChange, options, placeholder, searchPlaceholder, disabled = false }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between h-10 bg-transparent"
+          disabled={disabled}
+        >
+          {value ? options.find((option) => option.value === value)?.label : placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder} />
+          <CommandList>
+            <CommandEmpty>No option found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.value}
+                  onSelect={(currentValue) => {
+                    onValueChange(currentValue === value ? "" : currentValue)
+                    setOpen(false)
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme }) {
   const [shipmentOrder, setShipmentOrder] = useState({
     entryDate: new Date(),
     brand: "",
     poDate: undefined,
-    // facility: "",
     channel: "",
     location: "",
     poNumber: "",
@@ -56,30 +155,112 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       qty: "",
       gmv: "",
       poValue: "",
+      brandName: "",
+      mrp: "",
     },
   ])
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [brandMismatchError, setBrandMismatchError] = useState("")
+
+  // Prepare options for searchable selects
+  const channelOptions = useMemo(() => channels.map((channel) => ({ value: channel, label: channel })), [])
+
+  const skuCodeOptions = useMemo(
+    () =>
+      master_sku_code_options.map((sku) => ({
+        value: sku.sku_code,
+        label: `${sku.sku_code}`,
+      })),
+    [],
+  )
+
+  // Auto-fill brand based on selected SKUs
+  useEffect(() => {
+    const skusWithBrands = skuOrders.filter((sku) => sku.brandName)
+
+    if (skusWithBrands.length === 0) {
+      setShipmentOrder((prev) => ({ ...prev, brand: "" }))
+      setBrandMismatchError("")
+      return
+    }
+
+    // Get unique brands from selected SKUs
+    const uniqueBrands = [...new Set(skusWithBrands.map((sku) => sku.brandName))]
+
+    if (uniqueBrands.length === 1) {
+      // All SKUs are from the same brand
+      setShipmentOrder((prev) => ({ ...prev, brand: uniqueBrands[0] }))
+      setBrandMismatchError("")
+    } else if (uniqueBrands.length > 1) {
+      // Multiple brands detected
+      setBrandMismatchError(
+        `Multiple brands detected: ${uniqueBrands.join(", ")}. All SKUs must be from the same brand.`,
+      )
+      setShipmentOrder((prev) => ({ ...prev, brand: "" }))
+    }
+  }, [skuOrders])
 
   const handleShipmentChange = (field, value) => {
     setShipmentOrder((prev) => ({
       ...prev,
       [field]: value,
     }))
+
+    // Update all SKU channel codes when channel changes
+    if (field === "channel") {
+      setSkuOrders((prev) =>
+        prev.map((sku) => ({
+          ...sku,
+          channelSkuCode:
+            sku.skuCode && channelSkuMapping[value]?.[sku.skuCode] ? channelSkuMapping[value][sku.skuCode] : "",
+        })),
+      )
+    }
   }
 
   const handleSkuChange = (id, field, value) => {
     setSkuOrders((prev) =>
-      prev.map((sku) =>
-        sku.id === id
-          ? {
-              ...sku,
-              [field]: value,
+      prev.map((sku) => {
+        if (sku.id !== id) return sku
+
+        const updatedSku = { ...sku, [field]: value }
+
+        // Auto-fill when SKU code changes
+        if (field === "skuCode") {
+          const masterSku = master_sku_code_options.find((item) => item.sku_code === value)
+          if (masterSku) {
+            updatedSku.skuName = masterSku.sku_name
+            updatedSku.brandName = masterSku.brand_name
+            updatedSku.mrp = masterSku.mrp
+
+            // Auto-fill channel SKU code if channel is selected
+            if (shipmentOrder.channel && channelSkuMapping[shipmentOrder.channel]?.[value]) {
+              updatedSku.channelSkuCode = channelSkuMapping[shipmentOrder.channel][value]
             }
-          : sku,
-      ),
+
+            // Auto-calculate GMV if quantity exists
+            if (updatedSku.qty) {
+              updatedSku.gmv = (Number(updatedSku.qty) * masterSku.mrp).toString()
+            }
+          } else {
+            // Clear auto-filled fields if SKU not found
+            updatedSku.skuName = ""
+            updatedSku.brandName = ""
+            updatedSku.mrp = ""
+            updatedSku.channelSkuCode = ""
+          }
+        }
+
+        // Auto-calculate GMV when quantity changes
+        if (field === "qty" && updatedSku.mrp) {
+          updatedSku.gmv = (Number(value) * Number(updatedSku.mrp)).toString()
+        }
+
+        return updatedSku
+      }),
     )
   }
 
@@ -94,6 +275,8 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       qty: "",
       gmv: "",
       poValue: "",
+      brandName: "",
+      mrp: "",
     }
     setSkuOrders((prev) => [...prev, newSku])
   }
@@ -105,8 +288,13 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
   }
 
   const validateForm = () => {
+    // Check for brand consistency first
+    if (brandMismatchError) {
+      return brandMismatchError
+    }
+
     // Validate shipment order
-    const requiredShipmentFields = ["brand", "facility", "channel", "location", "poNumber"]
+    const requiredShipmentFields = ["brand", "channel", "location", "poNumber"]
     for (const field of requiredShipmentFields) {
       if (!shipmentOrder[field]) {
         return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
@@ -140,6 +328,18 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       }
     }
 
+    // Final brand consistency check
+    const skusWithBrands = skuOrders.filter((sku) => sku.brandName)
+    const uniqueBrands = [...new Set(skusWithBrands.map((sku) => sku.brandName))]
+
+    if (uniqueBrands.length > 1) {
+      return `All SKUs must be from the same brand. Found: ${uniqueBrands.join(", ")}`
+    }
+
+    if (uniqueBrands.length === 0) {
+      return "At least one SKU with a valid brand is required"
+    }
+
     return null
   }
 
@@ -162,7 +362,6 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
           entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "dd-MM-yyyy") : "",
           brandName: shipmentOrder.brand,
           poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "dd-MM-yyyy") : "",
-          // facility: shipmentOrder.facility,
           channel: shipmentOrder.channel,
           location: shipmentOrder.location,
           poNumber: shipmentOrder.poNumber,
@@ -175,11 +374,11 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
           qty: Number.parseInt(sku.qty),
           gmv: Number.parseFloat(sku.gmv),
           poValue: Number.parseFloat(sku.poValue),
+          // brandName: sku.brandName,
+          // mrp: Number.parseFloat(sku.mrp || "0"),
         })),
       }
 
-      // Simulate API call
-      // await new Promise((resolve) => setTimeout(resolve, 1500))
       const res = await createShipmentOrder(apiData)
       console.log("Order created:", apiData)
       console.log("res:", res.data)
@@ -201,7 +400,6 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       entryDate: new Date(),
       brand: "",
       poDate: undefined,
-      // facility: "",
       channel: "",
       location: "",
       poNumber: "",
@@ -216,10 +414,13 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
         qty: "",
         gmv: "",
         poValue: "",
+        brandName: "",
+        mrp: "",
       },
     ])
     setError("")
     setSuccess("")
+    setBrandMismatchError("")
   }
 
   // Calculate totals
@@ -229,13 +430,6 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
 
   return (
     <div className={`min-h-screen h-full ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
-      {/* <NavigationHeader
-        currentPage="create-order"
-        onNavigate={onNavigate}
-        isDarkMode={isDarkMode}
-        onToggleTheme={onToggleTheme}
-      /> */}
-
       <main className="container mx-auto p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
@@ -263,6 +457,13 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {brandMismatchError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{brandMismatchError}</AlertDescription>
                 </Alert>
               )}
 
@@ -341,60 +542,28 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                   {/* Basic Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Brand *</Label>
-                      <Select
+                      <Label className="text-sm font-medium">Brand * (Auto-filled from SKUs)</Label>
+                      <Input
+                        type="text"
+                        placeholder="Will be auto-filled based on selected SKUs"
                         value={shipmentOrder.brand}
-                        onValueChange={(value) => handleShipmentChange("brand", value)}
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Select brand" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {brands.map((brand) => (
-                            <SelectItem key={brand} value={brand}>
-                              {brand}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        className={cn("h-10", brandMismatchError ? "border-red-300 bg-red-50" : "bg-gray-100")}
+                        disabled
+                      />
+                      {shipmentOrder.brand && (
+                        <p className="text-xs text-green-600">✓ Brand auto-filled from selected SKUs</p>
+                      )}
                     </div>
-
-                    {/* <div className="space-y-2">
-                      <Label className="text-sm font-medium">Facility *</Label>
-                      <Select
-                        value={shipmentOrder.facility}
-                        onValueChange={(value) => handleShipmentChange("facility", value)}
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Select facility" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {facilities.map((facility) => (
-                            <SelectItem key={facility} value={facility}>
-                              {facility}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div> */}
 
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Channel *</Label>
-                      <Select
+                      <SearchableSelect
                         value={shipmentOrder.channel}
                         onValueChange={(value) => handleShipmentChange("channel", value)}
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Select channel" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {channels.map((channel) => (
-                            <SelectItem key={channel} value={channel}>
-                              {channel}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={channelOptions}
+                        placeholder="Select channel"
+                        searchPlaceholder="Search channels..."
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -473,36 +642,54 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                           />
                         </div>
 
-                        <div className="space-y-2 md:col-span-3">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">SKU Code *</Label>
+                          <SearchableSelect
+                            value={sku.skuCode}
+                            onValueChange={(value) => handleSkuChange(sku.id, "skuCode", value)}
+                            options={skuCodeOptions}
+                            placeholder="Select SKU code"
+                            searchPlaceholder="Search SKU codes..."
+                          />
+                        </div>
+
+                        <div className="space-y-2 md:col-span-2">
                           <Label className="text-sm font-medium">SKU Name *</Label>
                           <Input
                             type="text"
-                            placeholder="Enter SKU name"
+                            placeholder="Auto-filled from SKU selection"
                             value={sku.skuName}
                             onChange={(e) => handleSkuChange(sku.id, "skuName", e.target.value)}
                             className="h-10"
+                            disabled={!!sku.skuCode}
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">SKU Code *</Label>
+                          <Label className="text-sm font-medium">Brand Name</Label>
                           <Input
                             type="text"
-                            placeholder="SKU code"
-                            value={sku.skuCode}
-                            onChange={(e) => handleSkuChange(sku.id, "skuCode", e.target.value)}
+                            placeholder="Auto-filled"
+                            value={sku.brandName}
                             className="h-10"
+                            disabled
                           />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">MRP (₹)</Label>
+                          <Input type="number" placeholder="Auto-filled" value={sku.mrp} className="h-10" disabled />
                         </div>
 
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">Channel SKU Code *</Label>
                           <Input
                             type="text"
-                            placeholder="Channel SKU code"
+                            placeholder="Auto-filled from channel + SKU"
                             value={sku.channelSkuCode}
                             onChange={(e) => handleSkuChange(sku.id, "channelSkuCode", e.target.value)}
                             className="h-10"
+                            disabled={!!(sku.skuCode && shipmentOrder.channel)}
                           />
                         </div>
 
@@ -522,12 +709,13 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                           <Label className="text-sm font-medium">GMV (₹) *</Label>
                           <Input
                             type="number"
-                            placeholder="0.00"
+                            placeholder="Auto-calculated (Qty × MRP)"
                             value={sku.gmv}
                             onChange={(e) => handleSkuChange(sku.id, "gmv", e.target.value)}
                             className="h-10"
                             min="0"
                             step="0.01"
+                            disabled={!!(sku.qty && sku.mrp)}
                           />
                         </div>
 
@@ -548,13 +736,13 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                   ))}
 
                   <Button
-                      type="button"
-                      onClick={addSkuOrder}
-                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add SKU
-                    </Button>
+                    type="button"
+                    onClick={addSkuOrder}
+                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add SKU
+                  </Button>
 
                   {/* Totals Summary */}
                   <Separator />
@@ -600,7 +788,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isLoading}
+              disabled={isLoading || !!brandMismatchError}
               className="h-11 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               <Save className="h-4 w-4 mr-2" />
