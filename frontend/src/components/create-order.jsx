@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+
 import {
   CalendarIcon,
   AlertCircle,
@@ -29,112 +29,71 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { createShipmentOrder } from "@/lib/order"
 
+import SearchableSelect from "./ui/searchable-select"
+
 // import master sheet
 import { master_sku_code_options } from "@/constants/sku_code_options"
 import { master_channel_options } from "@/constants/master_sheet"
+import { channelSkuMapping } from "@/constants/master_channel_skucode_map"
 
 // Channel SKU mapping
-const channelSkuMapping = {
-  Amazon: {
-    MCaf121: "AMZ-mCaf121",
-    MCaf122: "AMZ-mCaf122",
-    MCaf123: "AMZ-mCaf123",
-    MCaf124: "AMZ-mCaf124",
-    MCaf125: "AMZ-mCaf125",
-  },
-  Flipkart: {
-    MCaf121: "FK-mCaf121",
-    MCaf122: "FK-mCaf122",
-    MCaf123: "FK-mCaf123",
-    MCaf124: "FK-mCaf124",
-    MCaf125: "FK-mCaf125",
-  },
-  Nykaa: {
-    MCaf121: "NYK-mCaf121",
-    MCaf122: "NYK-mCaf122",
-    MCaf123: "NYK-mCaf123",
-    MCaf124: "NYK-mCaf124",
-    MCaf125: "NYK-mCaf125",
-  },
-  Zepto: {
-    MCaf121: "ZPT-mCaf121",
-    MCaf122: "ZPT-mCaf122",
-    MCaf123: "ZPT-mCaf123",
-    MCaf124: "ZPT-mCaf124",
-    MCaf125: "ZPT-mCaf125",
-  },
-  BigBasket: {
-    MCaf121: "BB-mCaf121",
-    MCaf122: "BB-mCaf122",
-    MCaf123: "BB-mCaf123",
-    MCaf124: "BB-mCaf124",
-    MCaf125: "BB-mCaf125",
-  },
-  "Swiggy Instamart": {
-    MCaf121: "SWG-mCaf121",
-    MCaf122: "SWG-mCaf122",
-    MCaf123: "SWG-mCaf123",
-    MCaf124: "SWG-mCaf124",
-    MCaf125: "SWG-mCaf125",
-  },
-  Blinkit: {
-    MCaf121: "BLK-mCaf121",
-    MCaf122: "BLK-mCaf122",
-    MCaf123: "BLK-mCaf123",
-    MCaf124: "BLK-mCaf124",
-    MCaf125: "BLK-mCaf125",
-  },
-}
+// const channelSkuMapping = {
+//   Amazon: {
+//     MCaf121: "AMZ-mCaf121",
+//     MCaf122: "AMZ-mCaf122",
+//     MCaf123: "AMZ-mCaf123",
+//     MCaf124: "AMZ-mCaf124",
+//     MCaf125: "AMZ-mCaf125",
+//   },
+//   Flipkart: {
+//     MCaf121: "FK-mCaf121",
+//     MCaf122: "FK-mCaf122",
+//     MCaf123: "FK-mCaf123",
+//     MCaf124: "FK-mCaf124",
+//     MCaf125: "FK-mCaf125",
+//   },
+//   Nykaa: {
+//     MCaf121: "NYK-mCaf121",
+//     MCaf122: "NYK-mCaf122",
+//     MCaf123: "NYK-mCaf123",
+//     MCaf124: "NYK-mCaf124",
+//     MCaf125: "NYK-mCaf125",
+//   },
+//   Zepto: {
+//     MCaf121: "ZPT-mCaf121",
+//     MCaf122: "ZPT-mCaf122",
+//     MCaf123: "ZPT-mCaf123",
+//     MCaf124: "ZPT-mCaf124",
+//     MCaf125: "ZPT-mCaf125",
+//   },
+//   BigBasket: {
+//     MCaf121: "BB-mCaf121",
+//     MCaf122: "BB-mCaf122",
+//     MCaf123: "BB-mCaf123",
+//     MCaf124: "BB-mCaf124",
+//     MCaf125: "BB-mCaf125",
+//   },
+//   "Swiggy Instamart": {
+//     MCaf121: "SWG-mCaf121",
+//     MCaf122: "SWG-mCaf122",
+//     MCaf123: "SWG-mCaf123",
+//     MCaf124: "SWG-mCaf124",
+//     MCaf125: "SWG-mCaf125",
+//   },
+//   Blinkit: {
+//     MCaf121: "BLK-mCaf121",
+//     MCaf122: "BLK-mCaf122",
+//     MCaf123: "BLK-mCaf123",
+//     MCaf124: "BLK-mCaf124",
+//     MCaf125: "BLK-mCaf125",
+//   },
+// }
 
 const brands = ["mCaffine", "MCaffeine", "Other Brand"]
 const facilities = ["Delhi WH1", "Mumbai WH1", "Mumbai WH2", "Bangalore WH1", "Hyderabad WH1", "Chennai WH1"]
 const channels = ["Amazon", "Flipkart", "Zepto", "Nykaa", "BigBasket", "Swiggy Instamart", "Blinkit"]
 const locations = ["New Delhi", "Mumbai", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune"]
 
-// Searchable Select Component
-function SearchableSelect({ value, onValueChange, options, placeholder, searchPlaceholder, disabled = false }) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between h-10 bg-transparent"
-          disabled={disabled}
-        >
-          {value ? options.find((option) => option.value === value)?.label : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
-            <CommandEmpty>No option found.</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  onSelect={(currentValue) => {
-                    onValueChange(currentValue === value ? "" : currentValue)
-                    setOpen(false)
-                  }}
-                >
-                  <Check className={cn("mr-2 h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
-                  {option.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  )
-}
 
 export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme }) {
   const [shipmentOrder, setShipmentOrder] = useState({

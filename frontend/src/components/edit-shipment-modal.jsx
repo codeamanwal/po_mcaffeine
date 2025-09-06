@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,6 +36,10 @@ import { shipmentStatusDataType } from "@/constants/data_type"
 import { updateShipment } from "@/lib/order"
 import { toast } from "sonner"
 
+import SearchableSelect from "./ui/searchable-select"
+
+
+import {master_appointment_change_options} from "@/constants/master_sheet"
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
   "Correction from brand/supplier",
@@ -47,6 +51,8 @@ const PO_EDIT_REASONS = [
   "Data migration correction",
   "Other (specify in comments)",
 ]
+
+// searchable reason for appintment change remark
 
 // Extended shipment data type with dynamic appointment fields
 const extendedShipmentStatusDataType = [
@@ -159,6 +165,13 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const [poEditComments, setPoEditComments] = useState("")
 
   const { user } = useUserStore()
+
+  // appointment remark option
+  const appointmentRemarkOptions = useMemo(() => master_appointment_change_options.map((remark) => (
+  { 
+    value: remark.remark,
+    label: `${remark.remark}`,
+  })), [])
 
   useEffect(() => {
     if (shipmentData) {
@@ -505,18 +518,19 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     // Handle new appointment remark
     if (field.type === "new_appointment_remark") {
       return (
-        <div className="space-y-2">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            {field.label}
-            <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            value={newAppointmentRemark}
-            onChange={(e) => setNewAppointmentRemark(e.target.value)}
-            placeholder="Enter remark for new appointment (required)"
-            className="h-10"
-          />
-          <p className="text-xs text-gray-500">Remark is mandatory for new appointments</p>
+        // <div className="space-y-2">
+
+         <div className="space-y-2">
+            <Label className="text-sm font-medium">{field.label} *</Label>
+            <SearchableSelect
+              value={newAppointmentRemark}
+              onValueChange={(value) => setNewAppointmentRemark(value)}
+              options={appointmentRemarkOptions}
+              placeholder="Select remark"
+              searchPlaceholder="Search remarks..."
+            />
+          
+          {/* <p className="text-xs text-gray-500">Remark is mandatory for new appointments</p> */}
         </div>
       )
     }

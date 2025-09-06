@@ -2586,3 +2586,12 @@ export const master_sku_code_options = [
         "mrp": 499
     }
 ]
+
+// const seen = new Set();
+// export const master_sku_code_options = [
+//     master_sku_code_options_arr.filter(item => {
+//         if (seen.has(item.sku_code)) return false;
+//         seen.add(item.sku_code);
+//         return true;
+//     })
+// ];
