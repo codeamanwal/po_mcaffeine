@@ -31,57 +31,58 @@ import { createShipmentOrder } from "@/lib/order"
 
 // import master sheet
 import { master_sku_code_options } from "@/constants/sku_code_options"
+import { master_channel_options } from "@/constants/master_sheet"
 
 // Channel SKU mapping
 const channelSkuMapping = {
   Amazon: {
-    mCaf121: "AMZ-mCaf121",
-    mCaf122: "AMZ-mCaf122",
-    mCaf123: "AMZ-mCaf123",
-    mCaf124: "AMZ-mCaf124",
-    mCaf125: "AMZ-mCaf125",
+    MCaf121: "AMZ-mCaf121",
+    MCaf122: "AMZ-mCaf122",
+    MCaf123: "AMZ-mCaf123",
+    MCaf124: "AMZ-mCaf124",
+    MCaf125: "AMZ-mCaf125",
   },
   Flipkart: {
-    mCaf121: "FK-mCaf121",
-    mCaf122: "FK-mCaf122",
-    mCaf123: "FK-mCaf123",
-    mCaf124: "FK-mCaf124",
-    mCaf125: "FK-mCaf125",
+    MCaf121: "FK-mCaf121",
+    MCaf122: "FK-mCaf122",
+    MCaf123: "FK-mCaf123",
+    MCaf124: "FK-mCaf124",
+    MCaf125: "FK-mCaf125",
   },
   Nykaa: {
-    mCaf121: "NYK-mCaf121",
-    mCaf122: "NYK-mCaf122",
-    mCaf123: "NYK-mCaf123",
-    mCaf124: "NYK-mCaf124",
-    mCaf125: "NYK-mCaf125",
+    MCaf121: "NYK-mCaf121",
+    MCaf122: "NYK-mCaf122",
+    MCaf123: "NYK-mCaf123",
+    MCaf124: "NYK-mCaf124",
+    MCaf125: "NYK-mCaf125",
   },
   Zepto: {
-    mCaf121: "ZPT-mCaf121",
-    mCaf122: "ZPT-mCaf122",
-    mCaf123: "ZPT-mCaf123",
-    mCaf124: "ZPT-mCaf124",
-    mCaf125: "ZPT-mCaf125",
+    MCaf121: "ZPT-mCaf121",
+    MCaf122: "ZPT-mCaf122",
+    MCaf123: "ZPT-mCaf123",
+    MCaf124: "ZPT-mCaf124",
+    MCaf125: "ZPT-mCaf125",
   },
   BigBasket: {
-    mCaf121: "BB-mCaf121",
-    mCaf122: "BB-mCaf122",
-    mCaf123: "BB-mCaf123",
-    mCaf124: "BB-mCaf124",
-    mCaf125: "BB-mCaf125",
+    MCaf121: "BB-mCaf121",
+    MCaf122: "BB-mCaf122",
+    MCaf123: "BB-mCaf123",
+    MCaf124: "BB-mCaf124",
+    MCaf125: "BB-mCaf125",
   },
   "Swiggy Instamart": {
-    mCaf121: "SWG-mCaf121",
-    mCaf122: "SWG-mCaf122",
-    mCaf123: "SWG-mCaf123",
-    mCaf124: "SWG-mCaf124",
-    mCaf125: "SWG-mCaf125",
+    MCaf121: "SWG-mCaf121",
+    MCaf122: "SWG-mCaf122",
+    MCaf123: "SWG-mCaf123",
+    MCaf124: "SWG-mCaf124",
+    MCaf125: "SWG-mCaf125",
   },
   Blinkit: {
-    mCaf121: "BLK-mCaf121",
-    mCaf122: "BLK-mCaf122",
-    mCaf123: "BLK-mCaf123",
-    mCaf124: "BLK-mCaf124",
-    mCaf125: "BLK-mCaf125",
+    MCaf121: "BLK-mCaf121",
+    MCaf122: "BLK-mCaf122",
+    MCaf123: "BLK-mCaf123",
+    MCaf124: "BLK-mCaf124",
+    MCaf125: "BLK-mCaf125",
   },
 }
 
@@ -166,7 +167,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
   const [brandMismatchError, setBrandMismatchError] = useState("")
 
   // Prepare options for searchable selects
-  const channelOptions = useMemo(() => channels.map((channel) => ({ value: channel, label: channel })), [])
+  const channelOptions = useMemo(() => master_channel_options.map((channel) => ({ value: channel, label: channel })), [])
 
   const skuCodeOptions = useMemo(
     () =>

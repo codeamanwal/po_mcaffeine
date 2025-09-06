@@ -226,7 +226,7 @@ export default function SkuLevelEditModal({
       }, 1000)
     } catch (e) {
       console.error(e)
-      const msg = e?.message || "Failed to update SKUs. Please try again."
+      const msg = err.response.data.error || err.message || err || "Failed to update SKUs. Please try again."
       setError(msg)
       toast.error(msg)
     } finally {

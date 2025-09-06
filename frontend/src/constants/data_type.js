@@ -138,6 +138,9 @@ export const poFormatDataType = [
   // { fieldName: "check", label: "Check", id: "check", type: "text" },
 ];
 
+import { master_courier_partner_options, master_facility_option, master_rto_remark_options } from "./master_sheet";
+import { master_status_planning_options, master_status_warehouse_options, master_status_logistics_options } from "./master_sheet";
+import { master_channel_options } from "./master_sheet";
 
 export const shipmentStatusDataType = [
   { fieldName: "uid", label: "UID", id: "uid", type: "text" },
@@ -148,14 +151,14 @@ export const shipmentStatusDataType = [
     label: "Facility",
     id: "facility",
     type: "select",
-    options: ["MUM_WAREHOUSE1", "MUM_WAREHOUSE2", "DEL_WAREHOUSE1", "BLR_WAREHOUSE1"],
+    options: master_facility_option,
   },
   {
     fieldName: "channel",
     label: "Channel",
     id: "channel",
     type: "select",
-    options: ["Zepto", "Amazon", "Flipkart", "Nykaa", "BigBasket", "Swiggy Instamart", "Blinkit"],
+    options: master_channel_options,
   },
   {
     fieldName: "location",
@@ -182,21 +185,21 @@ export const shipmentStatusDataType = [
     label: "Status (Planning)",
     id: "statusPlanning",
     type: "select",
-    options: ["Confirmed", "Pending", "Cancelled", "In Progress"],
+    options: master_status_planning_options,
   },
   {
     fieldName: "statusWarehouse",
     label: "Status (Warehouse)",
     id: "statusWarehouse",
     type: "select",
-    options: ["Ready", "Processing", "Dispatched", ""],
+    options: master_status_warehouse_options,
   },
   {
     fieldName: "statusLogistics",
     label: "Status (Logistics)",
     id: "statusLogistics",
     type: "select",
-    options: ["Ready", "Processing", "Dispatched", "Delivered", ""],
+    options: master_status_logistics_options,
   },
   { fieldName: "channelInwardingRemarks", label: "Channel Inwarding Remarks", id: "channelInwardingRemarks", type: "text" },
   { fieldName: "dispatchRemarksLogistics", label: "Dispatch Remarks (Logistics)", id: "dispatchRemarksLogistics", type: "text" },
@@ -225,11 +228,17 @@ export const shipmentStatusDataType = [
     type: "select",
     options: ["Quick-commerce", "E-commerce", "Marketplace", "Retail"],
   },
-  { fieldName: "firstTransporter", label: "1st Transporter (First Mile)", id: "firstTransporter", type: "text" },
+  { fieldName: "firstTransporter", label: "1st Transporter (First Mile)", id: "firstTransporter", type: "select", 
+    options: master_courier_partner_options,
+  },
   { fieldName: "firstDocketNo", label: "1st Docket No/ Vehicle Number (First Mile)", id: "firstDocketNo", type: "text" },
-  { fieldName: "secondTransporter", label: "2nd Transporter (Mid Mile)", id: "secondTransporter", type: "text" },
+  { fieldName: "secondTransporter", label: "2nd Transporter (Mid Mile)", id: "secondTransporter", type: "select",
+    options: master_courier_partner_options,
+  },
   { fieldName: "secondDocketNo", label: "2nd Docket No/ Vehicle Number (Mid Mile)", id: "secondDocketNo", type: "text" },
-  { fieldName: "thirdTransporter", label: "3rd Transporter (Last Mile)", id: "thirdTransporter", type: "text" },
+  { fieldName: "thirdTransporter", label: "3rd Transporter (Last Mile)", id: "thirdTransporter", type: "select",
+    options: master_courier_partner_options,
+  },
   { fieldName: "thirdDocketNo", label: "3rd Docket No/ Vehicle Number (Last Mile)", id: "thirdDocketNo", type: "text" },
   { fieldName: "appointmentLetter", label: "Appointment Letter/STN", id: "appointmentLetter", type: "text" },
   { fieldName: "labelsLink", label: "Labels - Amazon/Flipkart (Link)", id: "labelsLink", type: "text" },
@@ -245,7 +254,9 @@ export const shipmentStatusDataType = [
   { fieldName: "customerCode", label: "Customer Code", id: "customerCode", type: "text" },
   { fieldName: "poEntryCount", label: "PO Entry Count", id: "poEntryCount", type: "number" },
   { fieldName: "deliveryDate", label: "Delivery Date", id: "deliveryDate", type: "date" },
-  { fieldName: "rescheduleLag", label: "Reschedule Lag (Remarks)", id: "rescheduleLag", type: "number" },
+  { fieldName: "rescheduleLag", label: "Reschedule Lag (Remarks)", id: "rescheduleLag", type: "select",
+    options: master_rto_remark_options,
+  },
   { fieldName: "finalRemarks", label: "Final Remarks", id: "finalRemarks", type: "text" },
   { fieldName: "updatedGmv", label: "Updated GMV", id: "updatedGmv", type: "number" },
   { fieldName: "physicalWeight", label: "Physical Weight", id: "physicalWeight", type: "number" },

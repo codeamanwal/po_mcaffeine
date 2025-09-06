@@ -82,7 +82,7 @@ const adminFields = [
   "remarksPlanning",
   "specialRemarksCOPT",
   // "newShipmentReference",
-  // "statusActive",
+  "statusActive",
   "statusPlanning",
   "channelInwardingRemarks",
   "dispatchDateTentative",
@@ -402,11 +402,15 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       setPoEditComments("")
     } catch (err) {
       console.error("Error: ", err)
-      setError("Failed to update shipment: " + (err.message || err))
-      toast.error("Failed to update shipment: " + (err.message || err))
+      setError("Failed to update shipment: " + (err.response.data.error || err.message || err))
+      toast.error("Failed to update shipment: " + (err.response.data.error || err.message || err))
+    }finally {
+      setIsLoading(false)
+      setSuccess("");
+      setError("");
     }
 
-    setIsLoading(false)
+    
   }
 
   // Check if field is backend-controlled (like currentAppointmentDate)
