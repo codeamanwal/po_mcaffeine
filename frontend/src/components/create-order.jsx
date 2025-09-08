@@ -649,7 +649,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                             value={sku.channelSkuCode}
                             onChange={(e) => handleSkuChange(sku.id, "channelSkuCode", e.target.value)}
                             className="h-10"
-                            disabled={!!(sku.skuCode && shipmentOrder.channel)}
+                            // disabled={!!(sku.skuCode && shipmentOrder.channel)}
                           />
                         </div>
 

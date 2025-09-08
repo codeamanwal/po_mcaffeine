@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { validateShipmentData } from "@/lib/validation"
 import {
   CalendarIcon,
   AlertCircle,
@@ -35,11 +36,10 @@ import { useUserStore } from "@/store/user-store"
 import { shipmentStatusDataType } from "@/constants/data_type"
 import { updateShipment } from "@/lib/order"
 import { toast } from "sonner"
-
 import SearchableSelect from "./ui/searchable-select"
 
-
 import {master_appointment_change_options} from "@/constants/master_sheet"
+
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
   "Correction from brand/supplier",
@@ -51,8 +51,6 @@ const PO_EDIT_REASONS = [
   "Data migration correction",
   "Other (specify in comments)",
 ]
-
-// searchable reason for appintment change remark
 
 // Extended shipment data type with dynamic appointment fields
 const extendedShipmentStatusDataType = [
@@ -79,15 +77,12 @@ const extendedShipmentStatusDataType = [
 
 // Role-based field permissions
 const adminFields = [
-  // "poDate",
   "facility",
   "channel",
   "location",
   "poNumber",
-  // "brandName",
   "remarksPlanning",
   "specialRemarksCOPT",
-  // "newShipmentReference",
   "statusActive",
   "statusPlanning",
   "channelInwardingRemarks",
@@ -99,19 +94,8 @@ const adminFields = [
   "orderNo3",
   "poNumberInwardCWH",
   "channelType",
-  // "appointmentLetter",
   "labelsLink",
-  // "invoiceDate",
-  // "invoiceLink",
-  // "cnLink",
-  // "ewayLink",
   "invoiceValue",
-  // "remarksAccountsTeam",
-  // "invoiceChallanNumber",
-  // "invoiceCheckedBy",
-  // "tallyCustomerName",
-  // "customerCode",
-  // "poEntryCount",
 ]
 
 const warehouseFields = [
@@ -121,7 +105,6 @@ const warehouseFields = [
   "dispatchDate",
   "noOfBoxes",
   "pickListNo",
-  // "workingTypeWarehouse",
   "inventoryRemarksWarehouse",
   "b2bWorkingTeamRemarks",
   "actualWeight",
@@ -137,7 +120,7 @@ const warehouseFields = [
 const logisticsFields = [
   "statusLogistics",
   "dispatchRemarksLogistics",
-  "currentAppointmentDate", // Read-only field
+  "currentAppointmentDate",
   "allAppointmentDate",
   "newAppointmentDate",
   "newAppointmentRemark",
@@ -158,6 +141,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [activeTab, setActiveTab] = useState("admin")
+  const [validationErrors, setValidationErrors] = useState([])
 
   // PO Number change tracking
   const [poNumberChanged, setPoNumberChanged] = useState(false)
@@ -166,8 +150,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   const { user } = useUserStore()
 
-  // appointment remark option
-  const appointmentRemarkOptions = useMemo(() => master_appointment_change_options.map((remark) => (
+   const appointmentRemarkOptions = useMemo(() => master_appointment_change_options.map((remark) => (
   { 
     value: remark.remark,
     label: `${remark.remark}`,
@@ -177,6 +160,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     if (shipmentData) {
       setSuccess("")
       setError("")
+      setValidationErrors([])
       // Reset PO edit tracking
       setPoNumberChanged(false)
       setPoEditReason("")
@@ -189,7 +173,6 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       extendedShipmentStatusDataType.forEach((field) => {
         if (field.type === "date" && field.fieldName in processedData) {
           const dateValue = processedData[field.fieldName]
-          // Check if dateValue exists and is not empty/invalid
           if (dateValue && typeof dateValue === "string" && dateValue !== "1900/01/00" && dateValue.trim() !== "") {
             try {
               let parsedDate
@@ -221,15 +204,12 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       const appointmentDates = processedData.allAppointmentDate || []
       const appointmentRemarks = processedData.appointmentRemarks || []
 
-      console.log("Raw appointment data:", { appointmentDates, appointmentRemarks })
-
       // Convert appointment dates to Date objects and pair with remarks
       const processedAppointments = appointmentDates
         .map((dateStr, index) => {
           let parsedDate = null
           if (dateStr && typeof dateStr === "string" && dateStr !== "1900/01/00" && dateStr.trim() !== "") {
             try {
-              // Handle DD-MM-YYYY format from database
               if (dateStr.includes("-")) {
                 const [day, month, year] = dateStr.split("-")
                 parsedDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
@@ -257,8 +237,6 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         })
         .filter((apt) => apt.date !== null)
 
-      console.log("Processed appointments:", processedAppointments)
-
       setAppointments(processedAppointments)
       setFormData(processedData)
       setOriginalData(processedData)
@@ -275,6 +253,14 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       setActiveTab("admin")
     }
   }, [user])
+
+  // Validate form data when it changes
+  useEffect(() => {
+    if (Object.keys(formData).length > 0) {
+      const validation = validateShipmentData(formData)
+      setValidationErrors(validation.errors)
+    }
+  }, [formData])
 
   const handleInputChange = (fieldName, value) => {
     // Check if PO Number is being changed by admin/superadmin
@@ -301,7 +287,6 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     const validAppointments = appointments.filter((apt) => apt.date !== null)
     if (validAppointments.length === 0) return null
 
-    // Return the latest appointment date
     return validAppointments.reduce((latest, current) => {
       if (!latest.date) return current
       return current.date > latest.date ? current : latest
@@ -342,6 +327,14 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         return
       }
 
+      // Validate shipment data using validation utility
+      const validation = validateShipmentData(formData)
+      if (!validation.isValid) {
+        setError(`Validation errors: ${validation.errors.join(", ")}`)
+        setIsLoading(false)
+        return
+      }
+
       // Convert Date objects back to strings for saving
       const dataToSave = { ...formData }
 
@@ -355,8 +348,6 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           editedBy: user?.email,
           editedAt: new Date().toISOString(),
         }
-
-        console.log("PO Number edit audit:", dataToSave.poEditAudit)
       }
 
       // Process regular date fields
@@ -366,48 +357,35 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         }
       })
 
-      // Handle appointments - always preserve existing ones
+      // Handle appointments
       let finalAppointmentDates = []
       let finalAppointmentRemarks = []
 
-      // First, add all existing appointments
       if (appointments.length > 0) {
         finalAppointmentDates = appointments.map((apt) => format(apt.date, "dd-MM-yyyy"))
         finalAppointmentRemarks = appointments.map((apt) => apt.remark)
       }
 
-      // Then, add new appointment if provided (push to existing arrays)
       if (newAppointmentDate && newAppointmentRemark.trim()) {
         finalAppointmentDates.push(format(newAppointmentDate, "dd-MM-yyyy"))
         finalAppointmentRemarks.push(newAppointmentRemark.trim())
-
-        // Update current appointment date to the new one (latest)
         dataToSave.currentAppointmentDate = format(newAppointmentDate, "dd-MM-yyyy")
       } else if (appointments.length > 0) {
-        // If no new appointment, set current appointment date to the latest existing one
         const currentAppointment = getCurrentAppointmentDate()
         if (currentAppointment) {
           dataToSave.currentAppointmentDate = format(currentAppointment.date, "dd-MM-yyyy")
         }
       }
 
-      // Always set the appointment arrays (even if empty)
       dataToSave.allAppointmentDate = finalAppointmentDates
       dataToSave.appointmentRemarks = finalAppointmentRemarks
 
-      console.log("Saving appointment data:", {
-        allAppointmentDate: finalAppointmentDates,
-        appointmentRemarks: finalAppointmentRemarks,
-        currentAppointmentDate: dataToSave.currentAppointmentDate,
-      })
-
       const res = await updateShipment(dataToSave)
       setSuccess("Shipment updated successfully!")
-      console.log("Shipment updated successfully:", res.data)
       onSave()
       toast.success("Shipment updated successfully!")
 
-      // Reset new appointment fields and PO edit tracking after successful save
+      // Reset fields after successful save
       setNewAppointmentDate(null)
       setNewAppointmentRemark("")
       setPoNumberChanged(false)
@@ -415,18 +393,14 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       setPoEditComments("")
     } catch (err) {
       console.error("Error: ", err)
-      setError("Failed to update shipment: " + (err.response.data.error || err.message || err))
-      toast.error("Failed to update shipment: " + (err.response.data.error || err.message || err))
-    }finally {
-      setIsLoading(false)
-      setSuccess("");
-      setError("");
+      setError("Failed to update shipment: " + (err.message || err))
+      toast.error("Failed to update shipment: " + (err.message || err))
     }
 
-    
+    setIsLoading(false)
   }
 
-  // Check if field is backend-controlled (like currentAppointmentDate)
+  // Check if field is backend-controlled
   const isBackendControlledField = (fieldName) => {
     if (fieldName === "currentAppointmentDate") return true
     if (fieldName === "deliveryDate" && originalData["statusLogistics"] !== "Delivered") return true
@@ -438,6 +412,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     const isBackendControlled = isBackendControlledField(field.fieldName)
     const isPoNumberField = field.fieldName === "poNumber"
     const needsPoReason = isPoNumberField && poNumberChanged && (user?.role === "admin" || user?.role === "superadmin")
+    const hasValidationError = validationErrors.some((error) => error.toLowerCase().includes(field.label.toLowerCase()))
 
     // Handle appointment display
     if (field.type === "appointment_display") {
@@ -518,19 +493,19 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     // Handle new appointment remark
     if (field.type === "new_appointment_remark") {
       return (
-        // <div className="space-y-2">
-
-         <div className="space-y-2">
-            <Label className="text-sm font-medium">{field.label} *</Label>
-            <SearchableSelect
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            {field.label}
+            <span className="text-red-500">*</span>
+          </Label>
+          <SearchableSelect
               value={newAppointmentRemark}
               onValueChange={(value) => setNewAppointmentRemark(value)}
               options={appointmentRemarkOptions}
               placeholder="Select remark"
               searchPlaceholder="Search remarks..."
-            />
-          
-          {/* <p className="text-xs text-gray-500">Remark is mandatory for new appointments</p> */}
+          />
+          <p className="text-xs text-gray-500">Remark is mandatory for new appointments</p>
         </div>
       )
     }
@@ -543,6 +518,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           <div className="space-y-2">
             <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
               {field.label}
+              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
             </Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -554,6 +530,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                     !value && "text-muted-foreground",
                     shouldDisableDate && "opacity-60 cursor-not-allowed bg-gray-50",
                     isBackendControlled && "border-blue-200 bg-blue-50",
+                    hasValidationError && "border-red-300 bg-red-50",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -578,11 +555,12 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       case "select":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id} className="text-sm font-medium">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
               {field.label}
+              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
             </Label>
             <Select value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
-              <SelectTrigger className="h-10">
+              <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
                 <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
               </SelectTrigger>
               <SelectContent>
@@ -599,15 +577,20 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       case "number":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id} className="text-sm font-medium">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
               {field.label}
+              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
             </Label>
             <Input
               id={field.id}
               type="number"
               value={value || ""}
               onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
-              className={cn("h-10", needsPoReason && !poEditReason && "border-red-300 bg-red-50")}
+              className={cn(
+                "h-10",
+                needsPoReason && !poEditReason && "border-red-300 bg-red-50",
+                hasValidationError && "border-red-300 bg-red-50",
+              )}
               step={field.fieldName.includes("Weight") ? "0.01" : "1"}
             />
             {needsPoReason && (
@@ -622,15 +605,20 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       default:
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id} className="text-sm font-medium">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
               {field.label}
+              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
             </Label>
             <Input
               id={field.id}
               type="text"
               value={value || ""}
               onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
-              className={cn("h-10", needsPoReason && !poEditReason && "border-red-300 bg-red-50")}
+              className={cn(
+                "h-10",
+                needsPoReason && !poEditReason && "border-red-300 bg-red-50",
+                hasValidationError && "border-red-300 bg-red-50",
+              )}
             />
             {needsPoReason && (
               <p className="text-xs text-red-600 flex items-center gap-1">
@@ -693,7 +681,9 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
             <Save className="h-5 w-5" />
             <span>Edit Shipment</span>
           </DialogTitle>
-          <DialogDescription>Update shipment information based on your role permissions</DialogDescription>
+          <DialogDescription>
+            Update shipment information with validation based on your role permissions
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -708,6 +698,20 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
             <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+
+          {validationErrors.length > 0 && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="font-medium mb-1">Validation Issues:</div>
+                <ul className="text-sm list-disc list-inside space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
             </Alert>
           )}
 
@@ -727,8 +731,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
             {availableTabs.map((tab) => (
               <TabsContent key={tab?.value} value={tab?.value}>
-                <ScrollArea className="h-[65vh] pr-4">
-                  <div className="flex flex-col">
+                <ScrollArea className="max-h-[60vh] pr-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-h-[60vh]">
                     {getFieldsByRole(tab?.value).map((field) => (
                       <div
@@ -739,85 +742,82 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                       </div>
                     ))}
                   </div>
-
-                  {/* PO Number Edit Reason Section */}
-                  {poNumberChanged && (user?.role === "admin" || user?.role === "superadmin") && (
-                    <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-                      <CardHeader>
-                        <CardTitle className="text-lg text-red-900 dark:text-red-100 flex items-center gap-2">
-                          <AlertTriangle className="h-5 w-5" />
-                          Reason Required for PO Number Change
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium text-red-900 dark:text-red-100">Original PO Number</Label>
-                            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded border font-mono text-sm">
-                              {originalData.poNumber || "Not set"}
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium text-red-900 dark:text-red-100">New PO Number</Label>
-                            <div className="p-2 bg-red-100 dark:bg-red-900 rounded border font-mono text-sm">
-                              {formData.poNumber || "Not set"}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-red-900 dark:text-red-100">Reason for Change *</Label>
-                          <Select value={poEditReason} onValueChange={setPoEditReason}>
-                            <SelectTrigger className="border-red-300">
-                              <SelectValue placeholder="Select a reason for changing PO Number..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PO_EDIT_REASONS.map((reason) => (
-                                <SelectItem key={reason} value={reason}>
-                                  {reason}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {!poEditReason && <p className="text-xs text-red-600">This field is mandatory</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-red-900 dark:text-red-100">Additional Comments</Label>
-                          <Textarea
-                            placeholder="Any additional details about this change..."
-                            value={poEditComments}
-                            onChange={(e) => setPoEditComments(e.target.value)}
-                            rows={3}
-                            className="border-red-300"
-                          />
-                        </div>
-
-                        <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
-                          <AlertTriangle className="h-4 w-4" />
-                          <span>This change will be logged for audit purposes</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  </div>
                   <ScrollBar orientation="vertical" />
                 </ScrollArea>
               </TabsContent>
             ))}
           </Tabs>
 
-          
+          {/* PO Number Edit Reason Section */}
+          {poNumberChanged && (user?.role === "admin" || user?.role === "superadmin") && (
+            <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+              <CardHeader>
+                <CardTitle className="text-lg text-red-900 dark:text-red-100 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Reason Required for PO Number Change
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-red-900 dark:text-red-100">Original PO Number</Label>
+                    <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded border font-mono text-sm">
+                      {originalData.poNumber || "Not set"}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-red-900 dark:text-red-100">New PO Number</Label>
+                    <div className="p-2 bg-red-100 dark:bg-red-900 rounded border font-mono text-sm">
+                      {formData.poNumber || "Not set"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-red-900 dark:text-red-100">Reason for Change *</Label>
+                  <Select value={poEditReason} onValueChange={setPoEditReason}>
+                    <SelectTrigger className="border-red-300">
+                      <SelectValue placeholder="Select a reason for changing PO Number..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PO_EDIT_REASONS.map((reason) => (
+                        <SelectItem key={reason} value={reason}>
+                          {reason}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!poEditReason && <p className="text-xs text-red-600">This field is mandatory</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-red-900 dark:text-red-100">Additional Comments</Label>
+                  <Textarea
+                    placeholder="Any additional details about this change..."
+                    value={poEditComments}
+                    onChange={(e) => setPoEditComments(e.target.value)}
+                    rows={3}
+                    className="border-red-300"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>This change will be logged for audit purposes</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
-          {/* Cancle and save button at bottom */}
-        <div className="flex justify-end space-x-4 pt-4 border-t z-20 w-full">
+
+        <div className="flex justify-end space-x-4 pt-4 border-t">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             <X className="h-4 w-4 mr-2" />
             Cancel
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isLoading || (poNumberChanged && !poEditReason)}
+            disabled={isLoading || (poNumberChanged && !poEditReason) || validationErrors.length > 0}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             <Save className="h-4 w-4 mr-2" />

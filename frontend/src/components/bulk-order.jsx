@@ -10,9 +10,9 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
 import { Upload, FileText, AlertCircle, CheckCircle, Download, ArrowLeft, X, Eye, Database } from "lucide-react"
 import { createBulkShipment } from "@/lib/order"
+import { validateBulkOrderData, autoFillSkuData, calculateGmv, generateChannelSkuCode } from "@/lib/validation"
 
-
-export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme }) {
+const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
   const [file, setFile] = useState(null)
   const [parsedOrders, setParsedOrders] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -62,21 +62,7 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
     const lines = csvText.split("\n").filter((line) => line.trim())
     const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
-    const expectedHeaders = [
-      // "Entry Date",
-      "Brand",
-      "Channel",
-      "Location",
-      "PO Date",
-      "PO Number",
-      "Sr/ No",
-      "SKU Name",
-      "SKU Code",
-      "Channel SKU Code",
-      "Qty",
-      "GMV",
-      "PO Value",
-    ]
+    const expectedHeaders = ["Channel", "Location", "PO Date", "PO Number", "Sr/ No", "SKU Code", "Qty"]
 
     // Check if all required headers are present
     const missingHeaders = expectedHeaders.filter((header) => !headers.includes(header))
@@ -88,46 +74,73 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""))
+
+      const skuCode = values[headers.indexOf("SKU Code")] || ""
+      const qty = Number.parseInt(values[headers.indexOf("Qty")]) || 0
+      const channel = values[headers.indexOf("Channel")] || ""
+
+      // Auto-fill SKU data
+      const skuData = autoFillSkuData(skuCode)
+
       const order = {
-        entryDate: `${String(new Date().getDate()).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`,
-        brand: values[headers.indexOf("Brand")] || "",
-        channel: values[headers.indexOf("Channel")] || "",
+        entryDate: `${String(new Date().getDate()).padStart(2, "0")}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${new Date().getFullYear()}`,
+        brand: skuData?.brandName || "",
+        channel: channel,
         location: values[headers.indexOf("Location")] || "",
         poDate: values[headers.indexOf("PO Date")] || "",
         poNumber: values[headers.indexOf("PO Number")] || "",
         srNo: values[headers.indexOf("Sr/ No")] || "",
-        skuName: values[headers.indexOf("SKU Name")] || "",
-        skuCode: values[headers.indexOf("SKU Code")] || "",
-        channelSkuCode: values[headers.indexOf("Channel SKU Code")] || "",
-        qty: Number.parseInt(values[headers.indexOf("Qty")]) || 0,
-        gmv: Number.parseFloat(values[headers.indexOf("GMV")]) || 0,
-        poValue: Number.parseFloat(values[headers.indexOf("PO Value")]) || 0,
+        skuName: skuData?.skuName || "",
+        skuCode: skuCode,
+        channelSkuCode: generateChannelSkuCode(channel, skuCode) || "",
+        qty: qty,
+        gmv: skuData ? calculateGmv(qty, skuCode) : 0,
+        poValue: skuData ? Math.round(calculateGmv(qty, skuCode) * 0.8 * 100) / 100 : 0, // Assuming 80% of GMV
         status: "valid",
         errors: [],
-      }
-
-      // Validate order
-      const errors = []
-      if (!order.entryDate) errors.push("Entry Date is required")
-      if (!order.brand) errors.push("Brand is required")
-      if (!order.channel) errors.push("Channel is required")
-      if (!order.location) errors.push("Location is required")
-      if (!order.poDate) errors.push("PO Date is required")
-      if (!order.poNumber) errors.push("PO Number is required")
-      if (!order.srNo) errors.push("Sr/ No is required")
-      if (!order.skuName) errors.push("SKU Name is required")
-      if (!order.skuCode) errors.push("SKU Code is required")
-      if (!order.channelSkuCode) errors.push("Channel SKU Code is required")
-      if (order.qty <= 0) errors.push("Quantity must be greater than 0")
-      if (order.gmv <= 0) errors.push("GMV must be greater than 0")
-      if (order.poValue <= 0) errors.push("PO Value must be greater than 0")
-
-      if (errors.length > 0) {
-        order.status = "error"
-        order.errors = errors
+        warnings: [],
       }
 
       orders.push(order)
+    }
+
+    // Validate all orders using the validation utility
+    const validation = validateBulkOrderData(orders)
+
+    // Mark orders with errors
+    if (!validation.isValid || validation.warnings?.length > 0) {
+      orders.forEach((order, index) => {
+        const orderErrors = validation.errors.filter((error) => error.startsWith(`Order ${index + 1}:`))
+        const orderWarnings = validation.warnings?.filter((warning) => warning.startsWith(`Order ${index + 1}:`)) || []
+
+        if (orderErrors.length > 0) {
+          order.status = "error"
+          order.errors = orderErrors.map((error) => error.replace(`Order ${index + 1}: `, ""))
+        }
+
+        if (orderWarnings.length > 0) {
+          order.warnings = orderWarnings.map((warning) => warning.replace(`Order ${index + 1}: `, ""))
+        }
+      })
+
+      // Add PO-level errors
+      const poErrors = validation.errors.filter((error) => error.startsWith("PO "))
+      if (poErrors.length > 0) {
+        // Mark all orders in problematic POs as errors
+        poErrors.forEach((poError) => {
+          const poMatch = poError.match(/PO ([^:]+):/)
+          if (poMatch) {
+            const poNumber = poMatch[1]
+            orders.forEach((order) => {
+              if (order.poNumber === poNumber) {
+                order.status = "error"
+                if (!order.errors) order.errors = []
+                order.errors.push(poError.replace(`PO ${poNumber}: `, ""))
+              }
+            })
+          }
+        })
+      }
     }
 
     return orders
@@ -144,7 +157,20 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
       const orders = parseCSV(text)
       setParsedOrders(orders)
       setShowPreview(true)
-      setSuccess(`Successfully parsed ${orders.length} orders from CSV file`)
+
+      const validCount = orders.filter((order) => order.status === "valid").length
+      const errorCount = orders.filter((order) => order.status === "error").length
+      const warningCount = orders.filter((order) => order.warnings?.length > 0).length
+
+      let message = `Successfully parsed ${orders.length} orders from CSV file`
+      if (errorCount > 0) {
+        message += ` (${errorCount} errors)`
+      }
+      if (warningCount > 0) {
+        message += ` (${warningCount} warnings)`
+      }
+
+      setSuccess(message)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process CSV file")
     }
@@ -163,64 +189,41 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
     setUploadProgress(0)
 
     try {
+      // Simulate upload progress
+      for (let i = 0; i <= 100; i += 10) {
+        setUploadProgress(i)
+        await new Promise((resolve) => setTimeout(resolve, 200))
+      }
 
-      const res = await createBulkShipment(validOrders);
+      const res = await createBulkShipment(validOrders)
+      console.log("Upload response:", res.data)
 
-      // const res = await api.post(createBulkOrderUrl, {orders: validOrders})
-      console.log(res.data);
-      
-      // // Reset after success
-      // setTimeout(() => {
-      //   setFile(null)
-      //   setParsedOrders([])
-      //   setShowPreview(false)
-      //   setSuccess("")
-      //   if (fileInputRef.current) {
-      //     fileInputRef.current.value = ""
-      //   }
-      // }, 1000)
+      setSuccess(`Successfully uploaded ${validOrders.length} orders to the system`)
+
+      // Reset after success
+      setTimeout(() => {
+        setFile(null)
+        setParsedOrders([])
+        setShowPreview(false)
+        setSuccess("")
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+      }, 3000)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Failed to upload orders")
-    }finally {
+    } finally {
       setIsUploading(false)
       setUploadProgress(0)
     }
-
-    // Simulate upload progress
-    for (let i = 0; i <= 100; i += 10) {
-      setUploadProgress(i)
-      await new Promise((resolve) => setTimeout(resolve, 200))
-    }
-    console.log(validOrders);
-
-    setSuccess(`Successfully uploaded ${validOrders.length} orders to the system`)
-    setIsUploading(false)
-    setUploadProgress(0)
-
-    // Reset after success
-    
   }
 
   const downloadTemplate = () => {
-    const headers = [
-      // "Entry Date",
-      "Brand",
-      "Channel",
-      "Location",
-      "PO Date",
-      "PO Number",
-      "Sr/ No",
-      "SKU Name",
-      "SKU Code",
-      "Channel SKU Code",
-      "Qty",
-      "GMV",
-      "PO Value",
-    ]
+    const headers = ["Channel", "Location", "PO Date", "PO Number", "Sr/ No", "SKU Code", "Qty"]
 
     const sampleData = [
-      "MCaffeine,Zepto,Hyderabad,27-12-2024,3100495853,1,mCaffeine Naked & Raw Coffee Espresso Body Wash,15MCaf177,8906129573451,24,11976,8024",
-      "MCaffeine,Zepto,Hyderabad,27-12-2024,3100495853,2,Green Tea Hydrogel Under Eye Patches,15MCaf225,8906129573468,22,10978,7355",
+      "Amazon,Mumbai,27-12-2024,3100495853,1,MCaf40,24",
+      "Amazon,Mumbai,27-12-2024,3100495853,2,MCaf42,22",
     ]
 
     const csvContent = [headers.join(","), ...sampleData].join("\n")
@@ -235,10 +238,10 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
 
   const validOrdersCount = parsedOrders.filter((order) => order.status === "valid").length
   const errorOrdersCount = parsedOrders.filter((order) => order.status === "error").length
+  const warningOrdersCount = parsedOrders.filter((order) => order.warnings?.length > 0).length
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
-
       <main className="container mx-auto p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
@@ -253,7 +256,9 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
               </Button>
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Bulk Order Upload</h2>
-                <p className="text-lg text-gray-600 dark:text-gray-300 mt-1">Upload multiple orders using a CSV file</p>
+                <p className="text-lg text-gray-600 dark:text-gray-300 mt-1">
+                  Upload multiple orders using a CSV file with auto-validation
+                </p>
               </div>
             </div>
           </div>
@@ -268,10 +273,13 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
                   </div>
                   <div>
                     <CardTitle className="text-xl">Upload CSV File</CardTitle>
-                    <CardDescription>Select or drag and drop your CSV file containing order data</CardDescription>
+                    <CardDescription>
+                      Select or drag and drop your CSV file. SKU names, brands, GMV, and channel codes will be
+                      auto-filled.
+                    </CardDescription>
                   </div>
                 </div>
-                <Button variant="outline" onClick={downloadTemplate} className="h-10">
+                <Button variant="outline" onClick={downloadTemplate} className="h-10 bg-transparent">
                   <Download className="h-4 w-4 mr-2" />
                   Download Template
                 </Button>
@@ -374,7 +382,7 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
                     </div>
                     <div>
                       <CardTitle className="text-xl">Order Preview</CardTitle>
-                      <CardDescription>Review the parsed orders before uploading</CardDescription>
+                      <CardDescription>Review the parsed orders with auto-filled data before uploading</CardDescription>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
@@ -385,6 +393,11 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
                       {errorOrdersCount > 0 && (
                         <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                           {errorOrdersCount} Errors
+                        </Badge>
+                      )}
+                      {warningOrdersCount > 0 && (
+                        <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                          {warningOrdersCount} Warnings
                         </Badge>
                       )}
                     </div>
@@ -400,23 +413,22 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
               </CardHeader>
               <CardContent>
                 <ScrollArea className="w-full">
-                  <div className="min-w-[1400px]">
+                  <div className="min-w-[1600px]">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
                           <TableHead className="font-semibold">Status</TableHead>
-                          <TableHead className="font-semibold">Entry Date</TableHead>
                           <TableHead className="font-semibold">Brand</TableHead>
                           <TableHead className="font-semibold">Channel</TableHead>
                           <TableHead className="font-semibold">Location</TableHead>
                           <TableHead className="font-semibold">PO Number</TableHead>
-                          <TableHead className="font-semibold">Sr. No</TableHead>
                           <TableHead className="font-semibold">SKU Name</TableHead>
                           <TableHead className="font-semibold">SKU Code</TableHead>
+                          <TableHead className="font-semibold">Channel SKU</TableHead>
                           <TableHead className="font-semibold">Qty</TableHead>
                           <TableHead className="font-semibold">GMV</TableHead>
                           <TableHead className="font-semibold">PO Value</TableHead>
-                          <TableHead className="font-semibold">Errors</TableHead>
+                          <TableHead className="font-semibold">Issues</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -424,37 +436,56 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
                           <TableRow
                             key={index}
                             className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                              order.status === "error" ? "bg-red-50 dark:bg-red-950" : ""
+                              order.status === "error"
+                                ? "bg-red-50 dark:bg-red-950"
+                                : order.warnings?.length > 0
+                                  ? "bg-yellow-50 dark:bg-yellow-950"
+                                  : ""
                             }`}
                           >
                             <TableCell>
-                              <Badge
-                                className={
-                                  order.status === "valid"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                }
-                              >
-                                {order.status === "valid" ? "Valid" : "Error"}
-                              </Badge>
+                              <div className="flex flex-col gap-1">
+                                <Badge
+                                  className={
+                                    order.status === "valid"
+                                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                  }
+                                >
+                                  {order.status === "valid" ? "Valid" : "Error"}
+                                </Badge>
+                                {order.warnings?.length > 0 && (
+                                  <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-xs">
+                                    Warning
+                                  </Badge>
+                                )}
+                              </div>
                             </TableCell>
-                            <TableCell>{order.entryDate}</TableCell>
-                            <TableCell>{order.brand}</TableCell>
+                            <TableCell className="font-medium">{order.brand}</TableCell>
                             <TableCell>{order.channel}</TableCell>
                             <TableCell>{order.location}</TableCell>
                             <TableCell className="font-mono text-sm">{order.poNumber}</TableCell>
-                            <TableCell>{order.srNo}</TableCell>
                             <TableCell className="max-w-xs truncate" title={order.skuName}>
                               {order.skuName}
                             </TableCell>
                             <TableCell className="font-mono text-sm">{order.skuCode}</TableCell>
+                            <TableCell className="font-mono text-xs">{order.channelSkuCode}</TableCell>
                             <TableCell className="text-right">{order.qty}</TableCell>
                             <TableCell className="text-right">₹{order.gmv.toLocaleString()}</TableCell>
                             <TableCell className="text-right">₹{order.poValue.toLocaleString()}</TableCell>
                             <TableCell>
-                              {order.errors && order.errors.length > 0 && (
-                                <div className="text-xs text-red-600 dark:text-red-400">{order.errors.join(", ")}</div>
-                              )}
+                              <div className="space-y-1">
+                                {order.errors && order.errors.length > 0 && (
+                                  <div className="text-xs text-red-600 dark:text-red-400">
+                                    <strong>Errors:</strong> {order.errors.join(", ")}
+                                  </div>
+                                )}
+                                {order.warnings && order.warnings.length > 0 && (
+                                  <div className="text-xs text-yellow-600 dark:text-yellow-400">
+                                    <strong>Warnings:</strong> {order.warnings.join(", ")}
+                                  </div>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -471,3 +502,5 @@ export default function BulkOrderPage({ onNavigate, isDarkMode, onToggleTheme })
     </div>
   )
 }
+
+export default BulkOrderPage
