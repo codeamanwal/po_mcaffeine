@@ -283,8 +283,8 @@ async function getAllSkuOrders(req, res) {
     const skuDataList = skuOrders.map(sku => {
       const {shipmentOrder, ...skuData} = sku.dataValues;
       return {
+        ...shipmentOrder?.dataValues,
         ...skuData,
-        ...shipmentOrder?.dataValues
       }
     })
 
@@ -389,6 +389,7 @@ async function updateSkusBySipment(req, res){
   try {
     const {shipmentId, skus} = req.body;
     for (const item of skus) {
+      console.log(item)
       await SkuOrder.update(
         item ,
         { where: { shipmentOrderId: shipmentId, id: item.id }, transaction: t }
