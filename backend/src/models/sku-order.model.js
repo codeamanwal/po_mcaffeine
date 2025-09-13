@@ -10,6 +10,11 @@ const SkuOrder = sequelize.define('SkuOrder', {
   qty: { type: DataTypes.INTEGER },
   gmv: { type: DataTypes.FLOAT },
   poValue: { type: DataTypes.FLOAT },
+  // updated datafields
+  updatedQty: { type: DataTypes.INTEGER },
+  updatedGmv: { type: DataTypes.FLOAT },
+  updatedPoValue: { type: DataTypes.FLOAT },
+
   accountsWorking: { type: DataTypes.STRING },
   channelInwardingQuantity: { type: DataTypes.INTEGER },
   actualWeight: { type: DataTypes.FLOAT },
