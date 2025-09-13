@@ -23,27 +23,33 @@ import {
   Warehouse,
   Truck,
   Database,
+  AlertTriangle,
 } from "lucide-react"
 import { useUserStore } from "@/store/user-store"
 import { Label } from "./ui/label"
 import { updateBulkShipment } from "@/lib/order"
+import {
+  validateShipmentData,
+  master_facility_option,
+  master_channel_options,
+  master_status_planning_options,
+  master_status_warehouse_options,
+  master_status_logistics_options,
+  master_courier_partner_options,
+  master_rejection_reasons,
+  master_location_options,
+} from "@/lib/validation"
 
-// Field definitions with role permissions and CSV headers
+// Field definitions with role permissions, CSV headers, and validation rules
 const fieldDefinitions = {
   // Admin fields
-  // entryDate: {
-  //   label: "Entry Date",
-  //   csvHeader: "Entry Date",
-  //   roles: ["superadmin", "admin"],
-  //   type: "date",
-  //   category: "admin"
-  // },
   poDate: {
     label: "PO Date",
     csvHeader: "PO Date",
     roles: ["superadmin", "admin"],
     type: "date",
     category: "admin",
+    validation: null,
   },
   facility: {
     label: "Facility",
@@ -51,6 +57,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: master_facility_option,
   },
   channel: {
     label: "Channel",
@@ -58,6 +65,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: master_channel_options,
   },
   location: {
     label: "Location",
@@ -65,20 +73,15 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: master_location_options,
   },
-  // brandName: {
-  //   label: "Brand Name",
-  //   csvHeader: "Brand Name",
-  //   roles: ["superadmin", "admin"],
-  //   type: "text",
-  //   category: "admin",
-  // },
   remarksPlanning: {
     label: "Remarks (Planning)",
     csvHeader: "Remarks (Planning)",
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   specialRemarksCOPT: {
     label: "Special Remarks (COPT)",
@@ -86,27 +89,15 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
-  // newShipmentReference: {
-    // label: "New Shipment Reference",
-    // csvHeader: "New Shipment Reference",
-    // roles: ["superadmin", "admin"],
-    // type: "text",
-    // category: "admin",
-  // },
-  // statusActive: {
-    // label: "Status (Active/Inactive)",
-    // csvHeader: "Status (Active/Inactive)",
-    // roles: ["superadmin", "admin"],
-    // type: "text",
-    // category: "admin",
-  // },
   statusPlanning: {
     label: "Status (Planning)",
     csvHeader: "Status (Planning)",
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: master_status_planning_options,
   },
   channelInwardingRemarks: {
     label: "Channel Inwarding Remarks",
@@ -114,6 +105,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   dispatchDateTentative: {
     label: "Dispatch Date Tentative",
@@ -121,6 +113,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "date",
     category: "admin",
+    validation: null,
   },
   workingDatePlanner: {
     label: "Working Date (Planner)",
@@ -128,6 +121,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "date",
     category: "admin",
+    validation: null,
   },
   firstAppointmentDateCOPT: {
     label: "First Appointment Date (COPT)",
@@ -135,6 +129,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "date",
     category: "admin",
+    validation: null,
   },
   orderNo1: {
     label: "Order No 1",
@@ -142,6 +137,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   orderNo2: {
     label: "Order No 2",
@@ -149,6 +145,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   orderNo3: {
     label: "Order No 3",
@@ -156,62 +153,23 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
-  // channelType: {
-  //   label: "Channel Type",
-  //   csvHeader: "Channel Type",
-  //   roles: ["superadmin", "admin"],
-  //   type: "text",
-  //   category: "admin",
-  // },
-  // appointmentLetter: {
-  //   label: "Appointment Letter/STN",
-  //   csvHeader: "Appointment Letter/STN",
-  //   roles: ["superadmin", "admin"],
-  //   type: "text",
-  //   category: "admin",
-  // },
   labelsLink: {
     label: "Labels",
     csvHeader: "Labels",
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
-  // invoiceDate: {
-  //   label: "Invoice Date",
-  //   csvHeader: "Invoice Date",
-  //   roles: ["superadmin", "admin"],
-  //   type: "date",
-  //   category: "admin",
-  // },
-  // invoiceLink: {
-  //   label: "Invoice Link",
-  //   csvHeader: "Invoice Link",
-  //   roles: ["superadmin", "admin"],
-  //   type: "text",
-  //   category: "admin",
-  // },
-  // cnLink: {
-  //   label: "CN Link",
-  //   csvHeader: "CN Link",
-  //   roles: ["superadmin", "admin"],
-  //   type: "text",
-  //   category: "admin",
-  // },
-  // ewayLink: {
-  //   label: "E-Way Link",
-  //   csvHeader: "E-Way Link",
-  //   roles: ["superadmin", "admin"],
-  //   type: "text",
-  //   category: "admin",
-  // },
   invoiceValue: {
     label: "Invoice Value",
     csvHeader: "Invoice Value (Check with Invoice Link)",
     roles: ["superadmin", "admin"],
     type: "number",
     category: "admin",
+    validation: null,
   },
   remarksAccountsTeam: {
     label: "Remarks by Accounts Team",
@@ -219,6 +177,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   invoiceChallanNumber: {
     label: "Invoice / Challan Number",
@@ -226,6 +185,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   invoiceCheckedBy: {
     label: "Invoice Checked By",
@@ -233,6 +193,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   tallyCustomerName: {
     label: "Tally Customer Name",
@@ -240,6 +201,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   customerCode: {
     label: "Customer Code",
@@ -247,6 +209,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "text",
     category: "admin",
+    validation: null,
   },
   poEntryCount: {
     label: "PO Entry Count",
@@ -254,6 +217,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "number",
     category: "admin",
+    validation: null,
   },
   updatedGmv: {
     label: "Updated GMV",
@@ -261,6 +225,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin"],
     type: "number",
     category: "admin",
+    validation: null,
   },
 
   // Warehouse fields
@@ -270,6 +235,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: master_status_warehouse_options,
   },
   dispatchRemarksWarehouse: {
     label: "Dispatch Remarks (Warehouse)",
@@ -277,6 +243,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: null,
   },
   rtsDate: {
     label: "RTS Date",
@@ -284,6 +251,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "date",
     category: "warehouse",
+    validation: null,
   },
   dispatchDate: {
     label: "Dispatch Date",
@@ -291,6 +259,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "date",
     category: "warehouse",
+    validation: null,
   },
   noOfBoxes: {
     label: "No Of Boxes",
@@ -298,6 +267,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "number",
     category: "warehouse",
+    validation: null,
   },
   pickListNo: {
     label: "Pick List No",
@@ -305,20 +275,15 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: null,
   },
-  // workingTypeWarehouse: {
-  //   label: "Working Type (Warehouse)",
-  //   csvHeader: "Working Type (Warehouse)",
-  //   roles: ["superadmin", "admin", "warehouse"],
-  //   type: "text",
-  //   category: "warehouse",
-  // },
   inventoryRemarksWarehouse: {
     label: "Inventory Remarks Warehouse",
     csvHeader: "Inventory Remarks Warehouse",
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: null,
   },
   b2bWorkingTeamRemarks: {
     label: "B2B Working Team Remarks",
@@ -326,6 +291,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: null,
   },
   volumetricWeight: {
     label: "Volumetric Weight",
@@ -333,6 +299,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "number",
     category: "warehouse",
+    validation: null,
   },
   firstTransporter: {
     label: "First Transporter",
@@ -340,6 +307,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: master_courier_partner_options,
   },
   firstDocketNo: {
     label: "First Docket No",
@@ -347,6 +315,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: null,
   },
   secondTransporter: {
     label: "Second Transporter",
@@ -354,6 +323,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: master_courier_partner_options,
   },
   secondDocketNo: {
     label: "Second Docket No",
@@ -361,6 +331,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: null,
   },
   thirdTransporter: {
     label: "Third Transporter",
@@ -368,6 +339,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: master_courier_partner_options,
   },
   thirdDocketNo: {
     label: "Third Docket No",
@@ -375,6 +347,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "warehouse"],
     type: "text",
     category: "warehouse",
+    validation: null,
   },
 
   // Logistics fields
@@ -384,6 +357,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "logistics"],
     type: "text",
     category: "logistics",
+    validation: master_status_logistics_options,
   },
   dispatchRemarksLogistics: {
     label: "Dispatch Remarks (Logistics)",
@@ -391,27 +365,15 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "logistics"],
     type: "text",
     category: "logistics",
+    validation: null,
   },
-  // currentAppointmentDate: {
-  //   label: "Current Appointment Date",
-  //   csvHeader: "Current Appointment Date",
-  //   roles: ["superadmin", "admin", "logistics"],
-  //   type: "date",
-  //   category: "logistics",
-  // },
-  // deliveryDate: {
-  //   label: "Delivery Date",
-  //   csvHeader: "Delivery Date",
-  //   roles: ["superadmin", "admin", "logistics"],
-  //   type: "date",
-  //   category: "logistics",
-  // },
   rescheduleLag: {
     label: "Reschedule Lag (Remarks)",
     csvHeader: "Reschedule Lag (Remarks)",
     roles: ["superadmin", "admin", "logistics"],
-    type: "number",
+    type: "text",
     category: "logistics",
+    validation: master_rejection_reasons,
   },
   finalRemarks: {
     label: "Final Remarks",
@@ -419,6 +381,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "logistics"],
     type: "text",
     category: "logistics",
+    validation: null,
   },
   physicalWeight: {
     label: "Physical Weight",
@@ -426,6 +389,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "logistics"],
     type: "number",
     category: "logistics",
+    validation: null,
   },
 }
 
@@ -439,6 +403,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [step, setStep] = useState("select")
+  const [validationSummary, setValidationSummary] = useState({ errors: 0, warnings: 0 })
   const fileInputRef = useRef(null)
   const { user } = useUserStore()
 
@@ -470,10 +435,23 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
     const headers = ["UID", "PO Number", ...sortedSelectedFields.map((field) => fieldDefinitions[field].csvHeader)]
 
-    // Sample data rows - also use sorted order for consistency
-    // const sampleData = [`135290,3100495853,${sortedSelectedFields.map(() => "").join(",")}`]
+    // Add validation notes as comments in the CSV
+    const validationNotes = []
+    sortedSelectedFields.forEach((fieldName) => {
+      const field = fieldDefinitions[fieldName]
+      if (field.validation) {
+        validationNotes.push(`# ${field.label} must be one of: ${field.validation.slice(0, 3).join(", ")}...`)
+      }
+    })
 
-    const csvContent = [headers.join(",")].join("\n")
+    const csvContent = [
+      "# Bulk Update Template - MCaffeine Dashboard",
+      "# Instructions: Fill in the data below. Do not modify the header row.",
+      ...validationNotes,
+      "",
+      headers.join(","),
+    ].join("\n")
+
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -496,6 +474,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       setError("")
       setSuccess("")
       setParsedUpdates([])
+      setValidationSummary({ errors: 0, warnings: 0 })
     }
   }
 
@@ -515,11 +494,31 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       setError("")
       setSuccess("")
       setParsedUpdates([])
+      setValidationSummary({ errors: 0, warnings: 0 })
     }
   }
 
+  const validateFieldValue = (fieldName, value) => {
+    const field = fieldDefinitions[fieldName]
+    if (!field || !field.validation || !value || value.trim() === "") {
+      return { isValid: true, errors: [] }
+    }
+
+    const allowedValues = field.validation
+    if (!allowedValues.includes(value)) {
+      return {
+        isValid: false,
+        errors: [
+          `${field.label} "${value}" is not valid. Must be one of: ${allowedValues.slice(0, 3).join(", ")}${allowedValues.length > 3 ? "..." : ""}`,
+        ],
+      }
+    }
+
+    return { isValid: true, errors: [] }
+  }
+
   const parseCSV = (csvText) => {
-    const lines = csvText.split("\n").filter((line) => line.trim())
+    const lines = csvText.split("\n").filter((line) => line.trim() && !line.startsWith("#"))
     const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
     // Validate required headers
@@ -535,6 +534,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     }
 
     const updates = []
+    let totalErrors = 0
+    let totalWarnings = 0
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""))
@@ -544,6 +545,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
         poNumber: values[headers.indexOf("PO Number")] || "",
         status: "valid",
         errors: [],
+        warnings: [],
+        rowNumber: i + 1,
       }
 
       // Parse selected fields
@@ -561,21 +564,50 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
         } else {
           update[fieldName] = value
         }
+
+        // Validate field value
+        if (value && value.trim() !== "") {
+          const validation = validateFieldValue(fieldName, value)
+          if (!validation.isValid) {
+            update.errors.push(...validation.errors)
+          }
+        }
       })
 
-      // Validate update
+      // Basic validation
       const errors = []
       if (!update.uid || update.uid <= 0) errors.push("UID is required and must be a positive number")
       if (!update.poNumber) errors.push("PO Number is required")
 
-      if (errors.length > 0) {
+      // Add basic errors
+      update.errors.push(...errors)
+
+      // Comprehensive shipment validation
+      try {
+        const shipmentValidation = validateShipmentData(update)
+        if (!shipmentValidation.isValid) {
+          update.errors.push(...shipmentValidation.errors)
+        }
+        if (shipmentValidation.warnings && shipmentValidation.warnings.length > 0) {
+          update.warnings.push(...shipmentValidation.warnings)
+        }
+      } catch (validationError) {
+        update.errors.push(`Validation error: ${validationError.message}`)
+      }
+
+      // Set status based on errors and warnings
+      if (update.errors.length > 0) {
         update.status = "error"
-        update.errors = errors
+        totalErrors++
+      } else if (update.warnings.length > 0) {
+        update.status = "warning"
+        totalWarnings++
       }
 
       updates.push(update)
     }
 
+    setValidationSummary({ errors: totalErrors, warnings: totalWarnings })
     return updates
   }
 
@@ -590,7 +622,14 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       const updates = parseCSV(text)
       setParsedUpdates(updates)
       setStep("preview")
-      setSuccess(`Successfully parsed ${updates.length} updates from CSV file`)
+
+      const validCount = updates.filter((u) => u.status === "valid").length
+      const errorCount = updates.filter((u) => u.status === "error").length
+      const warningCount = updates.filter((u) => u.status === "warning").length
+
+      setSuccess(
+        `Successfully parsed ${updates.length} updates: ${validCount} valid, ${errorCount} errors, ${warningCount} warnings`,
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process CSV file")
     }
@@ -600,7 +639,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
   const handleUploadUpdates = async () => {
     try {
-      const validUpdates = parsedUpdates.filter((update) => update.status === "valid")
+      const validUpdates = parsedUpdates.filter((update) => update.status === "valid" || update.status === "warning")
       if (validUpdates.length === 0) {
         setError("No valid updates to upload")
         return
@@ -609,7 +648,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       // Prepare data to send in bulk to backend
       let data = []
       validUpdates.forEach((item) => {
-        const { errors, status, ...extractedFields } = item
+        const { errors, warnings, status, rowNumber, ...extractedFields } = item
         // final only field with data inside them
         const cleanedData = {}
         for (const [key, value] of Object.entries(extractedFields)) {
@@ -626,9 +665,11 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       // Simulate upload progress
       for (let i = 0; i <= 100; i += 10) {
         setUploadProgress(i)
-        const res = await updateBulkShipment(data)
-        console.log(res.data)
+        await new Promise((resolve) => setTimeout(resolve, 100))
       }
+
+      const res = await updateBulkShipment(data)
+      console.log(res.data)
 
       onSave(validUpdates)
       setSuccess(`Successfully updated ${validUpdates.length} shipments`)
@@ -641,8 +682,10 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
         onClose()
       }, 3000)
     } catch (error) {
-      console.error("Eroor: ", error)
-      setError("Error: ", error.response.msg || error.message)
+      console.error("Error: ", error)
+      setError(`Error: ${error.response?.msg || error.message}`)
+      setIsUploading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -653,12 +696,14 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     setStep("select")
     setError("")
     setSuccess("")
+    setValidationSummary({ errors: 0, warnings: 0 })
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
   }
 
   const validUpdatesCount = parsedUpdates.filter((update) => update.status === "valid").length
+  const warningUpdatesCount = parsedUpdates.filter((update) => update.status === "warning").length
   const errorUpdatesCount = parsedUpdates.filter((update) => update.status === "error").length
 
   const getCategoryIcon = (category) => {
@@ -672,6 +717,31 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       default:
         return Database
     }
+  }
+
+  const getStatusBadge = (status, errors, warnings) => {
+    if (status === "error") {
+      return (
+        <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Error
+        </Badge>
+      )
+    }
+    if (status === "warning") {
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          Warning
+        </Badge>
+      )
+    }
+    return (
+      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+        <CheckCircle className="h-3 w-3 mr-1" />
+        Valid
+      </Badge>
+    )
   }
 
   return (
@@ -731,8 +801,13 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                               checked={selectedFields.includes(fieldName)}
                               onCheckedChange={() => handleFieldToggle(fieldName)}
                             />
-                            <Label htmlFor={fieldName} className="text-sm cursor-pointer">
+                            <Label htmlFor={fieldName} className="text-sm cursor-pointer flex items-center">
                               {field.label}
+                              {field.validation && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Validated
+                                </Badge>
+                              )}
                             </Label>
                           </div>
                         ))}
@@ -757,8 +832,13 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                               checked={selectedFields.includes(fieldName)}
                               onCheckedChange={() => handleFieldToggle(fieldName)}
                             />
-                            <Label htmlFor={fieldName} className="text-sm cursor-pointer">
+                            <Label htmlFor={fieldName} className="text-sm cursor-pointer flex items-center">
                               {field.label}
+                              {field.validation && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Validated
+                                </Badge>
+                              )}
                             </Label>
                           </div>
                         ))}
@@ -783,8 +863,13 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                               checked={selectedFields.includes(fieldName)}
                               onCheckedChange={() => handleFieldToggle(fieldName)}
                             />
-                            <Label htmlFor={fieldName} className="text-sm cursor-pointer">
+                            <Label htmlFor={fieldName} className="text-sm cursor-pointer flex items-center">
                               {field.label}
+                              {field.validation && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Validated
+                                </Badge>
+                              )}
                             </Label>
                           </div>
                         ))}
@@ -801,6 +886,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                         {selectedFields.map((fieldName) => (
                           <Badge key={fieldName} variant="secondary" className="bg-blue-100 text-blue-800">
                             {fieldDefinitions[fieldName].label}
+                            {fieldDefinitions[fieldName].validation && <span className="ml-1 text-xs">✓</span>}
                           </Badge>
                         ))}
                       </div>
@@ -903,6 +989,11 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                           {validUpdatesCount} Valid
                         </Badge>
+                        {warningUpdatesCount > 0 && (
+                          <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                            {warningUpdatesCount} Warnings
+                          </Badge>
+                        )}
                         {errorUpdatesCount > 0 && (
                           <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                             {errorUpdatesCount} Errors
@@ -911,10 +1002,10 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                       </div>
                       <Button
                         onClick={handleUploadUpdates}
-                        disabled={validUpdatesCount === 0 || isUploading}
+                        disabled={validUpdatesCount + warningUpdatesCount === 0 || isUploading}
                         className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                       >
-                        {isUploading ? "Updating..." : `Update ${validUpdatesCount} Shipments`}
+                        {isUploading ? "Updating..." : `Update ${validUpdatesCount + warningUpdatesCount} Shipments`}
                       </Button>
                     </div>
                   </div>
@@ -935,39 +1026,61 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Status</TableHead>
+                          <TableHead>Row</TableHead>
                           <TableHead>UID</TableHead>
                           <TableHead>PO Number</TableHead>
                           {selectedFields.map((fieldName) => (
                             <TableHead key={fieldName}>{fieldDefinitions[fieldName].label}</TableHead>
                           ))}
-                          <TableHead>Errors</TableHead>
+                          <TableHead>Issues</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {parsedUpdates.map((update, index) => (
                           <TableRow
                             key={index}
-                            className={update.status === "error" ? "bg-red-50 dark:bg-red-950" : ""}
+                            className={
+                              update.status === "error"
+                                ? "bg-red-50 dark:bg-red-950"
+                                : update.status === "warning"
+                                  ? "bg-yellow-50 dark:bg-yellow-950"
+                                  : ""
+                            }
                           >
-                            <TableCell>
-                              <Badge
-                                className={
-                                  update.status === "valid"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                }
-                              >
-                                {update.status === "valid" ? "Valid" : "Error"}
-                              </Badge>
-                            </TableCell>
+                            <TableCell>{getStatusBadge(update.status, update.errors, update.warnings)}</TableCell>
+                            <TableCell className="font-mono text-xs">{update.rowNumber}</TableCell>
                             <TableCell className="font-mono">{update.uid}</TableCell>
                             <TableCell className="font-mono">{update.poNumber}</TableCell>
                             {selectedFields.map((fieldName) => (
                               <TableCell key={fieldName}>{update[fieldName] || "-"}</TableCell>
                             ))}
                             <TableCell>
-                              {update.errors && update.errors.length > 0 && (
-                                <div className="text-xs text-red-600 dark:text-red-400">{update.errors.join(", ")}</div>
+                              {(update.errors && update.errors.length > 0) ||
+                              (update.warnings && update.warnings.length > 0) ? (
+                                <div className="space-y-1">
+                                  {update.errors && update.errors.length > 0 && (
+                                    <div className="text-xs text-red-600 dark:text-red-400">
+                                      <strong>Errors:</strong>
+                                      <ul className="list-disc list-inside ml-2">
+                                        {update.errors.map((error, i) => (
+                                          <li key={i}>{error}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {update.warnings && update.warnings.length > 0 && (
+                                    <div className="text-xs text-yellow-600 dark:text-yellow-400">
+                                      <strong>Warnings:</strong>
+                                      <ul className="list-disc list-inside ml-2">
+                                        {update.warnings.map((warning, i) => (
+                                          <li key={i}>{warning}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-green-600 text-xs">✓ Valid</span>
                               )}
                             </TableCell>
                           </TableRow>
