@@ -18,7 +18,7 @@ export default function SearchableSelect({ value, onValueChange, options, placeh
           className="w-full justify-between h-10 bg-transparent"
           disabled={disabled}
         >
-          {value ? options.find((option) => option.value === value)?.label : placeholder}
+          {value ? options?.find((option) => option.value === value)?.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -28,7 +28,7 @@ export default function SearchableSelect({ value, onValueChange, options, placeh
           <CommandList>
             <CommandEmpty>No option found.</CommandEmpty>
             <CommandGroup>
-              {options.map((option, idx) => (
+              {options && options?.map((option, idx) => (
                 <CommandItem
                   key={idx}
                   value={option.value}

@@ -8,6 +8,7 @@ import { master_courier_partner_options } from "@/constants/master_sheet"
 import { master_rejection_reasons } from "@/constants/master_sheet"
 import { channelSkuMapping } from "@/constants/master_channel_skucode_map"
 import { master_sku_code_options } from "@/constants/sku_code_options"
+import { master_channel_location_mapping } from "@/constants/master_sheet"
 
 // Location options (derived from common locations)
 export const master_location_options = [
@@ -63,8 +64,12 @@ export const validateShipmentData = (shipmentData)=> {
   }
 
   // Validate location
+  // first get all the location for given channel
+  const locs =  master_channel_location_mapping[shipmentData.channel].map((loc) => {
+    return loc.location;
+  })
   if (shipmentData.location) {
-    const locationValidation = validateField("Location", shipmentData.location, master_location_options)
+    const locationValidation = validateField("Location", shipmentData.location, locs)
     errors.push(...locationValidation.errors)
   }
 
@@ -280,7 +285,9 @@ export const validateBrandConsistency = (skuCodes) => {
 // Get available locations for a channel (if there are channel-specific restrictions)
 export const getLocationsForChannel = (channel) => {
   // For now, return all locations. This can be customized based on business rules
-  return master_location_options
+  const location_options = master_channel_location_mapping[channel]
+  console.log(location_options)
+  return location_options
 }
 
 // Validate PO Value calculation

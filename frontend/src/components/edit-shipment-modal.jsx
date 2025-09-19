@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { validateShipmentData } from "@/lib/validation"
+import { getLocationsForChannel, validateShipmentData } from "@/lib/validation"
 import {
   CalendarIcon,
   AlertCircle,
@@ -39,6 +39,7 @@ import { toast } from "sonner"
 import SearchableSelect from "./ui/searchable-select"
 
 import {master_appointment_change_options} from "@/constants/master_sheet"
+import SkuLevelEditModal from "./sku-level-edit-modal"
 
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
@@ -132,6 +133,9 @@ const logisticsFields = [
 ]
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
+
+  const [skuTabActive, setSkuTab] = useState(false)
+
   const [formData, setFormData] = useState({})
   const [originalData, setOriginalData] = useState({})
   const [appointments, setAppointments] = useState([])
@@ -147,6 +151,13 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const [poNumberChanged, setPoNumberChanged] = useState(false)
   const [poEditReason, setPoEditReason] = useState("")
   const [poEditComments, setPoEditComments] = useState("")
+
+  const [locationOtions, setLocationOptions] = useState([])
+  const getLocations = (channel) => {
+    if(!channel) return [];
+      const locations = getLocationsForChannel(channel);
+      setLocationOptions(locations);
+  }
 
   const { user } = useUserStore()
 
@@ -168,6 +179,8 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
       // Convert date strings to Date objects for date fields
       const processedData = { ...shipmentData }
+
+      getLocations(shipmentData.channel)
 
       // Process regular date fields
       extendedShipmentStatusDataType.forEach((field) => {
@@ -510,6 +523,30 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       )
     }
 
+    // handle dynamic availble locations
+    if(field.fieldName === "location"){
+      return (
+          <div className="space-y-2">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
+              {field.label}
+              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
+            </Label>
+            <Select value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
+              <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
+                <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {locationOtions.map((location, idx) => (
+                  <SelectItem key={idx} value={location.location}>
+                    {`${location.location} - ${location.drop_location}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )
+    }
+
     switch (field.type) {
       case "date":
         const shouldDisableDate = isBackendControlled
@@ -564,8 +601,8 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
               </SelectTrigger>
               <SelectContent>
-                {field?.options?.map((option) => (
-                  <SelectItem key={option} value={option || " "}>
+                {field?.options?.map((option,idx) => (
+                  <SelectItem key={idx} value={option || " "}>
                     {option}
                   </SelectItem>
                 ))}
@@ -675,7 +712,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[70vw] max-h-[95vh] overflow-hidden">
+      <DialogContent className="max-w-[70vw] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Save className="h-5 w-5" />
@@ -716,7 +753,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 mb-6">
               {availableTabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -727,6 +764,11 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                   </TabsTrigger>
                 )
               })}
+              <TabsTrigger value={"sku"} className="flex items-center space-x-2">
+                {/* <Icon className="h-4 w-4" /> */}
+                <span>Sku Update</span>
+                {/* <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"></span> */}
+              </TabsTrigger>
             </TabsList>
 
             {availableTabs.map((tab) => (
@@ -746,6 +788,21 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 </ScrollArea>
               </TabsContent>
             ))}
+
+            <TabsContent value={"sku"}>
+              <SkuLevelEditModal
+                isOpen={skuTabActive}
+                onClose={() => {
+                  setSkuTab(false);
+                  isOpen = false
+                }}
+                shipment = {shipmentData}
+                shipmentId={shipmentData.uid}
+                // onSave={() => {
+                //   onSavingUpdate()
+                // }}
+              />
+            </TabsContent>
           </Tabs>
 
           {/* PO Number Edit Reason Section */}

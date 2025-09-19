@@ -95,7 +95,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
         channelSkuCode: generateChannelSkuCode(channel, skuCode) || "",
         qty: qty,
         gmv: skuData ? calculateGmv(qty, skuCode) : 0,
-        poValue: skuData ? Math.round(calculateGmv(qty, skuCode) * 0.8 * 100) / 100 : 0, // Assuming 80% of GMV
+        // poValue: skuData ? Math.round(calculateGmv(qty, skuCode) * 0.8 * 100) / 100 : 0, // Assuming 80% of GMV
         status: "valid",
         errors: [],
         warnings: [],
@@ -222,8 +222,8 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
     const headers = ["Channel", "Location", "PO Date", "PO Number", "Sr/ No", "SKU Code", "Qty"]
 
     const sampleData = [
-      "Amazon,Mumbai,27-12-2024,3100495853,1,MCaf40,24",
-      "Amazon,Mumbai,27-12-2024,3100495853,2,MCaf42,22",
+      "Amazon,AMD2,27-09-2025,PO_SAMPLE,1,MCaf100,24",
+      // "Amazon,Mumbai,27-12-2024,3100495853,2,MCaf42,22",
     ]
 
     const csvContent = [headers.join(","), ...sampleData].join("\n")
@@ -472,7 +472,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
                             <TableCell className="font-mono text-xs">{order.channelSkuCode}</TableCell>
                             <TableCell className="text-right">{order.qty}</TableCell>
                             <TableCell className="text-right">₹{order.gmv.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">₹{order.poValue.toLocaleString()}</TableCell>
+                            {/* <TableCell className="text-right">₹{order.poValue.toLocaleString()}</TableCell> */}
                             <TableCell>
                               <div className="space-y-1">
                                 {order.errors && order.errors.length > 0 && (

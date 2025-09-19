@@ -34,7 +34,9 @@ import SearchableSelect from "./ui/searchable-select"
 // import master sheet
 import { master_sku_code_options } from "@/constants/sku_code_options"
 import { master_channel_options } from "@/constants/master_sheet"
-import { channelSkuMapping } from "@/constants/master_channel_skucode_map"
+import { channelSkuMapping } from "@/constants/channel-sku-map"
+import { getLocationsForChannel } from "@/lib/validation"
+import { toast } from "sonner"
 
 // Channel SKU mapping
 // const channelSkuMapping = {
@@ -127,15 +129,27 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
 
   // Prepare options for searchable selects
   const channelOptions = useMemo(() => master_channel_options.map((channel) => ({ value: channel, label: channel })), [])
+  
+  const getSkuOptionsForChannel = (channel) => {
+    if(!channel) return [];
+    const skuCodes = Object.keys(channelSkuMapping[channel] || {});
 
-  const skuCodeOptions = useMemo(
-    () =>
-      master_sku_code_options.map((sku) => ({
-        value: sku.sku_code,
-        label: `${sku.sku_code}`,
-      })),
-    [],
-  )
+    const options =  skuCodes.map(skuCode => ({
+      value: skuCode,
+      label: skuCode,
+    }));
+    console.log(options);
+    setSkuCodeOptions(options);
+    return options;
+  }
+
+  const getLocations = (channel) => {
+    const locations = getLocationsForChannel(channel);
+    setLocationOptions(locations);
+  }
+
+  const [skuCodeOptions, setSkuCodeOptions] = useState([])
+  const [locationOtions, setLocationOptions] = useState([])
 
   // Auto-fill brand based on selected SKUs
   useEffect(() => {
@@ -286,6 +300,10 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       if (Number.isNaN(Number(sku.poValue)) || Number(sku.poValue) <= 0) {
         return `SKU ${i + 1}: PO Value must be a positive number`
       }
+      // poValue should always be less than gmv
+      if(sku.poValue > sku.gmv) {
+        return `SKU ${i+1}: PO Value should be less than GMV`
+      }
     }
 
     // Final brand consistency check
@@ -311,6 +329,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
     const validationError = validateForm()
     if (validationError) {
       setError(validationError)
+      toast.error(validationError)
       setIsLoading(false)
       return
     }
@@ -492,6 +511,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                             mode="single"
                             selected={shipmentOrder.poDate}
                             onSelect={(date) => handleShipmentChange("poDate", date)}
+                            disabled={{ after: new Date() }}
                             initialFocus
                           />
                         </PopoverContent>
@@ -519,7 +539,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                       <Label className="text-sm font-medium">Channel *</Label>
                       <SearchableSelect
                         value={shipmentOrder.channel}
-                        onValueChange={(value) => handleShipmentChange("channel", value)}
+                        onValueChange={(value) => {handleShipmentChange("channel", value); getSkuOptionsForChannel(value || ""); getLocations(value || "")}}
                         options={channelOptions}
                         placeholder="Select channel"
                         searchPlaceholder="Search channels..."
@@ -536,9 +556,9 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                           <SelectValue placeholder="Select location" />
                         </SelectTrigger>
                         <SelectContent>
-                          {locations.map((location) => (
-                            <SelectItem key={location} value={location}>
-                              {location}
+                          {locationOtions.map((location, idx) => (
+                            <SelectItem key={idx} value={location.location}>
+                              {`${location.location} - ${location.drop_location}`}
                             </SelectItem>
                           ))}
                         </SelectContent>
