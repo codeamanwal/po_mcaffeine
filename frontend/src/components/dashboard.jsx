@@ -22,7 +22,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import NavigationHeader from "@/components/header"
 import { useThemeStore } from "@/store/theme-store"
 import { useUserStore } from "@/store/user-store"
-import { getPoFormatOrderList, getShipmentStatusList, updateSinglePoOrder } from "@/lib/order"
+import { deleteShipment, deleteSku, getPoFormatOrderList, getShipmentStatusList, updateSinglePoOrder } from "@/lib/order"
 import { poFormatDataType, shipmentStatusDataType } from "@/constants/data_type"
 import EditOrderModal from "@/components/edit-order-modal"
 import EditShipmentModal from "@/components/edit-shipment-modal"
@@ -46,6 +46,9 @@ import { format, parse, isSameDay } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog"
+
 
 // Sample data based on provided format
 const poData = [
@@ -347,6 +350,9 @@ export default function DashboardPage({ onNavigate }) {
   const [isShipmentViewModal, setShipmentViewModal] = useState(false)
   const [isSkuEditModal, setSkuEditModal] = useState(false)
   const [isBulkSkuUpdateModal, setBulkSkuUpdateModal] = useState(false)
+  const [orderType, setType] = useState("");
+  const [selectedId, setSelectedId] = useState("");
+  const [dialogType, setDialogType] = useState(null);
 
   // Check if user has access to bulk CSV SKU update
   const hasBulkSkuAccess = user?.role === "warehouse" || user?.role === "superadmin"
@@ -578,9 +584,51 @@ export default function DashboardPage({ onNavigate }) {
     setEditModal(true)
   }
 
-  function handleDeleteOrder(data) {
-    console.log("Delete order:", data)
-  }
+  const handleDeleteOrder = (data) => {
+    if(data.id){
+      setSelectedId(data.id);
+      setType("sku");
+    }else if(data.uid){
+      setSelectedId(data.uid);
+      setType("shipment")
+    }
+    setDialogType("delete");
+  };
+
+  const handleDialogConfirm = async (data) => {
+    if (dialogType === "edit") {
+      // Implement edit logic here (e.g., navigate to edit page or open edit form)
+      // alert(`Edit user: ${selectedUser.name}`);
+      console.log(selectedUser)
+    } else if (dialogType === "delete") {
+      // Implement delete logic here (e.g., API call)
+      // alert(`Delete user: ${selectedUser.name}`);
+      // Optionally remove user from state after successful delete
+      console.log("type:", orderType, "id:", selectedId )
+      try {
+        if(orderType == "sku"){
+          const res = await deleteSku(selectedId)
+          console.log(res.data);
+        }
+        else if(orderType == "shipment"){
+          const res = await deleteShipment(selectedId)
+          console.log(res.data);
+        }
+      }catch(error){
+        console.log(error)
+        setError( error?.response?.data?.msg ||"Failed to delete user")
+      }finally {
+        setDialogType(null);
+      }
+    }
+    
+  };
+
+  const handleDialogCancel = () => {
+    setDialogType(null);
+    setSelectedId(null);
+    setType(null);
+  };
 
   function handleViewShipment(data) {
     console.log(data)
@@ -1183,13 +1231,13 @@ export default function DashboardPage({ onNavigate }) {
                                       <Eye className="mr-2 h-4 w-4 text-blue-500" />
                                       View Details
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem
+                                    {/* <DropdownMenuItem
                                       onClick={() => handleEditSkuShipment(row)}
                                       className="cursor-pointer"
                                     >
                                       <Package className="mr-2 h-4 w-4 text-green-500" />
                                       Edit SKU Level
-                                    </DropdownMenuItem>
+                                    </DropdownMenuItem> */}
                                     <DropdownMenuItem
                                       onClick={() => handleEditShipment(row)}
                                       className="cursor-pointer"
@@ -1199,7 +1247,7 @@ export default function DashboardPage({ onNavigate }) {
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
-                                      onClick={() => handleDeleteShipment(row)}
+                                       onClick={() => handleDeleteOrder(row)}
                                       className="cursor-pointer text-red-600 focus:text-red-600"
                                     >
                                       <Trash className="mr-2 h-4 w-4" />
@@ -1286,7 +1334,42 @@ export default function DashboardPage({ onNavigate }) {
           shipmentId={selectedShipment.uid}
           poNumber={selectedShipment.poNumber}
         />
+
+        <ConfirmDialog
+            open={!!dialogType}
+            type={dialogType}
+            id={selectedId}
+            onConfirm={handleDialogConfirm}
+            onCancel={handleDialogCancel}
+        />
+
       </main>
     </div>
   )
 }
+
+const ConfirmDialog = ({ open, type, id, onConfirm, onCancel }) => (
+    <Dialog open={open} onOpenChange={onCancel}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {type === "edit" ? "Edit User" : "Delete User"}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          {type === "edit"
+            ? `Are you sure you want to edit user "${data?.name}"?`
+            : `Are you sure you want to delete order "${id}"? This action cannot be undone.`}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button
+            variant={type === "delete" ? "destructive" : "default"}
+            onClick={onConfirm}
+          >
+            {type === "edit" ? "Edit" : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+)

@@ -17,6 +17,11 @@ router.post("/update-shipment", shipmentControllers.updateShipment)
 router.post("/update-bulk-shipments", shipmentControllers.updateBulkShipment)
 router.post("/update-skus-by-shipment", shipmentControllers.updateSkusBySipment)
 
+router.post("/update-bulk-skus", shipmentControllers.updateBulkSku);
+
+router.post("/delete-sku", shipmentControllers.deleteSku);
+router.post("/delete-shipment", shipmentControllers.deleteShipment);
+
 router.post('/get-log', async (req, res) => {
     try {
         const {shipmentId} = req.body;

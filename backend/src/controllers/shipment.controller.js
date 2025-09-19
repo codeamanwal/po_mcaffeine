@@ -1,3 +1,4 @@
+import { where } from "sequelize";
 import { sequelize } from "../db/postgresql.js";
 import {ShipmentOrder} from "../models/index.js";
 import {SkuOrder} from "../models/index.js";
@@ -480,6 +481,85 @@ async function updateBulkShipment(req, res){
   }
 }
 
+async function updateBulkSku(req, res) {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const skus = req.body;
+    console.log('Received SKUs for bulk update:', skus);
+
+    if (!Array.isArray(skus) || skus.length === 0) {
+      await transaction.rollback();
+      return res.status(400).json({
+        msg: "Invalid input. Expected non-empty array of SKU objects.",
+        success: false
+      });
+    }
+    
+    const updatePromises = skus.map(async (sku) => {
+      const id = sku.id;
+      const updatedData = {
+        updatedQty: sku.updatedQty,
+        updatedGmv: sku.updatedGmv,
+        updatedPoValue: sku.updatedPoValue,
+        updateReason: sku.updateReason,
+        updatedBy: sku.updatedBy
+      }
+      return await SkuOrder.update(updatedData, {
+        where: { id: id },
+        transaction: transaction,
+        returning: true
+      });
+    });
+
+    const results = await Promise.all(updatePromises);
+    await transaction.commit();
+
+    const successCount = results.reduce((sum, result) => sum + result[0], 0);
+
+    return res.status(200).json({
+      msg: "Bulk update completed successfully",
+      success: true,
+      summary: {
+        total: skus.length,
+        successful: successCount,
+        failed: skus.length - successCount
+      }
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    console.log("ERROR in updateBulkSkuWithTransaction: ", error);
+    return res.status(500).json({
+      msg: "Transaction failed. All changes rolled back.",
+      success: false,
+      err: error.message
+    });
+  }
+}
+
+async function deleteSku(req,res) {
+  try {
+    const {id} = req.body;
+    const deleted = await SkuOrder.destroy({where: {id:id}});
+    return res.status(200).json({msg: "Sku order deleted successfully"})
+  } catch (error) {
+    console.log("ERROR: ",error)
+    return res.status(500).json({msg:"Failed to delete Order!", error})
+  }
+}
+
+async function deleteShipment(req,res) {
+  try {
+    const {uid} = req.body;
+    const deleted = await ShipmentOrder.destroy({where: {uid:uid}});
+    return res.status(200).json({msg: "Shipment order deleted successfully"})
+  } catch (error) {
+    console.log("ERROR: ",error)
+    return res.status(500).json({msg:"Failed to delete Order!", error})
+  }
+}
+
 export const shipmentControllers = {
     createShipment,
     createBulkShipment,
@@ -491,6 +571,9 @@ export const shipmentControllers = {
     updateShipment,
     updateBulkShipment,
     updateSkusBySipment,
-    getLogsByShipment
+    getLogsByShipment,
+    updateBulkSku,
+    deleteSku,
+    deleteShipment,
 };
 

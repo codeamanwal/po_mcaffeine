@@ -91,6 +91,33 @@ export async function updateSinglePoOrder (data){
     }
 }
 
+export async function updateBulkSkus(skus) {
+    try {
+        const res = await api.post("/api/v1/shipment/update-bulk-skus", skus);
+        return res
+    } catch (error) {
+        throw error
+    }
+}
+
+export async function deleteSku(id) {
+    try {
+        const res = await api.post("/api/v1/shipment/delete-sku", {id:id});
+        return res;
+    } catch (error) {
+        throw error
+    }
+}
+
+export async function deleteShipment(id) {
+    try {
+        const res = await api.post("/api/v1/shipment/delete-shipment", {uid:id});
+        return res;
+    } catch (error) {
+        throw error
+    }
+}
+
 export async function getLogsOfShipment(shipmentId){
     try {
         const res = await api.post("/api/v1/shipment/get-log", {shipmentId: shipmentId});

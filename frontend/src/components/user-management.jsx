@@ -143,11 +143,11 @@ export default function UserManagementPage({ onNavigate, isDarkMode, onToggleThe
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Edit className="my-auto h-6 w-6 text-blue-500"
+                      {/* <Edit className="my-auto h-6 w-6 text-blue-500"
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditUser(user)}
-                      />
+                      /> */}
                       <Trash2 className="my-auto h-6 w-6 text-red-500" 
                         size="sm"
                         variant="destructive"

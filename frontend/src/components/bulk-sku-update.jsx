@@ -15,6 +15,7 @@ import { useUserStore } from "@/store/user-store"
 import { validateBulkSkuData } from "@/lib/validation"
 import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
+import { updateBulkSkus } from "@/lib/order"
 
 
 export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [], onSave }) {
@@ -262,15 +263,16 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
         updatedPoValue: record.calculatedPoValue,
         updateReason: reason.trim(),
         updatedBy: user?.username || user?.email,
-        updatedAt: new Date().toISOString(),
       }))
 
       // Here you would call your API to update the SKUs
       // await updateBulkSkusFromCsv(bulkUpdateData)
 
-      console.log("Bulk CSV SKU Update Data:", bulkUpdateData)
+      console.log("Bulk SKU Update Data:", bulkUpdateData)
+      const res = await updateBulkSkus(bulkUpdateData);
+      console.log(res.data)
 
-      setSuccess(`Successfully updated ${validRecords.length} SKU(s) from CSV`)
+      setSuccess(res.data.msg)
       toast.success(`Successfully updated ${validRecords.length} SKU(s) from CSV`)
 
       if (onSave) {
