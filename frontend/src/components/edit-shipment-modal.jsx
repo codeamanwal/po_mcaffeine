@@ -872,7 +872,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           <Button
             onClick={handleSave}
             disabled={isLoading || (poNumberChanged && !poEditReason) || validationErrors.length > 0}
-            className={`${activeTab == "sku" ? "hidden" : "block"} bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700`}
+            className={`${activeTab == "sku" ? "hidden" : "flex flex-row"} bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700`}
           >
             <Save className="h-4 w-4 mr-2" />
             {isLoading ? "Saving..." : "Save Changes"}

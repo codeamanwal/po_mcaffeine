@@ -1265,7 +1265,7 @@ export default function DashboardPage({ onNavigate }) {
           }}
         />
 
-        <SkuLevelEditModal
+        {/* <SkuLevelEditModal
           isOpen={isSkuEditModal}
           onClose={() => {
             setSkuEditModal(false)
@@ -1274,7 +1274,7 @@ export default function DashboardPage({ onNavigate }) {
           onSave={() => {
             onSavingUpdate()
           }}
-        />
+        /> */}
 
         <ShipmentViewModal
           isOpen={isShipmentViewModal}
