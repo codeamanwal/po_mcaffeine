@@ -15,10 +15,9 @@ import EditOrderModal from "@/components/edit-order-modal"
 import EditShipmentModal from "@/components/edit-shipment-modal"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import BulkUpdateShipmentModal from "@/components/bulk-shipment-edit-modal"
+import BulkUpdateShipmentModal from "@/components/bulk-shipment-update"
 import SkuLevelEditModal from "@/components/sku-level-edit-modal"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import ShipmentViewModal from "@/components/view-shipment-modal"
@@ -29,8 +28,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { format, parse } from "date-fns"
+import { format, parse, isSameDay } from "date-fns"
 import { cn } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 
 // Sample data based on provided format
 const poData = [
@@ -204,6 +205,76 @@ const shipmentData = [
   },
 ]
 
+// Multi-select filter component
+const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleToggle = (value) => {
+    const newSelection = selectedValues.includes(value)
+      ? selectedValues.filter((v) => v !== value)
+      : [...selectedValues, value]
+    onSelectionChange(newSelection)
+  }
+
+  const handleSelectAll = () => {
+    if (selectedValues.length === options.length) {
+      onSelectionChange([])
+    } else {
+      onSelectionChange(options)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium">{label}</label>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="w-full justify-between text-left font-normal bg-transparent">
+            <span className="truncate">
+              {selectedValues.length === 0
+                ? placeholder
+                : selectedValues.length === 1
+                  ? selectedValues[0]
+                  : `${selectedValues.length} selected`}
+            </span>
+            <X className={cn("ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform", isOpen && "rotate-180")} />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <div className="max-h-60 overflow-auto">
+            <div className="p-2 border-b">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="select-all"
+                  checked={selectedValues.length === options.length}
+                  onCheckedChange={handleSelectAll}
+                />
+                <Label htmlFor="select-all" className="text-sm font-medium">
+                  Select All
+                </Label>
+              </div>
+            </div>
+            <div className="p-2 space-y-2">
+              {options.map((option) => (
+                <div key={option} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={option}
+                    checked={selectedValues.includes(option)}
+                    onCheckedChange={() => handleToggle(option)}
+                  />
+                  <Label htmlFor={option} className="text-sm cursor-pointer">
+                    {option}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+
 export default function DashboardPage({ onNavigate }) {
   const router = useRouter()
   const { isDarkMode, setIsDarkMode } = useThemeStore()
@@ -216,13 +287,13 @@ export default function DashboardPage({ onNavigate }) {
   const [poSearchTerm, setPoSearchTerm] = useState("")
   const [shipmentSearchTerm, setShipmentSearchTerm] = useState("")
 
-  // Filter states for PO Format
+  // Filter states for PO Format - Updated to support multi-select
   const [poFilters, setPoFilters] = useState({
     entryDateFrom: null,
     entryDateTo: null,
-    brand: "",
-    channel: "",
-    location: "",
+    brand: [],
+    channel: [],
+    location: [],
     poDateFrom: null,
     poDateTo: null,
     skuCode: "",
@@ -232,25 +303,25 @@ export default function DashboardPage({ onNavigate }) {
     dispatchDateTo: null,
     currentAppointmentDateFrom: null,
     currentAppointmentDateTo: null,
-    statusPlanning: "",
-    statusWarehouse: "",
-    statusLogistics: "",
+    statusPlanning: [],
+    statusWarehouse: [],
+    statusLogistics: [],
   })
 
-  // Filter states for Shipment
+  // Filter states for Shipment - Updated to support multi-select
   const [shipmentFilters, setShipmentFilters] = useState({
     entryDateFrom: null,
     entryDateTo: null,
-    brand: "",
-    channel: "",
-    location: "",
+    brand: [],
+    channel: [],
+    location: [],
     poDateFrom: null,
     poDateTo: null,
     currentAppointmentDateFrom: null,
     currentAppointmentDateTo: null,
-    statusPlanning: "",
-    statusWarehouse: "",
-    statusLogistics: "",
+    statusPlanning: [],
+    statusWarehouse: [],
+    statusLogistics: [],
   })
 
   const [isEditModal, setEditModal] = useState(false)
@@ -305,7 +376,7 @@ export default function DashboardPage({ onNavigate }) {
     }
   }
 
-  // Enhanced filter function for PO data
+  // Enhanced filter function for PO data - Updated for multi-select
   const filteredPoData = poFormatData.filter((item) => {
     // Search filter
     const searchLower = poSearchTerm.toLowerCase()
@@ -324,9 +395,9 @@ export default function DashboardPage({ onNavigate }) {
     const matchesFilters =
       (!poFilters.entryDateFrom || (entryDate && entryDate >= poFilters.entryDateFrom)) &&
       (!poFilters.entryDateTo || (entryDate && entryDate <= poFilters.entryDateTo)) &&
-      (!poFilters.brand || item.brandName === poFilters.brand) &&
-      (!poFilters.channel || item.channel === poFilters.channel) &&
-      (!poFilters.location || item.location === poFilters.location) &&
+      (poFilters.brand.length === 0 || poFilters.brand.includes(item.brand)) &&
+      (poFilters.channel.length === 0 || poFilters.channel.includes(item.channel)) &&
+      (poFilters.location.length === 0 || poFilters.location.includes(item.location)) &&
       (!poFilters.poDateFrom || (poDate && poDate >= poFilters.poDateFrom)) &&
       (!poFilters.poDateTo || (poDate && poDate <= poFilters.poDateTo)) &&
       (!poFilters.skuCode || item.skuCode?.toLowerCase().includes(poFilters.skuCode.toLowerCase())) &&
@@ -338,14 +409,14 @@ export default function DashboardPage({ onNavigate }) {
         (currentAppointmentDate && currentAppointmentDate >= poFilters.currentAppointmentDateFrom)) &&
       (!poFilters.currentAppointmentDateTo ||
         (currentAppointmentDate && currentAppointmentDate <= poFilters.currentAppointmentDateTo)) &&
-      (!poFilters.statusPlanning || item.statusPlanning === poFilters.statusPlanning) &&
-      (!poFilters.statusWarehouse || item.statusWarehouse === poFilters.statusWarehouse) &&
-      (!poFilters.statusLogistics || item.statusLogistics === poFilters.statusLogistics)
+      (poFilters.statusPlanning.length === 0 || poFilters.statusPlanning.includes(item.statusPlanning)) &&
+      (poFilters.statusWarehouse.length === 0 || poFilters.statusWarehouse.includes(item.statusWarehouse)) &&
+      (poFilters.statusLogistics.length === 0 || poFilters.statusLogistics.includes(item.statusLogistics))
 
     return matchesSearch && matchesFilters
   })
 
-  // Enhanced filter function for Shipment data
+  // Enhanced filter function for Shipment data - Updated for multi-select
   const filteredShipmentData = shipmentStatusData.filter((item) => {
     // Search filter
     const searchLower = shipmentSearchTerm.toLowerCase()
@@ -362,18 +433,19 @@ export default function DashboardPage({ onNavigate }) {
     const matchesFilters =
       (!shipmentFilters.entryDateFrom || (entryDate && entryDate >= shipmentFilters.entryDateFrom)) &&
       (!shipmentFilters.entryDateTo || (entryDate && entryDate <= shipmentFilters.entryDateTo)) &&
-      (!shipmentFilters.brand || item.brandName === shipmentFilters.brand) &&
-      (!shipmentFilters.channel || item.channel === shipmentFilters.channel) &&
-      (!shipmentFilters.location || item.location === shipmentFilters.location) &&
+      (shipmentFilters.brand.length === 0 || shipmentFilters.brand.includes(item.brandName)) &&
+      (shipmentFilters.channel.length === 0 || shipmentFilters.channel.includes(item.channel)) &&
+      (shipmentFilters.location.length === 0 || shipmentFilters.location.includes(item.location)) &&
       (!shipmentFilters.poDateFrom || (poDate && poDate >= shipmentFilters.poDateFrom)) &&
       (!shipmentFilters.poDateTo || (poDate && poDate <= shipmentFilters.poDateTo)) &&
       (!shipmentFilters.currentAppointmentDateFrom ||
         (currentAppointmentDate && currentAppointmentDate >= shipmentFilters.currentAppointmentDateFrom)) &&
       (!shipmentFilters.currentAppointmentDateTo ||
         (currentAppointmentDate && currentAppointmentDate <= shipmentFilters.currentAppointmentDateTo)) &&
-      (!shipmentFilters.statusPlanning || item.statusPlanning === shipmentFilters.statusPlanning) &&
-      (!shipmentFilters.statusWarehouse || item.statusWarehouse === shipmentFilters.statusWarehouse) &&
-      (!shipmentFilters.statusLogistics || item.statusLogistics === shipmentFilters.statusLogistics)
+      (shipmentFilters.statusPlanning.length === 0 || shipmentFilters.statusPlanning.includes(item.statusPlanning)) &&
+      (shipmentFilters.statusWarehouse.length === 0 ||
+        shipmentFilters.statusWarehouse.includes(item.statusWarehouse)) &&
+      (shipmentFilters.statusLogistics.length === 0 || shipmentFilters.statusLogistics.includes(item.statusLogistics))
 
     return matchesSearch && matchesFilters
   })
@@ -409,14 +481,14 @@ export default function DashboardPage({ onNavigate }) {
     document.body.removeChild(link)
   }
 
-  // Clear filters functions
+  // Clear filters functions - Updated for multi-select
   const clearPoFilters = () => {
     setPoFilters({
       entryDateFrom: null,
       entryDateTo: null,
-      brand: "",
-      channel: "",
-      location: "",
+      brand: [],
+      channel: [],
+      location: [],
       poDateFrom: null,
       poDateTo: null,
       skuCode: "",
@@ -426,9 +498,9 @@ export default function DashboardPage({ onNavigate }) {
       dispatchDateTo: null,
       currentAppointmentDateFrom: null,
       currentAppointmentDateTo: null,
-      statusPlanning: "",
-      statusWarehouse: "",
-      statusLogistics: "",
+      statusPlanning: [],
+      statusWarehouse: [],
+      statusLogistics: [],
     })
     setPoSearchTerm("")
   }
@@ -437,16 +509,16 @@ export default function DashboardPage({ onNavigate }) {
     setShipmentFilters({
       entryDateFrom: null,
       entryDateTo: null,
-      brand: "",
-      channel: "",
-      location: "",
+      brand: [],
+      channel: [],
+      location: [],
       poDateFrom: null,
       poDateTo: null,
       currentAppointmentDateFrom: null,
       currentAppointmentDateTo: null,
-      statusPlanning: "",
-      statusWarehouse: "",
-      statusLogistics: "",
+      statusPlanning: [],
+      statusWarehouse: [],
+      statusLogistics: [],
     })
     setShipmentSearchTerm("")
   }
@@ -464,7 +536,19 @@ export default function DashboardPage({ onNavigate }) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        <CalendarComponent mode="single" selected={date} onSelect={onDateChange} initialFocus />
+        <CalendarComponent
+          mode="single"
+          selected={date}
+          onSelect={(next) => {
+            // Toggle off if user selects the same date again
+            if (date && next && isSameDay(date, next)) {
+              onDateChange(null)
+            } else {
+              onDateChange(next ?? null)
+            }
+          }}
+          initialFocus
+        />
       </PopoverContent>
     </Popover>
   )
@@ -529,6 +613,30 @@ export default function DashboardPage({ onNavigate }) {
     await getShipmentData()
   }
 
+  // Get fixed columns for PO Format (up to PO Number)
+  const getPoFixedColumns = () => {
+    const poNumberIndex = poFormatDataType.findIndex((item) => item.fieldName === "poNumber")
+    return poFormatDataType.slice(0, poNumberIndex + 1)
+  }
+
+  // Get scrollable columns for PO Format (after PO Number)
+  const getPoScrollableColumns = () => {
+    const poNumberIndex = poFormatDataType.findIndex((item) => item.fieldName === "poNumber")
+    return poFormatDataType.slice(poNumberIndex + 1)
+  }
+
+  // Get fixed columns for Shipment (up to PO Number)
+  const getShipmentFixedColumns = () => {
+    const poNumberIndex = shipmentStatusDataType.findIndex((item) => item.fieldName === "poNumber")
+    return shipmentStatusDataType.slice(0, poNumberIndex + 1)
+  }
+
+  // Get scrollable columns for Shipment (after PO Number)
+  const getShipmentScrollableColumns = () => {
+    const poNumberIndex = shipmentStatusDataType.findIndex((item) => item.fieldName === "poNumber")
+    return shipmentStatusDataType.slice(poNumberIndex + 1)
+  }
+
   useEffect(() => {
     getPoFormateData()
     getShipmentData()
@@ -538,7 +646,7 @@ export default function DashboardPage({ onNavigate }) {
     <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
       <NavigationHeader currentPage="dashboard" onNavigate={onNavigate} />
 
-      <main className="container mx-auto p-6">
+      <main className="max-w-[97%] mx-auto py-3">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Data Management Dashboard</h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">Manage PO formats and shipment status data</p>
@@ -618,78 +726,32 @@ export default function DashboardPage({ onNavigate }) {
                       />
                     </div>
 
-                    {/* Brand */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Brand</label>
-                      <div>
-                        <Select
-                          value={poFilters.brand}
-                          onOpenChange={(open) => {
-                            if (open) {
-                              setPoFilters((prev) => ({ ...prev, brand: "" }));
-                            }
-                          }}
-                          onValueChange={(value) =>
-                            setPoFilters((prev) => ({ ...prev, brand: value }))
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select brand" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getUniqueValues(poFormatData, "brandName").map((brand) => (
-                              <SelectItem key={brand} value={brand}>
-                                {brand}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                    {/* Multi-select Brand */}
+                    <MultiSelectFilter
+                      label="Brand"
+                      options={getUniqueValues(poFormatData, "brand")}
+                      selectedValues={poFilters.brand}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, brand: values }))}
+                      placeholder="Select brands"
+                    />
 
-                    {/* Channel */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Channel</label>
-                      <Select
-                        value={poFilters.channel}
-                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, channel: "" }));}}}
-                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, channel: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select channel" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Channels</SelectItem> */}
-                          {getUniqueValues(poFormatData, "channel").map((channel) => (
-                            <SelectItem key={channel} value={channel}>
-                              {channel}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Channel */}
+                    <MultiSelectFilter
+                      label="Channel"
+                      options={getUniqueValues(poFormatData, "channel")}
+                      selectedValues={poFilters.channel}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, channel: values }))}
+                      placeholder="Select channels"
+                    />
 
-                    {/* Location */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Location</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, location: "" }));}}}
-                        value={poFilters.location}
-                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, location: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Locations</SelectItem> */}
-                          {getUniqueValues(poFormatData, "location").map((location) => (
-                            <SelectItem key={location} value={location}>
-                              {location}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Location */}
+                    <MultiSelectFilter
+                      label="Location"
+                      options={getUniqueValues(poFormatData, "location")}
+                      selectedValues={poFilters.location}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, location: values }))}
+                      placeholder="Select locations"
+                    />
 
                     {/* SKU Code */}
                     <div className="space-y-2">
@@ -701,150 +763,152 @@ export default function DashboardPage({ onNavigate }) {
                       />
                     </div>
 
-                    {/* Status Planning */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Status Planning</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, statusPlanning: "" }));}}}
-                        value={poFilters.statusPlanning}
-                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusPlanning: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Status</SelectItem> */}
-                          {getUniqueValues(poFormatData, "statusPlanning").map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Status Planning */}
+                    <MultiSelectFilter
+                      label="Status Planning"
+                      options={getUniqueValues(poFormatData, "statusPlanning")}
+                      selectedValues={poFilters.statusPlanning}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusPlanning: values }))}
+                      placeholder="Select status"
+                    />
 
-                    {/* Status Warehouse */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Status Warehouse</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, statusWarehouse: "" }));}}}
-                        value={poFilters.statusWarehouse}
-                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusWarehouse: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Status</SelectItem> */}
-                          {getUniqueValues(poFormatData, "statusWarehouse").map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Status Warehouse */}
+                    <MultiSelectFilter
+                      label="Status Warehouse"
+                      options={getUniqueValues(poFormatData, "statusWarehouse")}
+                      selectedValues={poFilters.statusWarehouse}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusWarehouse: values }))}
+                      placeholder="Select status"
+                    />
 
-                    {/* Status Logistics */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Status Logistics</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setPoFilters((prev) => ({ ...prev, statusLogistics: "" }));}}}
-                        value={poFilters.statusLogistics}
-                        onValueChange={(value) => setPoFilters((prev) => ({ ...prev, statusLogistics: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Status</SelectItem> */}
-                          {getUniqueValues(poFormatData, "statusLogistics").map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Status Logistics */}
+                    <MultiSelectFilter
+                      label="Status Logistics"
+                      options={getUniqueValues(poFormatData, "statusLogistics")}
+                      selectedValues={poFilters.statusLogistics}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusLogistics: values }))}
+                      placeholder="Select status"
+                    />
                   </div>
                 </div>
               </CardHeader>
 
               <CardContent>
                 <div className="relative">
-                  <ScrollArea className="w-full">
-                    <div className="min-w-[2000px]">
+                  {/* Fixed columns container */}
+                  <div className="flex overflow-auto">
+                    {/* Fixed columns */}
+                    <div className="absolute left-0 top-0 z-50 bg-background border-r border-gray-200 dark:border-gray-800">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-                            {poFormatDataType.map((item, index) => (
-                              <TableHead key={index} className="font-semibold mx-1 border-1 border-x-white py-1">
+                            {getPoFixedColumns().map((item, index) => (
+                              <TableHead
+                                key={index}
+                                className="font-semibold mx-1 border-1 border-x-white py-1 whitespace-nowrap"
+                              >
                                 {item.label}
                               </TableHead>
                             ))}
-                            <TableCell className="w-32 no-wrap"> </TableCell>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {filteredPoData.map((row, index) => (
                             <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                              {poFormatDataType.map((item, index) => (
-                                <TableCell key={index} className="mx-1 border-1 border-x-white py-1">
+                              {getPoFixedColumns().map((item, idx) => (
+                                <TableCell key={idx} className="mx-1 border-1 border-x-white py-1 whitespace-nowrap">
                                   {row[item.fieldName]}
                                 </TableCell>
                               ))}
-                              <TableCell className="min-w-32 mx-1 border-1 border-x-white py-3 whitespace-nowrap">
-                                {}
-                              </TableCell>
-                              <TableCell className="w-32"></TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     </div>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
 
-                  {/* Sticky Action Column */}
-                  <div className="absolute top-0 right-0 bg-white dark:bg-gray-950 shadow-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-                          <TableHead className="font-semibold py-2 px-4 w-32 text-center">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredPoData.map((row, index) => (
-                          <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-none">
-                            <TableCell className="py-0 px-2 w-28 border-none">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="py-0 my-[-0.23rem] flex flex-row">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-5 w-5 my-0" />
-                                    <span className="hidden md:block py-0 my-0">Action</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem onClick={() => handleViewShipment(row)} className="cursor-pointer">
-                                    <Eye className="mr-2 h-4 w-4 text-blue-500" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => handleDeleteOrder(row)}
-                                    className="cursor-pointer text-red-600 focus:text-red-600"
+                    {/* Scrollable columns container */}
+                    <div className="flex-1 ml-[37rem]">
+                      <ScrollArea className="w-full">
+                        <div className="min-w-max">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
+                                {getPoScrollableColumns().map((item, index) => (
+                                  <TableHead
+                                    key={index}
+                                    className="font-semibold mx-1 border-1 border-x-white py-1 whitespace-nowrap"
                                   >
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
+                                    {item.label}
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredPoData.map((row, index) => (
+                                <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                  {getPoScrollableColumns().map((item, idx) => (
+                                    <TableCell
+                                      key={idx}
+                                      className="mx-1 border-1 border-x-white py-1 whitespace-nowrap"
+                                    >
+                                      {row[item.fieldName]}
+                                    </TableCell>
+                                  ))}
+                                  <TableCell className={"min-w-28"}></TableCell>
+                                </TableRow>
+                              ))}
+                              
+                            </TableBody>
+                          </Table>
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </div>
+
+                    {/* Sticky Action Column */}
+                    <div className="absolute right-0 top-0 z-50 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
+                            <TableHead className="font-semibold py-2 px-4 w-32 text-center">Actions</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredPoData.map((row, index) => (
+                            <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-none">
+                              <TableCell className="py-0 px-2 w-28 border-none">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="py-0 my-[-0.23rem] flex flex-row">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-5 w-5 my-0" />
+                                      <span className="hidden md:block py-0 my-0">Action</span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem
+                                      onClick={() => handleViewShipment(row)}
+                                      className="cursor-pointer"
+                                    >
+                                      <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                      View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => handleDeleteOrder(row)}
+                                      className="cursor-pointer text-red-600 focus:text-red-600"
+                                    >
+                                      <Trash className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -924,149 +988,79 @@ export default function DashboardPage({ onNavigate }) {
                       />
                     </div>
 
-                    {/* Brand */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Brand</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, brand: "" }));}}}
-                        value={shipmentFilters.brand}
-                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, brand: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select brand" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Brands</SelectItem> */}
-                          {getUniqueValues(shipmentStatusData, "brandName").map((brand) => (
-                            <SelectItem key={brand} value={brand}>
-                              {brand}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Brand */}
+                    <MultiSelectFilter
+                      label="Brand"
+                      options={getUniqueValues(shipmentStatusData, "brandName")}
+                      selectedValues={shipmentFilters.brand}
+                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, brand: values }))}
+                      placeholder="Select brands"
+                    />
 
-                    {/* Channel */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Channel</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, channel: "" }));}}}
-                        value={shipmentFilters.channel}
-                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, channel: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select channel" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Channels</SelectItem> */}
-                          {getUniqueValues(shipmentStatusData, "channel").map((channel) => (
-                            <SelectItem key={channel} value={channel}>
-                              {channel}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Channel */}
+                    <MultiSelectFilter
+                      label="Channel"
+                      options={getUniqueValues(shipmentStatusData, "channel")}
+                      selectedValues={shipmentFilters.channel}
+                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, channel: values }))}
+                      placeholder="Select channels"
+                    />
 
-                    {/* Location */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Location</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, location: "" }));}}}
-                        value={shipmentFilters.location}
-                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, location: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Locations</SelectItem> */}
-                          {getUniqueValues(shipmentStatusData, "location").map((location) => (
-                            <SelectItem key={location} value={location}>
-                              {location}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Location */}
+                    <MultiSelectFilter
+                      label="Location"
+                      options={getUniqueValues(shipmentStatusData, "location")}
+                      selectedValues={shipmentFilters.location}
+                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, location: values }))}
+                      placeholder="Select locations"
+                    />
 
-                    {/* Status Planning */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Status Planning</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, statusPlanning: "" }));}}}
-                        value={shipmentFilters.statusPlanning}
-                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusPlanning: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Status</SelectItem> */}
-                          {getUniqueValues(shipmentStatusData, "statusPlanning").map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Status Planning */}
+                    <MultiSelectFilter
+                      label="Status Planning"
+                      options={getUniqueValues(shipmentStatusData, "statusPlanning")}
+                      selectedValues={shipmentFilters.statusPlanning}
+                      onSelectionChange={(values) =>
+                        setShipmentFilters((prev) => ({ ...prev, statusPlanning: values }))
+                      }
+                      placeholder="Select status"
+                    />
 
-                    {/* Status Warehouse */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Status Warehouse</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, statusWarehouse: "" }));}}}
-                        value={shipmentFilters.statusWarehouse}
-                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusWarehouse: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* <SelectItem value="all">All Status</SelectItem> */}
-                          {getUniqueValues(shipmentStatusData, "statusWarehouse").map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Status Warehouse */}
+                    <MultiSelectFilter
+                      label="Status Warehouse"
+                      options={getUniqueValues(shipmentStatusData, "statusWarehouse")}
+                      selectedValues={shipmentFilters.statusWarehouse}
+                      onSelectionChange={(values) =>
+                        setShipmentFilters((prev) => ({ ...prev, statusWarehouse: values }))
+                      }
+                      placeholder="Select status"
+                    />
 
-                    {/* Status Logistics */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Status Logistics</label>
-                      <Select
-                        onOpenChange={(open) => {if (open) {setShipmentFilters((prev) => ({ ...prev, statusLogistics: "" }));}}}
-                        value={shipmentFilters.statusLogistics}
-                        onValueChange={(value) => setShipmentFilters((prev) => ({ ...prev, statusLogistics: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={null}>All Status</SelectItem>
-                          {getUniqueValues(shipmentStatusData, "statusLogistics").map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Multi-select Status Logistics */}
+                    <MultiSelectFilter
+                      label="Status Logistics"
+                      options={getUniqueValues(shipmentStatusData, "statusLogistics")}
+                      selectedValues={shipmentFilters.statusLogistics}
+                      onSelectionChange={(values) =>
+                        setShipmentFilters((prev) => ({ ...prev, statusLogistics: values }))
+                      }
+                      placeholder="Select status"
+                    />
                   </div>
                 </div>
               </CardHeader>
 
               <CardContent>
                 <div className="relative">
-                  <ScrollArea className="w-full">
-                    <div className="relative">
+                  {/* Fixed columns container */}
+                  <div className="flex overflow-auto">
+                    {/* Fixed columns */}
+                    <div className="absolute left-0 top-0 z-50 bg-background border-r border-gray-200 dark:border-gray-800">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-                            {shipmentStatusDataType.map((item, idx) => (
+                            {getShipmentFixedColumns().map((item, idx) => (
                               <TableHead
                                 key={idx}
                                 className="font-semibold mx-1 border-1 border-x-white py-3 whitespace-nowrap"
@@ -1074,83 +1068,122 @@ export default function DashboardPage({ onNavigate }) {
                                 {item.label}
                               </TableHead>
                             ))}
-                            <TableHead className="w-32"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {filteredShipmentData.map((row, index) => (
                             <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                              {shipmentStatusDataType.map((item, idx) => (
+                              {getShipmentFixedColumns().map((item, idx) => (
                                 <TableCell key={idx} className="mx-1 border-1 border-x-white py-3 whitespace-nowrap">
                                   {row[item.fieldName]}
                                 </TableCell>
                               ))}
-                              <TableCell className="min-w-32 mx-1 border-1 border-x-white py-3 whitespace-nowrap">
-                                {}
-                              </TableCell>
-                              <TableCell className="w-32"></TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     </div>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
 
-                  {/* Sticky Action Column */}
-                  <div className="absolute top-0 right-0 bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800 shadow-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-                          <TableHead className="font-semibold py-3 px-4 w-32 text-center">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredShipmentData.map((row, index) => (
-                          <TableRow
-                            key={index}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
-                          >
-                            <TableCell className="py-[0.26rem] px-2 w-28">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="p-0 m-0 flex flex-row">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-5 w-5" />
-                                    <span className="hidden md:block">Action</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem onClick={() => handleViewShipment(row)} className="cursor-pointer">
-                                    <Eye className="mr-2 h-4 w-4 text-blue-500" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleEditSkuShipment(row)}
-                                    className="cursor-pointer"
+                    {/* Scrollable columns container */}
+                    <div className="flex-1 ml-[38rem]">
+                      <ScrollArea className="w-full">
+                        <div className="min-w-max">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
+                                {getShipmentScrollableColumns().map((item, idx) => (
+                                  <TableHead
+                                    key={idx}
+                                    className="font-semibold mx-1 border-1 border-x-white py-3 whitespace-nowrap"
                                   >
-                                    <Package className="mr-2 h-4 w-4 text-green-500" />
-                                    Update SKU Level
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleEditShipment(row)} className="cursor-pointer">
-                                    <Edit className="mr-2 h-4 w-4 text-orange-500" />
-                                    Edit Shipment
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => handleDeleteShipment(row)}
-                                    className="cursor-pointer text-red-600 focus:text-red-600"
-                                  >
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
+                                    {item.label}
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredShipmentData.map((row, index) => (
+                                <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                  {getShipmentScrollableColumns().map((item, idx) => (
+                                    <TableCell
+                                      key={idx}
+                                      className="mx-1 border-1 border-x-white py-3 whitespace-nowrap"
+                                    >
+                                      {row[item.fieldName]}
+                                    </TableCell>
+                                  ))}
+                                  <TableCell className={"min-w-28"}></TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </div>
+
+                    {/* Sticky Action Column */}
+                    <div className="absolute right-0 top-0 z-50 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
+                            <TableHead className="font-semibold py-3 px-4 w-32 text-center">Actions</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredShipmentData.map((row, index) => (
+                            <TableRow
+                              key={index}
+                              className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+                            >
+                              <TableCell className="py-[0.26rem] px-2 w-28">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="p-0 m-0 flex flex-row">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-5 w-5" />
+                                      <span className="hidden md:block">Action</span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem
+                                      onClick={() => handleViewShipment(row)}
+                                      className="cursor-pointer"
+                                    >
+                                      <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                      View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleEditSkuShipment(row)}
+                                      className="cursor-pointer"
+                                    >
+                                      <Package className="mr-2 h-4 w-4 text-green-500" />
+                                      Edit SKU Level
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleEditShipment(row)}
+                                      className="cursor-pointer"
+                                    >
+                                      <Edit className="mr-2 h-4 w-4 text-orange-500" />
+                                      Edit Shipment
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => handleDeleteShipment(row)}
+                                      className="cursor-pointer text-red-600 focus:text-red-600"
+                                    >
+                                      <Trash className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
                   </div>
                 </div>
               </CardContent>
@@ -1197,7 +1230,6 @@ export default function DashboardPage({ onNavigate }) {
           onClose={() => {
             setSkuEditModal(false)
           }}
-          shipment = {selectedShipment}
           shipmentId={selectedShipment.uid}
           onSave={() => {
             onSavingUpdate()

@@ -2,150 +2,491 @@
 
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Progress } from "@/components/ui/progress"
-import { Upload, FileText, AlertCircle, CheckCircle, Download, ArrowLeft, X, Eye, Database } from "lucide-react"
-import { createBulkShipment, getShipmentStatusList, updateBulkShipment } from "@/lib/order"
+import { Separator } from "@/components/ui/separator"
+import {
+  Upload,
+  Download,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  X,
+  Eye,
+  Shield,
+  Warehouse,
+  Truck,
+  Database,
+  AlertTriangle,
+  CheckSquare,
+  Square,
+} from "lucide-react"
+import { useUserStore } from "@/store/user-store"
+import { Label } from "./ui/label"
+import { updateBulkShipment } from "@/lib/order"
+import {
+  validateShipmentData,
+  master_facility_option,
+  master_channel_options,
+  master_status_planning_options,
+  master_status_warehouse_options,
+  master_status_logistics_options,
+  master_courier_partner_options,
+  master_rejection_reasons,
+  master_location_options,
+} from "@/lib/validation"
 
+// Field definitions with role permissions, CSV headers, and validation rules
+const fieldDefinitions = {
+  // Admin fields
+  poDate: {
+    label: "PO Date",
+    csvHeader: "PO Date",
+    roles: ["superadmin", "admin"],
+    type: "date",
+    category: "admin",
+    validation: null,
+  },
+  facility: {
+    label: "Facility",
+    csvHeader: "Facility",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: master_facility_option,
+  },
+  channel: {
+    label: "Channel",
+    csvHeader: "Channel",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: master_channel_options,
+  },
+  location: {
+    label: "Location",
+    csvHeader: "Location",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: master_location_options,
+  },
+  remarksPlanning: {
+    label: "Remarks (Planning)",
+    csvHeader: "Remarks (Planning)",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  specialRemarksCOPT: {
+    label: "Special Remarks (COPT)",
+    csvHeader: "Special Remarks (COPT)",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  statusPlanning: {
+    label: "Status (Planning)",
+    csvHeader: "Status (Planning)",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: master_status_planning_options,
+  },
+  channelInwardingRemarks: {
+    label: "Channel Inwarding Remarks",
+    csvHeader: "Channel Inwarding Remarks",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  dispatchDateTentative: {
+    label: "Dispatch Date Tentative",
+    csvHeader: "Dispatch Date Tentative",
+    roles: ["superadmin", "admin"],
+    type: "date",
+    category: "admin",
+    validation: null,
+  },
+  workingDatePlanner: {
+    label: "Working Date (Planner)",
+    csvHeader: "Working Date (Planner)",
+    roles: ["superadmin", "admin"],
+    type: "date",
+    category: "admin",
+    validation: null,
+  },
+  firstAppointmentDateCOPT: {
+    label: "First Appointment Date (COPT)",
+    csvHeader: "First Appointment Date (COPT)",
+    roles: ["superadmin", "admin"],
+    type: "date",
+    category: "admin",
+    validation: null,
+  },
+  orderNo1: {
+    label: "Order No 1",
+    csvHeader: "Order No 1",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  orderNo2: {
+    label: "Order No 2",
+    csvHeader: "Order No 2",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  orderNo3: {
+    label: "Order No 3",
+    csvHeader: "Order No 3",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  labelsLink: {
+    label: "Labels",
+    csvHeader: "Labels",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  invoiceValue: {
+    label: "Invoice Value",
+    csvHeader: "Invoice Value (Check with Invoice Link)",
+    roles: ["superadmin", "admin"],
+    type: "number",
+    category: "admin",
+    validation: null,
+  },
+  remarksAccountsTeam: {
+    label: "Remarks by Accounts Team",
+    csvHeader: "Remarks by Accounts Team",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  invoiceChallanNumber: {
+    label: "Invoice / Challan Number",
+    csvHeader: "Invoice / Challan Number",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  invoiceCheckedBy: {
+    label: "Invoice Checked By",
+    csvHeader: "Invoice Checked By",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  tallyCustomerName: {
+    label: "Tally Customer Name",
+    csvHeader: "Tally Customer Name",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  customerCode: {
+    label: "Customer Code",
+    csvHeader: "Customer Code",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  poEntryCount: {
+    label: "PO Entry Count",
+    csvHeader: "PO Entry Count",
+    roles: ["superadmin", "admin"],
+    type: "number",
+    category: "admin",
+    validation: null,
+  },
+  updatedGmv: {
+    label: "Updated GMV",
+    csvHeader: "Updated GMV",
+    roles: ["superadmin", "admin"],
+    type: "number",
+    category: "admin",
+    validation: null,
+  },
 
-const expectedHeaders = [
-        "UID",
-        "Entry Date",
-        "PO Date", 
-        "Facility",
-        "Channel",
-        "Location",
-        "PO Number",
-        "Brand Name",
-        "Remarks (Planning)",
-        "Special Remarks (COPT)",
-        "New Shipment Reference",
-        "Status (Active/Inactive)",
-        "Status (Planning)",
-        "Status (Warehouse)",
-        "Status (Logistics)",
-        "Channel Inwarding Remarks",
-        "Dispatch Remarks (Logistics)",
-        "Dispatch Remarks (Warehouse)",
-        "Dispatch Date Tentative",
-        "Working Date (Planner)",
-        "RTS Date",
-        "Dispatch Date",
-        "Current Appointment Date",
-        "First Appointment Date (COPT)",
-        "No Of Boxes",
-        "Order No 1",
-        "Order No 2",
-        "Order No 3",
-        "Pick List No",
-        "Working Type (Warehouse)",
-        "Inventory Remarks (Warehouse)",
-        "B2B Working Team Remarks",
-        "Volumetric Weight",
-        "Channel Type",
-        "First Transporter",
-        "First Docket No",
-        "Second Transporter",
-        "Second Docket No",
-        "Third Transporter",
-        "Third Docket No",
-        "Appointment Letter/STN",
-        "Labels Link",
-        "Invoice Date",
-        "Invoice Link",
-        "CN Link",
-        "E-Way Link",
-        "Invoice Value",
-        "Remarks (Accounts Team)",
-        "Invoice Challan Number",
-        "Invoice Checked By",
-        "Tally Customer Name",
-        "Customer Code",
-        "PO Entry Count",
-        "Temp",
-        "Delivery Date",
-        "Reschedule Lag",
-        "Final Remarks",
-        "Updated GMV",
-        "Physical Weight"
-]
+  // Warehouse fields
+  statusWarehouse: {
+    label: "Status (Warehouse)",
+    csvHeader: "Status (Warehouse)",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: master_status_warehouse_options,
+  },
+  dispatchRemarksWarehouse: {
+    label: "Dispatch Remarks (Warehouse)",
+    csvHeader: "Dispatch Remarks (Warehouse)",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: null,
+  },
+  rtsDate: {
+    label: "RTS Date",
+    csvHeader: "RTS Date",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "date",
+    category: "warehouse",
+    validation: null,
+  },
+  dispatchDate: {
+    label: "Dispatch Date",
+    csvHeader: "Dispatch Date",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "date",
+    category: "warehouse",
+    validation: null,
+  },
+  noOfBoxes: {
+    label: "No Of Boxes",
+    csvHeader: "No Of Boxes",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "number",
+    category: "warehouse",
+    validation: null,
+  },
+  pickListNo: {
+    label: "Pick List No",
+    csvHeader: "Pick List No",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: null,
+  },
+  inventoryRemarksWarehouse: {
+    label: "Inventory Remarks Warehouse",
+    csvHeader: "Inventory Remarks Warehouse",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: null,
+  },
+  b2bWorkingTeamRemarks: {
+    label: "B2B Working Team Remarks",
+    csvHeader: "B2B Working Team Remarks",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: null,
+  },
+  volumetricWeight: {
+    label: "Volumetric Weight",
+    csvHeader: "Volumetric Weight",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "number",
+    category: "warehouse",
+    validation: null,
+  },
+  firstTransporter: {
+    label: "First Transporter",
+    csvHeader: "First Transporter",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: master_courier_partner_options,
+  },
+  firstDocketNo: {
+    label: "First Docket No",
+    csvHeader: "First Docket No",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: null,
+  },
+  secondTransporter: {
+    label: "Second Transporter",
+    csvHeader: "Second Transporter",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: master_courier_partner_options,
+  },
+  secondDocketNo: {
+    label: "Second Docket No",
+    csvHeader: "Second Docket No",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: null,
+  },
+  thirdTransporter: {
+    label: "Third Transporter",
+    csvHeader: "Third Transporter",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: master_courier_partner_options,
+  },
+  thirdDocketNo: {
+    label: "Third Docket No",
+    csvHeader: "Third Docket No",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: null,
+  },
 
-const headersMapping = [
-    "uid",
-    "entryDate",
-    "poDate", 
-    "facility",
-    "channel",
-    "location",
-    "poNumber",
-    "brandName",
-    "remarksPlanning",
-    "specialRemarksCopt",
-    "newShipmentReference",
-    "statusActiveInactive",
-    "statusPlanning",
-    "statusWarehouse",
-    "statusLogistics",
-    "channelInwardingRemarks",
-    "dispatchRemarksLogistics",
-    "dispatchRemarksWarehouse",
-    "dispatchDateTentative",
-    "workingDatePlanner",
-    "rtsDate",
-    "dispatchDate",
-    "currentAppointmentDate",
-    "firstAppointmentDateCopt",
-    "noOfBoxes",
-    "orderNo1",
-    "orderNo2",
-    "orderNo3",
-    "pickListNo",
-    "workingTypeWarehouse",
-    "inventoryRemarksWarehouse",
-    "b2bWorkingTeamRemarks",
-    "volumetricWeight",
-    "channelType",
-    "firstTransporter",
-    "firstDocketNo",
-    "secondTransporter",
-    "secondDocketNo",
-    "thirdTransporter",
-    "thirdDocketNo",
-    "appointmentLetterStn",
-    "labelsLink",
-    "invoiceDate",
-    "invoiceLink",
-    "cnLink",
-    "eWayLink",
-    "invoiceValue",
-    "remarksAccountsTeam",
-    "invoiceChallanNumber",
-    "invoiceCheckedBy",
-    "tallyCustomerName",
-    "customerCode",
-    "poEntryCount",
-    "temp",
-    "deliveryDate",
-    "rescheduleLag",
-    "finalRemarks",
-    "updatedGmv",
-    "physicalWeight"
-]
+  // Logistics fields
+  statusLogistics: {
+    label: "Status (Logistics)",
+    csvHeader: "Status (Logistics)",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "text",
+    category: "logistics",
+    validation: master_status_logistics_options,
+  },
+  dispatchRemarksLogistics: {
+    label: "Dispatch Remarks (Logistics)",
+    csvHeader: "Dispatch Remarks (Logistics)",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "text",
+    category: "logistics",
+    validation: null,
+  },
+  rescheduleLag: {
+    label: "Reschedule Lag (Remarks)",
+    csvHeader: "Reschedule Lag (Remarks)",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "text",
+    category: "logistics",
+    validation: master_rejection_reasons,
+  },
+  finalRemarks: {
+    label: "Final Remarks",
+    csvHeader: "Final Remarks",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "text",
+    category: "logistics",
+    validation: null,
+  },
+  physicalWeight: {
+    label: "Physical Weight",
+    csvHeader: "Physical Weight",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "number",
+    category: "logistics",
+    validation: null,
+  },
+}
 
-export default function BulkShipmentUpdate({ onNavigate, isDarkMode, onToggleTheme }) {
+export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
+  const [selectedFields, setSelectedFields] = useState([])
   const [file, setFile] = useState(null)
-  const [parsedOrders, setParsedOrders] = useState([])
+  const [parsedUpdates, setParsedUpdates] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  const [showPreview, setShowPreview] = useState(false)
+  const [step, setStep] = useState("select")
+  const [validationSummary, setValidationSummary] = useState({ errors: 0, warnings: 0 })
   const fileInputRef = useRef(null)
+  const { user } = useUserStore()
+
+  const getAvailableFields = () => {
+    if (!user?.role) return []
+
+    return Object.entries(fieldDefinitions).filter(([_, field]) => field.roles.includes(user.role))
+  }
+
+  const getFieldsByCategory = (category) => {
+    return getAvailableFields().filter(([_, field]) => field.category === category)
+  }
+
+  const handleFieldToggle = (fieldName) => {
+    setSelectedFields((prev) => (prev.includes(fieldName) ? prev.filter((f) => f !== fieldName) : [...prev, fieldName]))
+  }
+
+  // Select All functionality
+  const handleSelectAllFields = () => {
+    const allAvailableFields = getAvailableFields().map(([fieldName]) => fieldName)
+    if (selectedFields.length === allAvailableFields.length) {
+      setSelectedFields([])
+    } else {
+      setSelectedFields(allAvailableFields)
+    }
+  }
+
+  const handleSelectCategoryFields = (category) => {
+    const categoryFields = getFieldsByCategory(category).map(([fieldName]) => fieldName)
+    const allCategorySelected = categoryFields.every((field) => selectedFields.includes(field))
+
+    if (allCategorySelected) {
+      // Deselect all category fields
+      setSelectedFields((prev) => prev.filter((field) => !categoryFields.includes(field)))
+    } else {
+      // Select all category fields
+      setSelectedFields((prev) => [...new Set([...prev, ...categoryFields])])
+    }
+  }
+
+  const downloadTemplate = () => {
+    if (selectedFields.length === 0) {
+      setError("Please select at least one field to update")
+      return
+    }
+
+    // Sort selected fields based on their original order in fieldDefinitions
+    const fieldDefinitionKeys = Object.keys(fieldDefinitions)
+    const sortedSelectedFields = selectedFields.sort((a, b) => {
+      return fieldDefinitionKeys.indexOf(a) - fieldDefinitionKeys.indexOf(b)
+    })
+
+    const headers = ["UID", "PO Number", ...sortedSelectedFields.map((field) => fieldDefinitions[field].csvHeader)]
+
+    // Add validation notes as comments in the CSV
+    const validationNotes = []
+    sortedSelectedFields.forEach((fieldName) => {
+      const field = fieldDefinitions[fieldName]
+      if (field.validation) {
+        validationNotes.push(`# ${field.label} must be one of: ${field.validation.slice(0, 3).join(", ")}...`)
+      }
+    })
+
+    const csvContent = [
+      "# Bulk Update Template - MCaffeine Dashboard",
+      "# Instructions: Fill in the data below. Do not modify the header row.",
+      ...validationNotes,
+      "",
+      headers.join(","),
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "bulk_update_shipment_template.csv"
+    a.click()
+    window.URL.revokeObjectURL(url)
+
+    setStep("upload")
+  }
 
   const handleFileSelect = (event) => {
     const selectedFile = event.target.files?.[0]
@@ -157,8 +498,8 @@ export default function BulkShipmentUpdate({ onNavigate, isDarkMode, onToggleThe
       setFile(selectedFile)
       setError("")
       setSuccess("")
-      setParsedOrders([])
-      setShowPreview(false)
+      setParsedUpdates([])
+      setValidationSummary({ errors: 0, warnings: 0 })
     }
   }
 
@@ -177,123 +518,122 @@ export default function BulkShipmentUpdate({ onNavigate, isDarkMode, onToggleThe
       setFile(droppedFile)
       setError("")
       setSuccess("")
-      setParsedOrders([])
-      setShowPreview(false)
+      setParsedUpdates([])
+      setValidationSummary({ errors: 0, warnings: 0 })
     }
   }
 
+  const validateFieldValue = (fieldName, value) => {
+    const field = fieldDefinitions[fieldName]
+    if (!field || !field.validation || !value || value.trim() === "") {
+      return { isValid: true, errors: [] }
+    }
+
+    const allowedValues = field.validation
+    if (!allowedValues.includes(value)) {
+      return {
+        isValid: false,
+        errors: [
+          `${field.label} "${value}" is not valid. Must be one of: ${allowedValues.slice(0, 3).join(", ")}${allowedValues.length > 3 ? "..." : ""}`,
+        ],
+      }
+    }
+
+    return { isValid: true, errors: [] }
+  }
+
   const parseCSV = (csvText) => {
-    const lines = csvText.split("\n").filter((line) => line.trim())
+    const lines = csvText.split("\n").filter((line) => line.trim() && !line.startsWith("#"))
     const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
-    
+    // Validate required headers
+    if (!headers.includes("UID") || !headers.includes("PO Number")) {
+      throw new Error("CSV must contain UID and PO Number columns")
+    }
 
-    // Check if all required headers are present
+    // Validate selected field headers
+    const expectedHeaders = selectedFields.map((field) => fieldDefinitions[field].csvHeader)
     const missingHeaders = expectedHeaders.filter((header) => !headers.includes(header))
     if (missingHeaders.length > 0) {
       throw new Error(`Missing required columns: ${missingHeaders.join(", ")}`)
     }
 
-    const orders = []
+    const updates = []
+    let totalErrors = 0
+    let totalWarnings = 0
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""))
-      const order = {
+
+      const update = {
         uid: Number.parseInt(values[headers.indexOf("UID")]) || null,
-        entryDate: values[headers.indexOf("Entry Date")] || "",
-        poDate: values[headers.indexOf("PO Date")] || "",
-        facility: values[headers.indexOf("Facility")] || "",
-        channel: values[headers.indexOf("Channel")] || "",
-        location: values[headers.indexOf("Location")] || "",
         poNumber: values[headers.indexOf("PO Number")] || "",
-        brandName: values[headers.indexOf("Brand")] || values[headers.indexOf("Brand Name")] || "",
-        remarksPlanning: values[headers.indexOf("Remarks (Planning)")] || "",
-        specialRemarksCOPT: values[headers.indexOf("Special Remarks (COPT)")] || "",
-        newShipmentReference: values[headers.indexOf("New Shipment Reference")] || "",
-        statusActive: values[headers.indexOf("Status (Active/Inactive)")] || "",
-        statusPlanning: values[headers.indexOf("Status (Planning)")] || "",
-        statusWarehouse: values[headers.indexOf("Status (Warehouse)")] || "",
-        statusLogistics: values[headers.indexOf("Status (Logistics)")] || "",
-        channelInwardingRemarks: values[headers.indexOf("Channel Inwarding Remarks")] || "",
-        dispatchRemarksLogistics: values[headers.indexOf("Dispatch Remarks (Logistics)")] || "",
-        dispatchRemarksWarehouse: values[headers.indexOf("Dispatch Remarks (Warehouse)")] || "",
-        dispatchDateTentative: values[headers.indexOf("Dispatch Date Tentative")] || "",
-        workingDatePlanner: values[headers.indexOf("Working Date (Planner)")] || "",
-        rtsDate: values[headers.indexOf("RTS Date")] || "",
-        dispatchDate: values[headers.indexOf("Dispatch Date")] || "",
-        currentAppointmentDate: values[headers.indexOf("Current Appointment Date")] || "",
-        firstAppointmentDateCOPT: values[headers.indexOf("First Appointment Date (COPT)")] || "",
-        noOfBoxes: Number.parseInt(values[headers.indexOf("No Of Boxes")]) || null,
-        orderNo1: values[headers.indexOf("Order No 1")] || "",
-        orderNo2: values[headers.indexOf("Order No 2")] || "",
-        orderNo3: values[headers.indexOf("Order No 3")] || "",
-        pickListNo: values[headers.indexOf("Pick List No")] || "",
-        workingTypeWarehouse: values[headers.indexOf("Working Type (Warehouse)")] || "",
-        inventoryRemarksWarehouse: values[headers.indexOf("Inventory Remarks Warehouse")] || "",
-        b2bWorkingTeamRemarks: values[headers.indexOf("B2B Working Team Remarks")] || "",
-        volumetricWeight: Number.parseFloat(values[headers.indexOf("Volumetric Weight")]) || null,
-        channelType: values[headers.indexOf("Channel Type")] || "",
-        firstTransporter: values[headers.indexOf("First Transporter")] || "",
-        firstDocketNo: values[headers.indexOf("First Docket No")] || "",
-        secondTransporter: values[headers.indexOf("Second Transporter")] || "",
-        secondDocketNo: values[headers.indexOf("Second Docket No")] || "",
-        thirdTransporter: values[headers.indexOf("Third Transporter")] || "",
-        thirdDocketNo: values[headers.indexOf("Third Docket No")] || "",
-        appointmentLetter: values[headers.indexOf("Appointment Letter/STN")] || "",
-        labelsLink: values[headers.indexOf("Labels")] || "",
-        invoiceDate: values[headers.indexOf("Invoice Date")] || "",
-        invoiceLink: values[headers.indexOf("Invoice Link")] || "",
-        cnLink: values[headers.indexOf("CN Link")] || "",
-        ewayLink: values[headers.indexOf("E-Way Link")] || "",
-        invoiceValue: Number.parseFloat(values[headers.indexOf("Invoice Value (Check with Invoice Link)")]) || null,
-        remarksAccountsTeam: values[headers.indexOf("Remarks by Accounts Team")] || "",
-        invoiceChallanNumber: values[headers.indexOf("Invoice / Challan Number")] || "",
-        invoiceCheckedBy: values[headers.indexOf("Invoice Checked By")] || "",
-        tallyCustomerName: values[headers.indexOf("Tally Customer Name")] || "",
-        customerCode: values[headers.indexOf("Customer Code")] || "",
-        poEntryCount: Number.parseInt(values[headers.indexOf("PO Entry Count")]) || null,
-        temp: Boolean(values[headers.indexOf("Temp")]) || null,
-        deliveryDate: values[headers.indexOf("Delivery Date")] || "",
-        // some fields are missing => appointment dates
-        /***** Have to fix this */
-        rescheduleLag: Number.parseInt(values[headers.indexOf("Reschedule Lag (Remarks)")] || null),
-        /******************* */
-        finalRemarks: values[headers.indexOf("Final Remarks")] || "",
-        updatedGmv: Number.parseFloat(values[headers.indexOf("Updated GMV")]) || null,
-        physicalWeight: Number.parseFloat(values[headers.indexOf("Physical Weight")]) || null,
-        // more fields =>  Rivigo TAT IP, Critical Dispatch Date, COPT Final Remark, Check
-        // qty: Number.parseInt(values[headers.indexOf("Qty")]) || 0,
-        // poValue: Number.parseFloat(values[headers.indexOf("PO Value")]) || 0,
         status: "valid",
         errors: [],
+        warnings: [],
+        rowNumber: i + 1,
       }
 
-      // Validate order
+      // Parse selected fields
+      selectedFields.forEach((fieldName) => {
+        const fieldDef = fieldDefinitions[fieldName]
+        const headerIndex = headers.indexOf(fieldDef.csvHeader)
+        const value = values[headerIndex] || ""
+
+        if (fieldDef.type === "number") {
+          update[fieldName] = value
+            ? fieldName.includes("Weight")
+              ? Number.parseFloat(value)
+              : Number.parseInt(value)
+            : null
+        } else {
+          update[fieldName] = value
+        }
+
+        // Validate field value
+        if (value && value.trim() !== "") {
+          const validation = validateFieldValue(fieldName, value)
+          if (!validation.isValid) {
+            update.errors.push(...validation.errors)
+          }
+        }
+      })
+
+      // Basic validation
       const errors = []
-      if (!order.uid) errors.push("UID is required")
-      if (!order.entryDate) errors.push("Entry Date is required")
-      if (!order.brand) errors.push("Brand is required")
-      if (!order.channel) errors.push("Channel is required")
-    //   if (!order.location) errors.push("Location is required")
-      if (!order.poDate) errors.push("PO Date is required")
-      if (!order.poNumber) errors.push("PO Number is required")
-    //   if (!order.srNo) errors.push("Sr/ No is required")
-    //   if (!order.skuName) errors.push("SKU Name is required")
-    //   if (!order.skuCode) errors.push("SKU Code is required")
-    //   if (!order.channelSkuCode) errors.push("Channel SKU Code is required")
-    //   if (order.qty <= 0) errors.push("Quantity must be greater than 0")
-    //   if (order.gmv <= 0) errors.push("GMV must be greater than 0")
-    //   if (order.poValue <= 0) errors.push("PO Value must be greater than 0")
+      if (!update.uid || update.uid <= 0) errors.push("UID is required and must be a positive number")
+      if (!update.poNumber) errors.push("PO Number is required")
 
-    //   if (errors.length > 0) {
-    //     order.status = "error"
-    //     order.errors = errors
-    //   }
+      // Add basic errors
+      update.errors.push(...errors)
 
-      orders.push(order)
+      // Comprehensive shipment validation
+      try {
+        const shipmentValidation = validateShipmentData(update)
+        if (!shipmentValidation.isValid) {
+          update.errors.push(...shipmentValidation.errors)
+        }
+        if (shipmentValidation.warnings && shipmentValidation.warnings.length > 0) {
+          update.warnings.push(...shipmentValidation.warnings)
+        }
+      } catch (validationError) {
+        update.errors.push(`Validation error: ${validationError.message}`)
+      }
+
+      // Set status based on errors and warnings
+      if (update.errors.length > 0) {
+        update.status = "error"
+        totalErrors++
+      } else if (update.warnings.length > 0) {
+        update.status = "warning"
+        totalWarnings++
+      }
+
+      updates.push(update)
     }
 
-    return orders
+    setValidationSummary({ errors: totalErrors, warnings: totalWarnings })
+    return updates
   }
 
   const handleProcessFile = async () => {
@@ -304,10 +644,17 @@ export default function BulkShipmentUpdate({ onNavigate, isDarkMode, onToggleThe
 
     try {
       const text = await file.text()
-      const orders = parseCSV(text)
-      setParsedOrders(orders)
-      setShowPreview(true)
-      setSuccess(`Successfully parsed ${orders.length} orders from CSV file`)
+      const updates = parseCSV(text)
+      setParsedUpdates(updates)
+      setStep("preview")
+
+      const validCount = updates.filter((u) => u.status === "valid").length
+      const errorCount = updates.filter((u) => u.status === "error").length
+      const warningCount = updates.filter((u) => u.status === "warning").length
+
+      setSuccess(
+        `Successfully parsed ${updates.length} updates: ${validCount} valid, ${errorCount} errors, ${warningCount} warnings`,
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process CSV file")
     }
@@ -315,306 +662,549 @@ export default function BulkShipmentUpdate({ onNavigate, isDarkMode, onToggleThe
     setIsProcessing(false)
   }
 
-  const handleUploadOrders = async () => {
-    const validOrders = parsedOrders.filter((order) => order.status === "valid")
-    if (validOrders.length === 0) {
-      setError("No valid orders to upload")
-      return
-    }
-
-    setIsUploading(true)
-    setUploadProgress(0)
-
+  const handleUploadUpdates = async () => {
     try {
-      console.log("Uploading orders:", validOrders)  
-      const res = await updateBulkShipment(validOrders);
-      // const res = await api.post(createBulkOrderUrl, {orders: validOrders})
-      console.log(res.data);
-      
-      // // Reset after success
-      // setTimeout(() => {
-      //   setFile(null)
-      //   setParsedOrders([])
-      //   setShowPreview(false)
-      //   setSuccess("")
-      //   if (fileInputRef.current) {
-      //     fileInputRef.current.value = ""
-      //   }
-      // }, 1000)
+      const validUpdates = parsedUpdates.filter((update) => update.status === "valid" || update.status === "warning")
+      if (validUpdates.length === 0) {
+        setError("No valid updates to upload")
+        return
+      }
+
+      // Prepare data to send in bulk to backend
+      let data = []
+      validUpdates.forEach((item) => {
+        const { errors, warnings, status, rowNumber, ...extractedFields } = item
+        // final only field with data inside them
+        const cleanedData = {}
+        for (const [key, value] of Object.entries(extractedFields)) {
+          if (value !== null && value !== undefined && value !== "" && !(typeof value === "number" && isNaN(value))) {
+            cleanedData[key] = value
+          }
+        }
+        data = [...data, cleanedData]
+      })
+
+      setIsUploading(true)
+      setUploadProgress(0)
+
+      // Simulate upload progress
+      for (let i = 0; i <= 100; i += 10) {
+        setUploadProgress(i)
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+
+      const res = await updateBulkShipment(data)
+      console.log(res.data)
+
+      onSave(validUpdates)
+      setSuccess(`Successfully updated ${validUpdates.length} shipments`)
+      setIsUploading(false)
+      setUploadProgress(0)
+
+      // Reset after success
+      setTimeout(() => {
+        resetForm()
+        onClose()
+      }, 3000)
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to upload orders")
-    }finally {
+      console.error("Error: ", error)
+      setError(`Error: ${error.response?.msg || error.message}`)
       setIsUploading(false)
       setUploadProgress(0)
     }
+  }
 
-    // Simulate upload progress
-    for (let i = 0; i <= 100; i += 10) {
-      setUploadProgress(i)
-      await new Promise((resolve) => setTimeout(resolve, 200))
+  const resetForm = () => {
+    setSelectedFields([])
+    setFile(null)
+    setParsedUpdates([])
+    setStep("select")
+    setError("")
+    setSuccess("")
+    setValidationSummary({ errors: 0, warnings: 0 })
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
-    console.log(validOrders);
-
-    setSuccess(`Successfully uploaded ${validOrders.length} orders to the system`)
-    setIsUploading(false)
-    setUploadProgress(0)
-
-    // Reset after success
-    
   }
 
-  const downloadTemplate = async () => {
+  const validUpdatesCount = parsedUpdates.filter((update) => update.status === "valid").length
+  const warningUpdatesCount = parsedUpdates.filter((update) => update.status === "warning").length
+  const errorUpdatesCount = parsedUpdates.filter((update) => update.status === "error").length
 
-    const headers = expectedHeaders;
-    const data = await getShipmentStatusList();
-    console.log(data.data);
-
-    const sampleData = [
-      "2024-12-04,MCaffeine,Zepto,Hyderabad,2024-12-03,3100495853,1,mCaffeine Naked & Raw Coffee Espresso Body Wash,15MCaf177,8906129573451,24,11976,8024",
-      "2024-12-04,MCaffeine,Zepto,Hyderabad,2024-12-03,3100495853,2,Green Tea Hydrogel Under Eye Patches,15MCaf225,8906129573468,22,10978,7355",
-    ]
-
-    // parse data in csv formate only needed headers similar to above strings
-    const csvData = data?.data?.shipments?.map((item) => {
-        return headersMapping.map(header => item[header] ?? "").join(",");
-    });
-    console.log("csvData: ", csvData);
-
-    
-
-    const csvContent = [headers.join(","), ...csvData].join("\n")
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "bulk_shipment_update.csv"
-    a.click()
-    window.URL.revokeObjectURL(url)
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case "admin":
+        return Shield
+      case "warehouse":
+        return Warehouse
+      case "logistics":
+        return Truck
+      default:
+        return Database
+    }
   }
 
-  const validOrdersCount = parsedOrders.filter((order) => order.status === "valid").length
-  const errorOrdersCount = parsedOrders.filter((order) => order.status === "error").length
+  const getStatusBadge = (status, errors, warnings) => {
+    if (status === "error") {
+      return (
+        <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Error
+        </Badge>
+      )
+    }
+    if (status === "warning") {
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          Warning
+        </Badge>
+      )
+    }
+    return (
+      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+        <CheckCircle className="h-3 w-3 mr-1" />
+        Valid
+      </Badge>
+    )
+  }
 
   return (
-        <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-h-[95vh] max-w-7xl overflow-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <Database className="h-5 w-5" />
+            <span>Bulk Update Shipments</span>
+          </DialogTitle>
+          <DialogDescription>
+            {step === "select" && "Select fields to update and download template"}
+            {step === "upload" && "Upload your completed CSV file"}
+            {step === "preview" && "Review and confirm updates"}
+          </DialogDescription>
+        </DialogHeader>
 
-        <main className="container mx-auto p-6">
-            <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-                <div className="flex items-center space-x-4 mb-4">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onNavigate("dashboard")}
-                    className="p-2 h-auto hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-                >
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Bulk Shipment Update</h2>
-                    <p className="text-lg text-gray-600 dark:text-gray-300 mt-1">Update multiple shipments using a CSV file</p>
-                </div>
-                </div>
-            </div>
+        <ScrollArea className="max-h-[70vh] pr-4">
+          <div className="space-y-6">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-            {/* Upload Section */}
-            <Card className="shadow-lg mb-8">
-                <CardHeader className="pb-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                        <Upload className="h-5 w-5 text-white" />
+            {success && (
+              <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Step 1: Field Selection */}
+            {step === "select" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Eye className="h-5 w-5" />
+                      <span>Select Fields to Update</span>
                     </div>
-                    <div>
-                        <CardTitle className="text-xl">Upload CSV File</CardTitle>
-                        <CardDescription>Select or drag and drop your CSV file containing order data</CardDescription>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSelectAllFields}
+                        className="flex items-center space-x-2 bg-transparent"
+                      >
+                        {selectedFields.length === getAvailableFields().length ? (
+                          <CheckSquare className="h-4 w-4" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                        <span>Select All Fields</span>
+                      </Button>
                     </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Admin Fields */}
+                  {(user?.role === "superadmin" || user?.role === "admin") && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Shield className="h-5 w-5 text-purple-600" />
+                          <h3 className="text-lg font-semibold">Admin Fields</h3>
+                          <Badge variant="secondary">{getFieldsByCategory("admin").length} fields</Badge>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSelectCategoryFields("admin")}
+                          className="flex items-center space-x-1"
+                        >
+                          {getFieldsByCategory("admin").every(([fieldName]) => selectedFields.includes(fieldName)) ? (
+                            <CheckSquare className="h-3 w-3" />
+                          ) : (
+                            <Square className="h-3 w-3" />
+                          )}
+                          <span className="text-xs">Select All</span>
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {getFieldsByCategory("admin").map(([fieldName, field]) => (
+                          <div key={fieldName} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={fieldName}
+                              checked={selectedFields.includes(fieldName)}
+                              onCheckedChange={() => handleFieldToggle(fieldName)}
+                            />
+                            <Label htmlFor={fieldName} className="text-sm cursor-pointer flex items-center">
+                              {field.label}
+                              {field.validation && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Validated
+                                </Badge>
+                              )}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <Button variant="outline" onClick={downloadTemplate} className="h-10">
-                    <Download className="h-4 w-4 mr-2" />
-                        Download Existing Data
+                  )}
+
+                  {/* Warehouse Fields */}
+                  {(user?.role === "superadmin" || user?.role === "warehouse") && (
+                    <div className="space-y-4">
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Warehouse className="h-5 w-5 text-blue-600" />
+                          <h3 className="text-lg font-semibold">Warehouse Fields</h3>
+                          <Badge variant="secondary">{getFieldsByCategory("warehouse").length} fields</Badge>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSelectCategoryFields("warehouse")}
+                          className="flex items-center space-x-1"
+                        >
+                          {getFieldsByCategory("warehouse").every(([fieldName]) =>
+                            selectedFields.includes(fieldName),
+                          ) ? (
+                            <CheckSquare className="h-3 w-3" />
+                          ) : (
+                            <Square className="h-3 w-3" />
+                          )}
+                          <span className="text-xs">Select All</span>
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {getFieldsByCategory("warehouse").map(([fieldName, field]) => (
+                          <div key={fieldName} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={fieldName}
+                              checked={selectedFields.includes(fieldName)}
+                              onCheckedChange={() => handleFieldToggle(fieldName)}
+                            />
+                            <Label htmlFor={fieldName} className="text-sm cursor-pointer flex items-center">
+                              {field.label}
+                              {field.validation && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Validated
+                                </Badge>
+                              )}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Logistics Fields */}
+                  {(user?.role === "superadmin" || user?.role === "logistics") && (
+                    <div className="space-y-4">
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Truck className="h-5 w-5 text-green-600" />
+                          <h3 className="text-lg font-semibold">Logistics Fields</h3>
+                          <Badge variant="secondary">{getFieldsByCategory("logistics").length} fields</Badge>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSelectCategoryFields("logistics")}
+                          className="flex items-center space-x-1"
+                        >
+                          {getFieldsByCategory("logistics").every(([fieldName]) =>
+                            selectedFields.includes(fieldName),
+                          ) ? (
+                            <CheckSquare className="h-3 w-3" />
+                          ) : (
+                            <Square className="h-3 w-3" />
+                          )}
+                          <span className="text-xs">Select All</span>
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {getFieldsByCategory("logistics").map(([fieldName, field]) => (
+                          <div key={fieldName} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={fieldName}
+                              checked={selectedFields.includes(fieldName)}
+                              onCheckedChange={() => handleFieldToggle(fieldName)}
+                            />
+                            <Label htmlFor={fieldName} className="text-sm cursor-pointer flex items-center">
+                              {field.label}
+                              {field.validation && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Validated
+                                </Badge>
+                              )}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedFields.length > 0 && (
+                    <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                        Selected Fields ({selectedFields.length})
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedFields.map((fieldName) => (
+                          <Badge key={fieldName} variant="secondary" className="bg-blue-100 text-blue-800">
+                            {fieldDefinitions[fieldName].label}
+                            {fieldDefinitions[fieldName].validation && <span className="ml-1 text-xs">✓</span>}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={downloadTemplate}
+                      disabled={selectedFields.length === 0}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Template & Continue
                     </Button>
-                </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Step 2: File Upload */}
+            {step === "upload" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Upload className="h-5 w-5" />
+                    <span>Upload Completed CSV</span>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                {error && (
-                    <Alert variant="destructive" className="mb-6">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
-
-                {success && (
-                    <Alert className="mb-6 border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>{success}</AlertDescription>
-                    </Alert>
-                )}
-
-                {/* File Upload Area */}
-                <div
+                  <div
                     className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
-                >
+                  >
                     <div className="flex flex-col items-center space-y-4">
-                    <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                      <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                         <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
+                      </div>
+                      <div>
                         <p className="text-lg font-medium text-gray-900 dark:text-white">
-                        {file ? file.name : "Drop your CSV file here, or click to browse"}
+                          {file ? file.name : "Drop your completed CSV file here, or click to browse"}
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Supports CSV files up to 10MB</p>
-                    </div>
-                    <div className="flex space-x-4">
-                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-10">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Select File
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          CSV file with UID, PO Number, and selected fields
+                        </p>
+                      </div>
+                      <div className="flex space-x-4">
+                        <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Select File
                         </Button>
                         {file && (
-                        <Button
+                          <Button
                             variant="outline"
                             onClick={() => {
-                            setFile(null)
-                            setParsedOrders([])
-                            setShowPreview(false)
-                            if (fileInputRef.current) {
+                              setFile(null)
+                              if (fileInputRef.current) {
                                 fileInputRef.current.value = ""
-                            }
+                              }
                             }}
-                            className="h-10"
-                        >
+                          >
                             <X className="h-4 w-4 mr-2" />
                             Remove
-                        </Button>
+                          </Button>
                         )}
+                      </div>
                     </div>
-                    </div>
-                </div>
+                  </div>
 
-                <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
+                  <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
 
-                {/* Process Button */}
-                {file && !showPreview && (
+                  {file && (
                     <div className="mt-6 flex justify-center">
-                    <Button
+                      <Button
                         onClick={handleProcessFile}
                         disabled={isProcessing}
-                        className="h-11 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    >
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      >
                         {isProcessing ? "Processing..." : "Process CSV File"}
                         <Eye className="h-4 w-4 ml-2" />
-                    </Button>
+                      </Button>
                     </div>
-                )}
-
-                {/* Upload Progress */}
-                {isUploading && (
-                    <div className="mt-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Uploading orders...</span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">{uploadProgress}%</span>
-                    </div>
-                    <Progress value={uploadProgress} className="h-2" />
-                    </div>
-                )}
+                  )}
                 </CardContent>
-            </Card>
+              </Card>
+            )}
 
-            {/* Preview Section */}
-            {showPreview && parsedOrders.length > 0 && (
-                <Card className="shadow-lg">
-                <CardHeader className="pb-6">
-                    <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center">
-                        <Database className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                        <CardTitle className="text-xl">Order Preview</CardTitle>
-                        <CardDescription>Review the parsed orders before uploading</CardDescription>
-                        </div>
+            {/* Step 3: Preview Updates */}
+            {step === "preview" && parsedUpdates.length > 0 && (
+              <Card className="">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Database className="h-5 w-5" />
+                      <CardTitle>Update Preview</CardTitle>
                     </div>
                     <div className="flex items-center space-x-4">
-                        <div className="flex space-x-2">
+                      <div className="flex space-x-2">
                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                            {validOrdersCount} Valid
+                          {validUpdatesCount} Valid
                         </Badge>
-                        {errorOrdersCount > 0 && (
-                            <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                            {errorOrdersCount} Errors
-                            </Badge>
+                        {warningUpdatesCount > 0 && (
+                          <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                            {warningUpdatesCount} Warnings
+                          </Badge>
                         )}
-                        </div>
-                        <Button
-                        onClick={handleUploadOrders}
-                        disabled={validOrdersCount === 0 || isUploading}
-                        className="h-10 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                        >
-                        {isUploading ? "Uploading..." : `Upload ${validOrdersCount} Orders`}
-                        </Button>
+                        {errorUpdatesCount > 0 && (
+                          <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                            {errorUpdatesCount} Errors
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        onClick={handleUploadUpdates}
+                        disabled={validUpdatesCount + warningUpdatesCount === 0 || isUploading}
+                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                      >
+                        {isUploading ? "Updating..." : `Update ${validUpdatesCount + warningUpdatesCount} Shipments`}
+                      </Button>
                     </div>
-                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                    <ScrollArea className="w-full">
-                    <div className="min-w-[1400px]">
-                        <Table>
-                        <TableHeader>
-                            <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-                            <TableHead className="font-semibold">Status</TableHead>
-                            {expectedHeaders.map((header) => (
-                                <TableHead key={header} className="font-semibold">
-                                {header.replace(/_/g, " ")} 
-                                </TableHead>
-                            ))}
-                            <TableHead className="font-semibold">Errors</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {parsedOrders.map((order, index) => (
-                            <TableRow
-                                key={index}
-                                className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                                order.status === "error" ? "bg-red-50 dark:bg-red-950" : ""
-                                }`}
-                            >
-                                <TableCell>
-                                <Badge
-                                    className={
-                                    order.status === "valid"
-                                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                        : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                    }
-                                >
-                                    {order.status === "valid" ? "Valid" : "Error"}
-                                </Badge>
-                                </TableCell>
-                                {
-                                    headersMapping.map(header => (
-                                        <TableCell key={header}>
-                                            {order[header] || ""}
-                                        </TableCell>
-                                    ))
-                                }
-                                <TableCell>
-                                {order.errors && order.errors.length > 0 && (
-                                    <div className="text-xs text-red-600 dark:text-red-400">{order.errors.join(", ")}</div>
-                                )}
-                                </TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                        </Table>
+                  {isUploading && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Updating shipments...</span>
+                        <span className="text-sm text-gray-500">{uploadProgress}%</span>
+                      </div>
+                      <Progress value={uploadProgress} className="h-2" />
                     </div>
-                    <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
+                  )}
+
+                  <ScrollArea className="max-w-7xl">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Row</TableHead>
+                          <TableHead>UID</TableHead>
+                          <TableHead>PO Number</TableHead>
+                          {selectedFields.map((fieldName) => (
+                            <TableHead key={fieldName}>{fieldDefinitions[fieldName].label}</TableHead>
+                          ))}
+                          <TableHead>Issues</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {parsedUpdates.map((update, index) => (
+                          <TableRow
+                            key={index}
+                            className={
+                              update.status === "error"
+                                ? "bg-red-50 dark:bg-red-950"
+                                : update.status === "warning"
+                                  ? "bg-yellow-50 dark:bg-yellow-950"
+                                  : ""
+                            }
+                          >
+                            <TableCell>{getStatusBadge(update.status, update.errors, update.warnings)}</TableCell>
+                            <TableCell className="font-mono text-xs">{update.rowNumber}</TableCell>
+                            <TableCell className="font-mono">{update.uid}</TableCell>
+                            <TableCell className="font-mono">{update.poNumber}</TableCell>
+                            {selectedFields.map((fieldName) => (
+                              <TableCell key={fieldName}>{update[fieldName] || "-"}</TableCell>
+                            ))}
+                            <TableCell>
+                              {(update.errors && update.errors.length > 0) ||
+                              (update.warnings && update.warnings.length > 0) ? (
+                                <div className="space-y-1">
+                                  {update.errors && update.errors.length > 0 && (
+                                    <div className="text-xs text-red-600 dark:text-red-400">
+                                      <strong>Errors:</strong>
+                                      <ul className="list-disc list-inside ml-2">
+                                        {update.errors.map((error, i) => (
+                                          <li key={i}>{error}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {update.warnings && update.warnings.length > 0 && (
+                                    <div className="text-xs text-yellow-600 dark:text-yellow-400">
+                                      <strong>Warnings:</strong>
+                                      <ul className="list-disc list-inside ml-2">
+                                        {update.warnings.map((warning, i) => (
+                                          <li key={i}>{warning}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-green-600 text-xs">✓ Valid</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
                 </CardContent>
-                </Card>
+              </Card>
             )}
-            </div>
-        </main>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+
+        <div className="flex justify-end space-x-4 pt-4 border-t">
+          <Button variant="outline" onClick={onClose} disabled={isUploading}>
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+          {step !== "select" && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (step === "upload") setStep("select")
+                if (step === "preview") setStep("upload")
+              }}
+              disabled={isUploading}
+            >
+              Back
+            </Button>
+          )}
         </div>
+      </DialogContent>
+    </Dialog>
   )
 }
