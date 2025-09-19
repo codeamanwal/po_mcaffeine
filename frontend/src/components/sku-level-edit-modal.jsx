@@ -249,7 +249,7 @@ export default function SkuLevelEditModal({
 
   return (
     <div open={isOpen} onOpenChange={handleClose}>
-      <div className="max-w-[96vw] md:max-w-5xl h-[85vh] my-5">
+      <div className="max-w-[96vw] md:max-w-5xl my-5">
         <div>
           <strong className="flex items-center gap-2">
             <Package className="h-5 w-5" />

@@ -549,16 +549,64 @@ async function deleteSku(req,res) {
   }
 }
 
-async function deleteShipment(req,res) {
+async function deleteShipment(req, res) {
+  const t = await sequelize.transaction();
   try {
-    const {uid} = req.body;
-    const deleted = await ShipmentOrder.destroy({where: {uid:uid}});
-    return res.status(200).json({msg: "Shipment order deleted successfully"})
+    const { uid } = req.body;
+    
+    // Validation
+    if (!uid) {
+      await t.rollback();
+      return res.status(400).json({
+        msg: "UID is required",
+        success: false
+      });
+    }
+
+    const deletedSkuOrders = await SkuOrder.destroy({
+      where: { 
+        shipmentOrderId: uid 
+      },
+      transaction: t
+    });
+
+    const deletedShipment = await ShipmentOrder.destroy({
+      where: { uid: uid },
+      transaction: t
+    });
+
+    // Check if shipment was found and deleted
+    if (deletedShipment === 0) {
+      await t.rollback();
+      return res.status(404).json({
+        msg: "Shipment order not found",
+        success: false
+      });
+    }
+
+    // Commit the transaction
+    await t.commit();
+
+    return res.status(200).json({
+      msg: "Shipment order and associated SKUs deleted successfully",
+      success: true,
+      deletedShipment: deletedShipment,
+      deletedSkuOrders: deletedSkuOrders
+    });
+
   } catch (error) {
-    console.log("ERROR: ",error)
-    return res.status(500).json({msg:"Failed to delete Order!", error})
+    // Rollback transaction on error
+    await t.rollback();
+    console.log("ERROR in deleteShipment: ", error);
+    
+    return res.status(500).json({
+      msg: "Failed to delete shipment order!",
+      success: false,
+      error: error.message
+    });
   }
 }
+
 
 export const shipmentControllers = {
     createShipment,
