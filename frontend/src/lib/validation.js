@@ -65,7 +65,7 @@ export const validateShipmentData = (shipmentData)=> {
 
   // Validate location
   // first get all the location for given channel
-  const locs =  master_channel_location_mapping[shipmentData.channel].map((loc) => {
+  const locs =  master_channel_location_mapping[shipmentData.channel]?.map((loc) => {
     return loc.location;
   })
   if (shipmentData.location) {

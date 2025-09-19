@@ -670,12 +670,12 @@ export default function DashboardPage({ onNavigate }) {
   }
 
   async function onSavingUpdate() {
-    setSelectedShipment({})
+    // setSelectedShipment({})
     setSelectedOrder({})
-    setShipmentEditModal(false)
+    // setShipmentEditModal(false)
     setShipmentViewModal(false)
     setSkuEditModal(false)
-    setEditModal(false)
+    // setEditModal(false)
     setBulkSkuUpdateModal(false)
     await getPoFormateData()
     await getShipmentData()

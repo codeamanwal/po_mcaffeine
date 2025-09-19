@@ -261,6 +261,10 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     }
   }, [shipmentData])
 
+  useEffect(() => {
+    getLocations(formData.channel)
+  }, [formData])
+
   // Set default tab based on user role
   useEffect(() => {
     if (user?.role === "warehouse") {
@@ -413,9 +417,13 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       console.error("Error: ", err)
       setError("Failed to update shipment: " + (err.message || err))
       toast.error("Failed to update shipment: " + (err.message || err))
+    } finally{
+      setSuccess("")
+      setError("")
+      setIsLoading(false)
     }
 
-    setIsLoading(false)
+    
   }
 
   // Check if field is backend-controlled

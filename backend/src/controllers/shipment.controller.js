@@ -541,7 +541,19 @@ async function updateBulkSku(req, res) {
 async function deleteSku(req,res) {
   try {
     const {id} = req.body;
+    if(!id){
+      return res.status(400).json({msg:"Provide valid order id!"})
+    }
+    const sku = await SkuOrder.findByPk(id);
+    if(!sku) {
+      return res.status(404).json({msg: "no such sku order exist!"})
+    }
+    const skusWithSameShipment = await SkuOrder.findAll({where: {shipmentOrderId: sku.shipmentOrderId}})
+    console.log("skus with same shipment:",skusWithSameShipment.length)
     const deleted = await SkuOrder.destroy({where: {id:id}});
+    if(skusWithSameShipment.length == 1){
+      await ShipmentOrder.destroy({where: { uid: sku.shipmentOrderId }})
+    }
     return res.status(200).json({msg: "Sku order deleted successfully"})
   } catch (error) {
     console.log("ERROR: ",error)
