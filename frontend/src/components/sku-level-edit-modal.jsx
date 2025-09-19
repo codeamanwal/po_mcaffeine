@@ -32,6 +32,7 @@ export default function SkuLevelEditModal({
   shipmentId,
   onSave,
   shipment,
+  skus,
 }) {
   const { user } = useUserStore()
   const [isLoading, setIsLoading] = useState(false)
@@ -49,9 +50,11 @@ export default function SkuLevelEditModal({
 
   // Fetch data when opened
   useEffect(() => {
+    console.log("Inside sku level panel")
+    console.log(shipmentId)
     let mounted = true
     const run = async () => {
-      if (!isOpen || !shipmentId) return
+      if (!shipmentId) return
       setIsLoading(true)
       setError("")
       setSuccess("")
@@ -221,9 +224,9 @@ export default function SkuLevelEditModal({
       setEditReason("")
       setEditComments("")
       if (onSave) onSave(shipmentId, editedSkus)
-      setTimeout(() => {
-        onClose()
-      }, 1000)
+      // setTimeout(() => {
+      //   onClose()
+      // }, 1000)
     } catch (e) {
       console.error(e)
       const msg = err.response.data.error || err.message || err || "Failed to update SKUs. Please try again."
@@ -245,10 +248,10 @@ export default function SkuLevelEditModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[96vw] md:max-w-5xl h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <div open={isOpen} onOpenChange={handleClose}>
+      <div className="max-w-[96vw] md:max-w-5xl h-[85vh] my-5">
+        <div>
+          <strong className="flex items-center gap-2">
             <Package className="h-5 w-5" />
             <span>SKU Level Edit</span>
             {shipment?.poNumber && (
@@ -256,13 +259,13 @@ export default function SkuLevelEditModal({
                 {shipment.poNumber}
               </Badge>
             )}
-          </DialogTitle>
-          <DialogDescription>
+          </strong>
+          {/* <DialogDescription>
             {isWarehouse
               ? "Update only quantity. GMV and PO Value will auto-calculate and be stored in updated fields."
               : "View-only. Only Warehouse can update quantity."}
-          </DialogDescription>
-        </DialogHeader>
+          </DialogDescription> */}
+        </div>
 
         <div className="space-y-4">
           {error && (
@@ -279,13 +282,8 @@ export default function SkuLevelEditModal({
           )}
         </div>
 
-        
-
-        
-
         {/* SKU Cards */}
-        <ScrollArea className="max-h-[60vh] pr-3">
-
+        <ScrollArea className="pr-3 overflow-auto">
           {/* Top basic info (optional) */}
           {shipment && (
             <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
@@ -316,7 +314,7 @@ export default function SkuLevelEditModal({
           )}
           <Separator />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4 overflow-auto">
             {isLoading && (
               <Card>
                 <CardContent className="py-10 flex items-center justify-center">
@@ -379,44 +377,52 @@ export default function SkuLevelEditModal({
                       </div>
 
                       {/* Original vs Updated */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-md border p-3 bg-gray-50 dark:bg-gray-900">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-row justify-between rounded-md border p-3 bg-gray-50 dark:bg-gray-900">
                           <div className="text-xs font-medium mb-2">Original</div>
-                          <div className="text-xs text-gray-600">Qty</div>
-                          <div className="font-semibold tabular-nums">{original.qty ?? 0}</div>
-                          <div className="mt-2 text-xs text-gray-600">GMV</div>
-                          <div className="font-semibold tabular-nums">
-                            ₹{Number(original.gmv ?? 0).toLocaleString()}
+                          <div className="flex flex-row justify-center items-center space-x-1">
+                            <div className="text-xs text-gray-600">Qty</div>
+                            <div className="font-semibold tabular-nums">{original.qty ?? 0}</div>
                           </div>
-                          <div className="mt-2 text-xs text-gray-600">PO Value</div>
-                          <div className="font-semibold tabular-nums">
-                            ₹{Number(original.poValue ?? 0).toLocaleString()}
+                          <div className="flex flex-row justify-center items-center space-x-1">
+                            <div className="mt-2 text-xs text-gray-600">GMV</div>
+                            <div className="font-semibold tabular-nums">
+                              ₹{Number(original.gmv ?? 0).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex flex-row justify-center items-center space-x-1">
+                            <div className="mt-2 text-xs text-gray-600">PO Value</div>
+                            <div className="font-semibold tabular-nums">
+                              ₹{Number(original.poValue ?? 0).toLocaleString()}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="rounded-md border p-3">
+                        <div className="flex flex-row justify-between rounded-md border p-3">
                           <div className="text-xs font-medium mb-2">Updated</div>
-
-                          <div className="text-xs text-gray-600 flex items-center justify-between">
-                            <span>Quantity (Max: {originalQty})</span>
-                            {!isWarehouse && <Badge variant="outline">View Only</Badge>}
-                          </div>
-                          <Input
-                            type="number"
-                            inputMode="numeric"
-                            min={0}
-                            max={originalQty}
-                            step={1}
-                            className="mt-1 text-center font-mono"
-                            value={Number(sku.updatedQty ?? 0)}
-                            onChange={(e) => onQtyChange(index, e.target.value)}
-                            disabled={!isWarehouse || isUpdating}
-                          />
+                          <div>
+                            <div className="text-xs text-gray-600 flex items-center justify-between">
+                              <span>Quantity (Max: {originalQty})</span>
+                              {!isWarehouse && <Badge variant="outline">View Only</Badge>}
+                            </div>
+                            <Input
+                              type="number"
+                              inputMode="numeric"
+                              min={0}
+                              max={originalQty}
+                              step={1}
+                              className="mt-1 text-center font-mono"
+                              value={Number(sku.updatedQty ?? 0)}
+                              onChange={(e) => onQtyChange(index, e.target.value)}
+                              disabled={!isWarehouse || isUpdating}
+                            />
+                          
                           {Number(sku.updatedQty ?? 0) > originalQty && (
                             <div className="text-xs text-red-500 mt-1">
                               Cannot exceed original quantity ({originalQty})
                             </div>
                           )}
+                          </div>
 
                           <div className="mt-2 text-xs text-gray-600">GMV (updatedGmv)</div>
                           <div className="font-semibold tabular-nums">
@@ -438,7 +444,7 @@ export default function SkuLevelEditModal({
 
           {/* Reason Section for Changes */}
           {changedSkus.size > 0 && isWarehouse && (
-            <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+            <Card className="overflow-auto border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 text-orange-900 dark:text-orange-100">
                   <AlertCircle className="h-5 w-5" />
@@ -503,10 +509,10 @@ export default function SkuLevelEditModal({
             <div className="text-sm text-gray-500">You can edit: Quantity (auto-updates GMV and PO Value)</div>
           )}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose} disabled={isUpdating}>
+            {/* <Button variant="outline" onClick={handleClose} disabled={isUpdating}>
               <X className="h-4 w-4 mr-2" />
               Cancel
-            </Button>
+            </Button> */}
             <Button
               onClick={handleSave}
               disabled={!isWarehouse || !hasChanges || isUpdating || isLoading || (changedSkus.size > 0 && !editReason)}
@@ -527,7 +533,7 @@ export default function SkuLevelEditModal({
           </div>
         </div>
        
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }

@@ -215,6 +215,107 @@ export const validateBulkOrderData = (orders) => {
   }
 }
 
+export const validateBulkSkuData = (csvSkus) => {
+  const errors = []
+  const warnings = []
+
+  // Check for duplicate entries in CSV
+  const seen = new Set()
+  const duplicates = new Set()
+
+  csvSkus.forEach((csvSku, index) => {
+    const key = `${csvSku.shipmentUid}-${csvSku.poNumber}-${csvSku.skuCode}`
+    if (seen.has(key)) {
+      duplicates.add(key)
+    }
+    seen.add(key)
+  })
+
+  if (duplicates.size > 0) {
+    errors.push(`Duplicate entries found in CSV for: ${Array.from(duplicates).join(", ")}`)
+  }
+
+  // Validate each CSV SKU entry
+  csvSkus.forEach((csvSku, index) => {
+    const rowPrefix = `Row ${csvSku.rowNumber || index + 1}`
+
+    // Check if record has errors from matching process
+    if (csvSku.error) {
+      errors.push(`${rowPrefix}: ${csvSku.error}`)
+      return
+    }
+
+    // Validate required fields
+    if (!csvSku.shipmentUid || !csvSku.poNumber || !csvSku.skuCode) {
+      errors.push(`${rowPrefix}: shipmentUid, poNumber, and skuCode are required`)
+    }
+
+    // Validate updated quantity
+    if (csvSku.updatedQty === undefined || csvSku.updatedQty === null) {
+      errors.push(`${rowPrefix}: updatedQty is required`)
+    } else {
+      const updatedQty = Number(csvSku.updatedQty)
+      const originalQty = Number(csvSku.originalQty ?? 0)
+
+      if (isNaN(updatedQty)) {
+        errors.push(`${rowPrefix}: updatedQty must be a valid number`)
+      } else {
+        if (updatedQty < 0) {
+          errors.push(`${rowPrefix}: updatedQty cannot be negative`)
+        }
+
+        if (!Number.isInteger(updatedQty)) {
+          errors.push(`${rowPrefix}: updatedQty must be a whole number`)
+        }
+
+        if (originalQty > 0 && updatedQty > originalQty) {
+          errors.push(`${rowPrefix}: updatedQty (${updatedQty}) cannot exceed original quantity (${originalQty})`)
+        }
+      }
+    }
+
+    // Validate calculated values if present
+    if (csvSku.calculatedGmv !== undefined && csvSku.calculatedPoValue !== undefined) {
+      const originalGmv = Number(csvSku.originalGmv ?? 0)
+      const originalPoValue = Number(csvSku.originalPoValue ?? 0)
+      const originalQty = Number(csvSku.originalQty ?? 0)
+      const updatedQty = Number(csvSku.updatedQty ?? 0)
+
+      if (originalQty > 0) {
+        const expectedGmv = Math.round((originalGmv / originalQty) * updatedQty * 100) / 100
+        const expectedPoValue = Math.round((originalPoValue / originalQty) * updatedQty * 100) / 100
+
+        if (Math.abs(csvSku.calculatedGmv - expectedGmv) > 0.01) {
+          warnings.push(`${rowPrefix}: Calculated GMV (${csvSku.calculatedGmv}) differs from expected (${expectedGmv})`)
+        }
+
+        if (Math.abs(csvSku.calculatedPoValue - expectedPoValue) > 0.01) {
+          warnings.push(
+            `${rowPrefix}: Calculated PO Value (${csvSku.calculatedPoValue}) differs from expected (${expectedPoValue})`,
+          )
+        }
+      }
+    }
+
+    // Check for significant quantity reductions (warning only)
+    if (csvSku.originalQty && csvSku.updatedQty) {
+      const originalQty = Number(csvSku.originalQty)
+      const updatedQty = Number(csvSku.updatedQty)
+      const reductionPercentage = ((originalQty - updatedQty) / originalQty) * 100
+
+      if (reductionPercentage > 50) {
+        warnings.push(`${rowPrefix}: Large quantity reduction (${reductionPercentage.toFixed(1)}%) - please verify`)
+      }
+    }
+  })
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  }
+}
+
 // Auto-fill functions
 export const autoFillSkuData = (skuCode) => {
   const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)

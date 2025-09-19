@@ -4,11 +4,24 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Database, Edit, Eye, Package, Trash, MoreHorizontal, Search, Download, Calendar, X } from "lucide-react"
+import {
+  Database,
+  Edit,
+  Eye,
+  Package,
+  Trash,
+  MoreHorizontal,
+  Search,
+  Download,
+  Calendar,
+  X,
+  Upload,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import NavigationHeader from "@/components/header"
 import { useThemeStore } from "@/store/theme-store"
+import { useUserStore } from "@/store/user-store"
 import { getPoFormatOrderList, getShipmentStatusList, updateSinglePoOrder } from "@/lib/order"
 import { poFormatDataType, shipmentStatusDataType } from "@/constants/data_type"
 import EditOrderModal from "@/components/edit-order-modal"
@@ -21,6 +34,7 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import ShipmentViewModal from "@/components/view-shipment-modal"
+import BulkSkuUpdateModal from "@/components/bulk-sku-update"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -278,6 +292,7 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
 export default function DashboardPage({ onNavigate }) {
   const router = useRouter()
   const { isDarkMode, setIsDarkMode } = useThemeStore()
+  const { user } = useUserStore()
   const [activeTab, setActiveTab] = useState("po-format")
 
   const [poFormatData, setPoFormatData] = useState([])
@@ -331,6 +346,10 @@ export default function DashboardPage({ onNavigate }) {
   const [isShipmentBulkEditModal, setShipmentBulkEditModal] = useState(false)
   const [isShipmentViewModal, setShipmentViewModal] = useState(false)
   const [isSkuEditModal, setSkuEditModal] = useState(false)
+  const [isBulkSkuUpdateModal, setBulkSkuUpdateModal] = useState(false)
+
+  // Check if user has access to bulk CSV SKU update
+  const hasBulkSkuAccess = user?.role === "warehouse" || user?.role === "superadmin"
 
   // Utility function to parse DD-MM-YYYY date strings
   const parseDate = (dateStr) => {
@@ -609,6 +628,7 @@ export default function DashboardPage({ onNavigate }) {
     setShipmentViewModal(false)
     setSkuEditModal(false)
     setEditModal(false)
+    setBulkSkuUpdateModal(false)
     await getPoFormateData()
     await getShipmentData()
   }
@@ -684,6 +704,17 @@ export default function DashboardPage({ onNavigate }) {
                       <Download className="h-4 w-4 mr-2" />
                       Export CSV
                     </Button>
+                    {hasBulkSkuAccess && (
+                      <Button
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        onClick={() => {
+                          setBulkSkuUpdateModal(true)
+                        }}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Bulk SKU Update
+                      </Button>
+                    )}
                   </div>
                 </CardTitle>
 
@@ -797,8 +828,8 @@ export default function DashboardPage({ onNavigate }) {
                 <div className="relative">
                   {/* Fixed columns container */}
                   <div className="flex overflow-auto">
-                    {/* Fixed columns */}
-                    <div className="absolute left-0 top-0 z-50 bg-background border-r border-gray-200 dark:border-gray-800">
+                    {/* Fixed columns (up to PO Number) */}
+                     <div className="absolute left-0 top-0 z-20 bg-background border-r border-gray-200 dark:border-gray-800">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
@@ -827,11 +858,11 @@ export default function DashboardPage({ onNavigate }) {
                     </div>
 
                     {/* Scrollable columns container */}
-                    <div className="flex-1 ml-[37rem]">
+                    <div className="flex-1 ml-[36.5rem]">
                       <ScrollArea className="w-full">
                         <div className="min-w-max">
-                          <Table>
-                            <TableHeader>
+                          <Table className={"relative"}>
+                            <TableHeader className={""}>
                               <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
                                 {getPoScrollableColumns().map((item, index) => (
                                   <TableHead
@@ -854,10 +885,9 @@ export default function DashboardPage({ onNavigate }) {
                                       {row[item.fieldName]}
                                     </TableCell>
                                   ))}
-                                  <TableCell className={"min-w-28"}></TableCell>
+                                  <TableCell className={"min-w-36"}></TableCell>
                                 </TableRow>
                               ))}
-                              
                             </TableBody>
                           </Table>
                         </div>
@@ -866,7 +896,7 @@ export default function DashboardPage({ onNavigate }) {
                     </div>
 
                     {/* Sticky Action Column */}
-                    <div className="absolute right-0 top-0 z-50 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
+                    <div className="absolute right-0 top-0 z-20 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
@@ -1055,8 +1085,8 @@ export default function DashboardPage({ onNavigate }) {
                 <div className="relative">
                   {/* Fixed columns container */}
                   <div className="flex overflow-auto">
-                    {/* Fixed columns */}
-                    <div className="absolute left-0 top-0 z-50 bg-background border-r border-gray-200 dark:border-gray-800">
+                    {/* Fixed columns (up to PO Number) */}
+                    <div className="absolute left-0 top-0 z-20 bg-background border-r border-gray-200 dark:border-gray-800">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
@@ -1085,7 +1115,7 @@ export default function DashboardPage({ onNavigate }) {
                     </div>
 
                     {/* Scrollable columns container */}
-                    <div className="flex-1 ml-[38rem]">
+                    <div className="flex-1 ml-[43.5rem]">
                       <ScrollArea className="w-full">
                         <div className="min-w-max">
                           <Table>
@@ -1112,7 +1142,7 @@ export default function DashboardPage({ onNavigate }) {
                                       {row[item.fieldName]}
                                     </TableCell>
                                   ))}
-                                  <TableCell className={"min-w-28"}></TableCell>
+                                  <TableCell className={"min-w-36"}></TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>
@@ -1123,7 +1153,7 @@ export default function DashboardPage({ onNavigate }) {
                     </div>
 
                     {/* Sticky Action Column */}
-                    <div className="absolute right-0 top-0 z-50 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
+                    <div className="absolute right-0 top-0 z-20 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
@@ -1183,7 +1213,6 @@ export default function DashboardPage({ onNavigate }) {
                         </TableBody>
                       </Table>
                     </div>
-
                   </div>
                 </div>
               </CardContent>
@@ -1220,6 +1249,17 @@ export default function DashboardPage({ onNavigate }) {
             setShipmentBulkEditModal(false)
           }}
           shipmentData={selectedShipment}
+          onSave={() => {
+            onSavingUpdate()
+          }}
+        />
+
+        <BulkSkuUpdateModal
+          isOpen={isBulkSkuUpdateModal}
+          onClose={() => {
+            setBulkSkuUpdateModal(false)
+          }}
+          poFormatData={filteredPoData}
           onSave={() => {
             onSavingUpdate()
           }}

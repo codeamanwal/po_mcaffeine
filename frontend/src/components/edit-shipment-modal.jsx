@@ -134,6 +134,10 @@ const logisticsFields = [
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
 
+  useEffect(() => {
+    console.log("shipmentData: ",shipmentData)
+  },[shipmentData])
+
   const [skuTabActive, setSkuTab] = useState(false)
 
   const [formData, setFormData] = useState({})
@@ -179,6 +183,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
       // Convert date strings to Date objects for date fields
       const processedData = { ...shipmentData }
+      console.log(processedData);
 
       getLocations(shipmentData.channel)
 
@@ -791,16 +796,8 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
             <TabsContent value={"sku"}>
               <SkuLevelEditModal
-                isOpen={skuTabActive}
-                onClose={() => {
-                  setSkuTab(false);
-                  isOpen = false
-                }}
-                shipment = {shipmentData}
                 shipmentId={shipmentData.uid}
-                // onSave={() => {
-                //   onSavingUpdate()
-                // }}
+                shipment={shipmentData}
               />
             </TabsContent>
           </Tabs>
@@ -875,7 +872,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           <Button
             onClick={handleSave}
             disabled={isLoading || (poNumberChanged && !poEditReason) || validationErrors.length > 0}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className={`${activeTab == "sku" ? "hidden" : "block"} bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700`}
           >
             <Save className="h-4 w-4 mr-2" />
             {isLoading ? "Saving..." : "Save Changes"}
