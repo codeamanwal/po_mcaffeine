@@ -7,6 +7,7 @@ const SkuOrder = sequelize.define('SkuOrder', {
   skuName: { type: DataTypes.STRING },
   skuCode: { type: DataTypes.STRING },
   channelSkuCode: { type: DataTypes.STRING },
+  brandName: {type: DataTypes.STRING, allowNull: false},
   qty: { type: DataTypes.INTEGER },
   gmv: { type: DataTypes.FLOAT },
   poValue: { type: DataTypes.FLOAT },

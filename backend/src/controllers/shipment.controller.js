@@ -65,6 +65,13 @@ async function createShipment(req, res) {
   // Start a transaction so either all writes succeed or all roll back
   const t = await sequelize.transaction();
   try {
+    // unique ponumber check
+    const existingShipment = await ShipmentOrder.findAll({where: {poNumber: shipmentOrder.poNumber}});
+    console.log(existingShipment)
+    if(existingShipment.length > 0){
+       await t.rollback();
+      return res.status(400).json({msg: "Shipment order already exist with this Po Number!"})
+    }
     // creating shipment order as a parent 
     const parent = await ShipmentOrder.create(shipmentOrder, { transaction: t });
 
@@ -170,6 +177,7 @@ async function createBulkShipment(req, res) {
       };
       const skuOrders = orders.map(order => ({
         srNo: order.srNo,
+        brandName: order.brand,
         skuName: order.skuName,
         skuCode: order.skuCode,
         channelSkuCode: order.channelSkuCode,

@@ -162,19 +162,19 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
     }
 
     // Get unique brands from selected SKUs
-    const uniqueBrands = [...new Set(skusWithBrands.map((sku) => sku.brandName))]
+    // const uniqueBrands = [...new Set(skusWithBrands.map((sku) => sku.brandName))]
 
-    if (uniqueBrands.length === 1) {
-      // All SKUs are from the same brand
-      setShipmentOrder((prev) => ({ ...prev, brand: uniqueBrands[0] }))
-      setBrandMismatchError("")
-    } else if (uniqueBrands.length > 1) {
-      // Multiple brands detected
-      setBrandMismatchError(
-        `Multiple brands detected: ${uniqueBrands.join(", ")}. All SKUs must be from the same brand.`,
-      )
-      setShipmentOrder((prev) => ({ ...prev, brand: "" }))
-    }
+    // if (uniqueBrands.length === 1) {
+    //   // All SKUs are from the same brand
+    //   setShipmentOrder((prev) => ({ ...prev, brand: uniqueBrands[0] }))
+    //   setBrandMismatchError("")
+    // } else if (uniqueBrands.length > 1) {
+    //   // Multiple brands detected
+    //   setBrandMismatchError(
+    //     `Multiple brands detected: ${uniqueBrands.join(", ")}. All SKUs must be from the same brand.`,
+    //   )
+    //   setShipmentOrder((prev) => ({ ...prev, brand: "" }))
+    // }
   }, [skuOrders])
 
   const handleShipmentChange = (field, value) => {
@@ -268,7 +268,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
     }
 
     // Validate shipment order
-    const requiredShipmentFields = ["brand", "channel", "location", "poNumber"]
+    const requiredShipmentFields = ["channel", "location", "poNumber"]
     for (const field of requiredShipmentFields) {
       if (!shipmentOrder[field]) {
         return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
@@ -310,9 +310,9 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
     const skusWithBrands = skuOrders.filter((sku) => sku.brandName)
     const uniqueBrands = [...new Set(skusWithBrands.map((sku) => sku.brandName))]
 
-    if (uniqueBrands.length > 1) {
-      return `All SKUs must be from the same brand. Found: ${uniqueBrands.join(", ")}`
-    }
+    // if (uniqueBrands.length > 1) {
+    //   return `All SKUs must be from the same brand. Found: ${uniqueBrands.join(", ")}`
+    // }
 
     if (uniqueBrands.length === 0) {
       return "At least one SKU with a valid brand is required"
@@ -339,7 +339,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       const apiData = {
         shipmentOrder: {
           entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "dd-MM-yyyy") : "",
-          brandName: shipmentOrder.brand,
+          brandName: skuOrders[0].brandName,
           poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "dd-MM-yyyy") : "",
           channel: shipmentOrder.channel,
           location: shipmentOrder.location,
@@ -353,7 +353,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
           qty: Number.parseInt(sku.qty),
           gmv: Number.parseFloat(sku.gmv),
           poValue: Number.parseFloat(sku.poValue),
-          // brandName: sku.brandName,
+          brandName: sku.brandName,
           // mrp: Number.parseFloat(sku.mrp || "0"),
         })),
       }
@@ -362,16 +362,19 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       console.log("Order created:", apiData)
       console.log("res:", res.data)
       setSuccess("Shipment order created successfully!")
-
+      toast.success(res.data.msg || "Order created successfully");
       // Reset form after success
       setTimeout(() => {
         resetForm()
-      }, 2000)
+      }, 1000)
     } catch (err) {
-      setError("Failed to create shipment order")
+      toast.error(err.response.data.msg || err.message);
+      console.log(err.response || err);
+    }finally {
+      setIsLoading(false)
     }
 
-    setIsLoading(false)
+    
   }
 
   const resetForm = () => {
@@ -521,7 +524,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
 
                   {/* Basic Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label className="text-sm font-medium">Brand * (Auto-filled from SKUs)</Label>
                       <Input
                         type="text"
@@ -533,7 +536,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                       {shipmentOrder.brand && (
                         <p className="text-xs text-green-600">✓ Brand auto-filled from selected SKUs</p>
                       )}
-                    </div>
+                    </div> */}
 
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Channel *</Label>
@@ -565,7 +568,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                       </Select>
                     </div>
 
-                    <div className="space-y-2 md:col-span-2">
+                    <div className="space-y-2 md:col-span-1">
                       <Label htmlFor="poNumber" className="text-sm font-medium">
                         PO Number *
                       </Label>

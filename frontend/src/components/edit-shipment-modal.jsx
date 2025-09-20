@@ -130,6 +130,7 @@ const logisticsFields = [
   "finalRemarks",
   "physicalWeight",
   "tentativeDeliveryDate",
+  "asset"
 ]
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
@@ -549,7 +550,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
               </SelectTrigger>
               <SelectContent>
-                {locationOtions.map((location, idx) => (
+                {locationOtions?.map((location, idx) => (
                   <SelectItem key={idx} value={location.location}>
                     {`${location.location} - ${location.drop_location}`}
                   </SelectItem>
@@ -649,6 +650,26 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 Reason required for PO Number change
               </p>
             )}
+          </div>
+        )
+
+      case "file":
+        return (
+           <div className="space-y-2">
+          <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
+              {field.label}
+          </Label>
+          <Input
+            id={field.id}
+            type="file"
+            value={value || ""}
+            onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
+            className={cn(
+              "h-10",
+              needsPoReason && !poEditReason && "border-red-300 bg-red-50",
+              hasValidationError && "border-red-300 bg-red-50",
+            )}
+          />
           </div>
         )
 

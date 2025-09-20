@@ -34,9 +34,9 @@ export const validateField = (fieldName, value, allowedValues)=> {
 
   if (!value || value.trim() === "") {
     errors.push(`${fieldName} is required`)
-  } else if (!allowedValues.includes(value)) {
+  } else if (!allowedValues?.includes(value)) {
     errors.push(
-      `${fieldName} must be one of: ${allowedValues.slice(0, 5).join(", ")}${allowedValues.length > 5 ? "..." : ""}`,
+      `${fieldName} must be one of: ${allowedValues?.slice(0, 5).join(", ")}${allowedValues?.length > 5 ? "..." : ""}`,
     )
   }
 
@@ -215,6 +215,7 @@ export const validateBulkOrderData = (orders) => {
   }
 }
 
+// Bulk sku validation
 export const validateBulkSkuData = (csvSkus) => {
   const errors = []
   const warnings = []
@@ -224,7 +225,7 @@ export const validateBulkSkuData = (csvSkus) => {
   const duplicates = new Set()
 
   csvSkus.forEach((csvSku, index) => {
-    const key = `${csvSku.shipmentUid}-${csvSku.poNumber}-${csvSku.skuCode}`
+    const key = `${csvSku.poNumber}-${csvSku.skuCode}`
     if (seen.has(key)) {
       duplicates.add(key)
     }
@@ -246,8 +247,8 @@ export const validateBulkSkuData = (csvSkus) => {
     }
 
     // Validate required fields
-    if (!csvSku.shipmentUid || !csvSku.poNumber || !csvSku.skuCode) {
-      errors.push(`${rowPrefix}: shipmentUid, poNumber, and skuCode are required`)
+    if (!csvSku.poNumber || !csvSku.skuCode) {
+      errors.push(`${rowPrefix}: poNumber, and skuCode are required`)
     }
 
     // Validate updated quantity

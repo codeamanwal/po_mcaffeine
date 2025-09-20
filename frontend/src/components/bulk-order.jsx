@@ -62,7 +62,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
     const lines = csvText.split("\n").filter((line) => line.trim())
     const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
-    const expectedHeaders = ["Channel", "Location", "PO Date", "PO Number", "Sr/ No", "SKU Code", "Qty"]
+    const expectedHeaders = ["Channel", "Location", "PO Date", "PO Number", "Sr/ No", "SKU Name", "SKU Code", "Channel SKU Code", "Qty", "GMV", "PO Value"]
 
     // Check if all required headers are present
     const missingHeaders = expectedHeaders.filter((header) => !headers.includes(header))
@@ -95,6 +95,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
         channelSkuCode: generateChannelSkuCode(channel, skuCode) || "",
         qty: qty,
         gmv: skuData ? calculateGmv(qty, skuCode) : 0,
+        poValue: Number.parseFloat(values[headers.indexOf("PO Value")]) || 0,
         // poValue: skuData ? Math.round(calculateGmv(qty, skuCode) * 0.8 * 100) / 100 : 0, // Assuming 80% of GMV
         status: "valid",
         errors: [],
@@ -156,6 +157,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       const text = await file.text()
       const orders = parseCSV(text)
       setParsedOrders(orders)
+      console.log(parsedOrders)
       setShowPreview(true)
 
       const validCount = orders.filter((order) => order.status === "valid").length
@@ -184,6 +186,8 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       setError("No valid orders to upload")
       return
     }
+
+    console.log("validOrders: ",validOrders)
 
     setIsUploading(true)
     setUploadProgress(0)
@@ -219,10 +223,10 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
   }
 
   const downloadTemplate = () => {
-    const headers = ["Channel", "Location", "PO Date", "PO Number", "Sr/ No", "SKU Code", "Qty"]
+    const headers = ["Channel", "Location", "PO Date", "PO Number", "Sr/ No", "SKU Name", "SKU Code", "Channel SKU Code", "Qty", "GMV", "PO Value"]
 
     const sampleData = [
-      "Amazon,AMD2,27-09-2025,PO_SAMPLE,1,MCaf100,24",
+      "Amazon,AMD2,27-09-2025,PO_SAMPLE,1,sku-name,MCaf100,channel-sku-code,24,2400,2000",
       // "Amazon,Mumbai,27-12-2024,3100495853,2,MCaf42,22",
     ]
 
@@ -472,7 +476,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
                             <TableCell className="font-mono text-xs">{order.channelSkuCode}</TableCell>
                             <TableCell className="text-right">{order.qty}</TableCell>
                             <TableCell className="text-right">₹{order.gmv.toLocaleString()}</TableCell>
-                            {/* <TableCell className="text-right">₹{order.poValue.toLocaleString()}</TableCell> */}
+                            <TableCell className="text-right">₹{order.poValue.toLocaleString()}</TableCell>
                             <TableCell>
                               <div className="space-y-1">
                                 {order.errors && order.errors.length > 0 && (

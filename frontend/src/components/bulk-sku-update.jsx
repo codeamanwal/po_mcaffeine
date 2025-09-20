@@ -54,7 +54,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
     }
 
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
-    const expectedHeaders = ["shipmentuid", "ponumber", "skucode", "updatedqty"]
+    const expectedHeaders = ["ponumber", "skucode", "updatedqty"]
 
     // Validate headers
     const missingHeaders = expectedHeaders.filter((h) => !headers.includes(h))
@@ -75,13 +75,13 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
       })
 
       // Validate and convert data types
-      const shipmentUid = row.shipmentuid
+      // const shipmentUid = row.shipmentuid
       const poNumber = row.ponumber
       const skuCode = row.skucode
       const updatedQty = Number.parseFloat(row.updatedqty)
 
-      if (!shipmentUid || !poNumber || !skuCode) {
-        throw new Error(`Row ${i + 1}: shipmentUid, poNumber, and skuCode are required`)
+      if (!poNumber || !skuCode) {
+        throw new Error(`Row ${i + 1}: poNumber, and skuCode are required`)
       }
 
       if (isNaN(updatedQty) || updatedQty < 0 || !Number.isInteger(updatedQty)) {
@@ -89,7 +89,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
       }
 
       data.push({
-        shipmentUid,
+        // shipmentUid,
         poNumber,
         skuCode,
         updatedQty,
@@ -122,7 +122,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
       // Find matching PO record
       const matchingRecord = poFormatData.find(
         (po) =>
-          po.uid?.toString() === csvRow.shipmentUid.toString() &&
+          // po.uid?.toString() === csvRow.shipmentUid.toString() &&
           po.poNumber?.toString() === csvRow.poNumber.toString() &&
           po.skuCode?.toString() === csvRow.skuCode.toString(),
       )
@@ -130,7 +130,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
       if (!matchingRecord) {
         return {
           ...csvRow,
-          error: `No matching record found for UID: ${csvRow.shipmentUid}, PO: ${csvRow.poNumber}, SKU: ${csvRow.skuCode}`,
+          error: `No matching record found for PO: ${csvRow.poNumber}, SKU: ${csvRow.skuCode}`,
         }
       }
 
@@ -213,8 +213,8 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
 
   // Download CSV template
   const downloadTemplate = () => {
-    const template = `shipmentUid,poNumber,skuCode,updatedQty
-    31,PO_SAMPLE,MCaf100,1`
+    const template = `poNumber,skuCode,updatedQty
+    PO_SAMPLE,MCaf100,1`
 
     const blob = new Blob([template], { type: "text/csv;charset=utf-8;" })
     const link = document.createElement("a")

@@ -169,7 +169,7 @@ export const shipmentStatusDataType = [
   },
   { fieldName: "poNumber", label: "PO Number", id: "poNumber", type: "text" },
   { fieldName: "totalUnits", label: "Total Units", id: "totalUnits", type: "number" },
-  { fieldName: "brandName", label: "Brand Name", id: "brandName", type: "text" },
+  // { fieldName: "brandName", label: "Brand Name", id: "brandName", type: "text" },
   { fieldName: "remarksPlanning", label: "Remarks (Planning)", id: "remarksPlanning", type: "text" },
   { fieldName: "specialRemarksCOPT", label: "Special Remarks (COPT)", id: "specialRemarksCOPT", type: "text" },
   { fieldName: "newShipmentReference", label: "New Shipment Reference", id: "newShipmentReference", type: "text" },
@@ -258,7 +258,9 @@ export const shipmentStatusDataType = [
     options: master_rto_remark_options,
   },
   { fieldName: "finalRemarks", label: "Final Remarks", id: "finalRemarks", type: "text" },
-  { fieldName: "updatedGmv", label: "Updated GMV", id: "updatedGmv", type: "number" },
-  { fieldName: "physicalWeight", label: "Physical Weight", id: "physicalWeight", type: "number" },
+  { fieldName: "actualWeight", label: "Actual Weight", id: "actualWeight", type: "number" },
+  // { fieldName: "updatedGmv", label: "Updated GMV", id: "updatedGmv", type: "number" },
+  // { fieldName: "physicalWeight", label: "Physical Weight", id: "physicalWeight", type: "number" },
   // Add more fields as needed
+  { fieldName: "asset", label: "Upload Asset", id: "asset", type:"file"}
 ];

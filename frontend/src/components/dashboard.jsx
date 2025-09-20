@@ -1134,7 +1134,7 @@ export default function DashboardPage({ onNavigate }) {
                   {/* Fixed columns container */}
                   <div className="flex overflow-auto">
                     {/* Fixed columns (up to PO Number) */}
-                    <div className="absolute left-0 top-0 z-20 bg-background border-r border-gray-200 dark:border-gray-800">
+                    <div className="absolute left-0 top-0 z-20 w-[43.5rem] bg-background border-r border-gray-200 dark:border-gray-800">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
