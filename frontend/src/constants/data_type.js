@@ -219,7 +219,7 @@ export const shipmentStatusDataType = [
   { fieldName: "workingTypeWarehouse", label: "Working Type (Warehouse)", id: "workingTypeWarehouse", type: "text" },
   { fieldName: "inventoryRemarksWarehouse", label: "Inventory Remarks (Warehouse)", id: "inventoryRemarksWarehouse", type: "text" },
   { fieldName: "b2bWorkingTeamRemarks", label: "B2B Working Team Remarks", id: "b2bWorkingTeamRemarks", type: "text" },
-  { fieldName: "actualWeight", label: "Actual Weight", id: "actualWeight", type: "number" },
+  // { fieldName: "actualWeight", label: "Actual Weight", id: "actualWeight", type: "number" },
   { fieldName: "volumetricWeight", label: "Volumetric Weight", id: "volumetricWeight", type: "number" },
   {
     fieldName: "channelType",
@@ -260,7 +260,7 @@ export const shipmentStatusDataType = [
   { fieldName: "finalRemarks", label: "Final Remarks", id: "finalRemarks", type: "text" },
   { fieldName: "actualWeight", label: "Actual Weight", id: "actualWeight", type: "number" },
   // { fieldName: "updatedGmv", label: "Updated GMV", id: "updatedGmv", type: "number" },
-  // { fieldName: "physicalWeight", label: "Physical Weight", id: "physicalWeight", type: "number" },
+  { fieldName: "physicalWeight", label: "Physical Weight", id: "physicalWeight", type: "number" },
   // Add more fields as needed
   { fieldName: "asset", label: "Upload Asset", id: "asset", type:"file"}
 ];
