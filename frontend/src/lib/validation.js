@@ -4,11 +4,13 @@ import { master_channel_options } from "@/constants/master_sheet"
 import { master_status_planning_options } from "@/constants/master_sheet"
 import { master_status_warehouse_options } from "@/constants/master_sheet"
 import { master_status_logistics_options } from "@/constants/master_sheet"
-import { master_courier_partner_options } from "@/constants/master_sheet"
+import { getAllCourierPartners } from "@/constants/courier-partners"
 import { master_rejection_reasons } from "@/constants/master_sheet"
 import { channelSkuMapping } from "@/constants/master_channel_skucode_map"
 import { master_sku_code_options } from "@/constants/sku_code_options"
 import { master_channel_location_mapping } from "@/constants/master_sheet"
+
+const master_courier_partner_options = getAllCourierPartners();
 
 // Location options (derived from common locations)
 export const master_location_options = [

@@ -138,9 +138,13 @@ export const poFormatDataType = [
   // { fieldName: "check", label: "Check", id: "check", type: "text" },
 ];
 
-import { master_courier_partner_options, master_facility_option, master_rto_remark_options } from "./master_sheet";
+import { master_facility_option, master_rto_remark_options } from "./master_sheet";
 import { master_status_planning_options, master_status_warehouse_options, master_status_logistics_options } from "./master_sheet";
 import { master_channel_options } from "./master_sheet";
+
+import { getAllCourierPartners } from "./courier-partners";
+
+const master_courier_partner_options = getAllCourierPartners();
 
 export const shipmentStatusDataType = [
   { fieldName: "uid", label: "UID", id: "uid", type: "text" },

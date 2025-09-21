@@ -29,6 +29,7 @@ import {
   Lock,
   Clock,
   AlertTriangle,
+  User,
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -40,6 +41,7 @@ import SearchableSelect from "./ui/searchable-select"
 
 import {master_appointment_change_options} from "@/constants/master_sheet"
 import SkuLevelEditModal from "./sku-level-edit-modal"
+import LogisticsCost from "./logistics-cost"
 
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
@@ -730,6 +732,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         { value: "admin", label: "Admin", icon: Shield, count: adminFields.length },
         { value: "warehouse", label: "Warehouse", icon: Warehouse, count: warehouseFields.length },
         { value: "logistics", label: "Logistics", icon: Truck, count: logisticsFields.length },
+        // { value: "logistics-cost", label: "Logistics Costs", icon: User, count:0},
       )
     } else if (user?.role === "admin") {
       tabs.push({ value: "admin", label: "Admin", icon: Shield, count: adminFields.length })
@@ -787,7 +790,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 mb-6">
+            <TabsList className="w-full flex md:flex-row justify-around items-center mb-6">
               {availableTabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -802,7 +805,15 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 {/* <Icon className="h-4 w-4" /> */}
                 <span>Sku Update</span>
                 {/* <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"></span> */}
-              </TabsTrigger>
+              </TabsTrigger> 
+              {
+                user?.role === "superadmin" ? 
+                (<TabsTrigger value={"logistics-cost"} className="flex items-center space-x-2">
+                  {/* <Icon className="h-4 w-4" /> */}
+                  <span>Logistics Costs</span>
+                  {/* <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"></span> */}
+                </TabsTrigger>) : (<></>)
+              } 
             </TabsList>
 
             {availableTabs.map((tab) => (
@@ -829,6 +840,11 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 shipment={shipmentData}
               />
             </TabsContent>
+
+            <TabsContent value={"logistics-cost"}>
+              <LogisticsCost shipmentData={shipmentData} />
+            </TabsContent>
+
           </Tabs>
 
           {/* PO Number Edit Reason Section */}
