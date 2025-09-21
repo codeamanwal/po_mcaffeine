@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Calculator, Truck, MapPin, Calendar, Hash, Weight, DollarSign, FileText, Clock, Package } from "lucide-react"
 import { format } from "date-fns"
-import { getCourierType, getDocketCharges } from "@/constants/courier-partners"
+import { getAppointmentCharges, getCourierType, getDocketCharges } from "@/constants/courier-partners"
 import { getSkuOrdersByShipment } from "@/lib/order"
+import { master_channel_location_mapping } from "@/constants/master_sheet"
 
 const FACILITY_PICKUP_MAPPING = {
   HYP_SRGWHT: "Guwahati",
@@ -57,14 +58,6 @@ const APPOINTMENT_CHARGES_MAPPING = {
   },
 }
 
-const MISC_CHARGES = {
-  "Fuel Surcharge": 15.0,
-  "Handling Charges": 10.0,
-  "Documentation Fee": 5.0,
-  "Insurance Premium": 8.0,
-  "Service Tax": 12.0,
-}
-
 export default function LogisticsCost({ shipmentData }) {
   const [isFetching, setFetching] = useState(true)
   const [skus, setSkus] = useState([])
@@ -93,7 +86,7 @@ export default function LogisticsCost({ shipmentData }) {
     const location = shipmentData.location || "N/A"
     const facility = shipmentData.facility || "Default"
     const poNumber = shipmentData.poNumber || "N/A"
-    const chargeableWeight = Number.parseFloat(shipmentData.chargeableWeight) || 0
+    const chargeableWeight = Number.parseFloat(shipmentData.chargeableWeight || shipmentData.physicalWeight || shipmentData.actualWeight) || 0
     const updatedPoValue = totalUpdatedPoValue() || 0
     const firstTransporter = shipmentData.firstTransporter || null
     const secondTransporter = shipmentData.secondTransporter || null
@@ -130,12 +123,20 @@ export default function LogisticsCost({ shipmentData }) {
     if (thirdTransporter) docketCharges += getDocketCharges(thirdTransporter)
 
     // Appointment charges
-    const appointmentCharges =
-      APPOINTMENT_CHARGES_MAPPING[channel]?.[firstTransporter] ||
-      APPOINTMENT_CHARGES_MAPPING[channel]?.["Default"] ||
-      APPOINTMENT_CHARGES_MAPPING["Default"]["Default"]
+    const apptChannel = master_channel_location_mapping[channel][0]["apptChannel"]
+    const appointmentCharges = getAppointmentCharges(firstTransporter, apptChannel);
+      // APPOINTMENT_CHARGES_MAPPING[channel]?.[firstTransporter] ||
+      // APPOINTMENT_CHARGES_MAPPING[channel]?.["Default"] ||
+      // APPOINTMENT_CHARGES_MAPPING["Default"]["Default"]
 
     // Misc charges
+    const MISC_CHARGES = {
+      "Delivery Charges": shipmentData.deliveryCharges ?? 0,
+      "Halting": shipmentData.halting ?? 0,
+      "Unloading Charges": shipmentData.unloadingCharges ?? 0,
+      "Dedicated Vehicle": shipmentData.dedicatedVehicle ?? 0,
+      "Other Charges": shipmentData.otherCharges ?? 0,
+    }
     const miscCharges = Object.values(MISC_CHARGES)
     const totalMiscCharges = miscCharges.reduce((sum, charge) => sum + charge, 0)
 

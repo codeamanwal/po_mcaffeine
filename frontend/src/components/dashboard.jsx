@@ -384,6 +384,13 @@ export default function DashboardPage({ onNavigate }) {
       const res = await getPoFormatOrderList()
       console.log(res.data)
       setPoFormatData(res.data.orders)
+      setPoFormatData((prev) => {
+        const updated = prev.map((poSingle) => ({
+          ...poSingle,
+          updatedQty: poSingle["updatedQty"] || poSingle["qty"]
+        }))
+        return updated
+      })
     } catch (error) {
       console.log(error)
       setPoFormatData(poData)
@@ -416,6 +423,7 @@ export default function DashboardPage({ onNavigate }) {
     const workingDate = parseDate(item.workingDate)
     const dispatchDate = parseDate(item.dispatchDate)
     const currentAppointmentDate = parseDate(item.currentAppointmentDate)
+    const updatedQty = poFormatData["updatedQty"] || poFormatData["qty"]
 
     const matchesFilters =
       (!poFilters.entryDateFrom || (entryDate && entryDate >= poFilters.entryDateFrom)) &&

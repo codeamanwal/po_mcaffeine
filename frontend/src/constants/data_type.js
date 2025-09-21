@@ -77,6 +77,7 @@ export const poFormatDataType = [
     type: "select",
     options: ["MUM_WAREHOUSE1", "MUM_WAREHOUSE2", "DEL_WAREHOUSE1", "BLR_WAREHOUSE1"],
   },
+  { fieldName: "productWeight", label: "Product Weight", id: "productWeight", type: "number" },
   // { fieldName: "accountsWorking", label: "Accounts Working", id: "accountsWorking", type: "number" },
   // {
   //   fieldName: "channelInwardingQuantity",
@@ -134,7 +135,6 @@ export const poFormatDataType = [
   //   type: "select",
   //   options: ["Quick-commerce", "E-commerce", "Marketplace", "Retail"],
   // },
-  { fieldName: "actualWeight", label: "Actual Weight", id: "actualWeight", type: "number" },
   // { fieldName: "check", label: "Check", id: "check", type: "text" },
 ];
 
@@ -232,6 +232,7 @@ export const shipmentStatusDataType = [
     type: "select",
     options: ["Quick-commerce", "E-commerce", "Marketplace", "Retail"],
   },
+  // { fieldName: "productWeight", label: "Product Weight", id: "productWeight", type: "number" },
   { fieldName: "firstTransporter", label: "1st Transporter (First Mile)", id: "firstTransporter", type: "select", 
     options: master_courier_partner_options,
   },
@@ -262,9 +263,18 @@ export const shipmentStatusDataType = [
     options: master_rto_remark_options,
   },
   { fieldName: "finalRemarks", label: "Final Remarks", id: "finalRemarks", type: "text" },
-  { fieldName: "actualWeight", label: "Actual Weight", id: "actualWeight", type: "number" },
+  { fieldName: "actualWeight", label: "Shipment Weight", id: "actualWeight", type: "number" },
   // { fieldName: "updatedGmv", label: "Updated GMV", id: "updatedGmv", type: "number" },
-  { fieldName: "physicalWeight", label: "Physical Weight", id: "physicalWeight", type: "number" },
-  // Add more fields as needed
-  { fieldName: "asset", label: "Upload Asset", id: "asset", type:"file"}
+  { fieldName: "physicalWeight", label: "Chargable Weight", id: "physicalWeight", type: "number" },
+
+  // misc charges field
+  {fieldName:"deliveryCharges", label: "Delivery Charges", id:"deliveryCharges", type:"number" },
+  {fieldName:"halting", label: "halting", id:"halting", type:"number" },
+  {fieldName:"unloadingCharges", label: "Unloading Charges", id:"unloadingCharges", type:"number" },
+  {fieldName:"dedicatedVehicle", label: "Dedicated Vehicle", id:"dedicatedVehicle", type:"number" },
+  {fieldName:"otherCharges", label: "Other Charges", id:"otherCharges", type:"number" },
+  // files field
+  { fieldName: "document", label: "Document", id: "document", type:"file"},
+  { fieldName: "proofOfDispatch", label: "Proof Of Dispatch", id: "proofOfDispatch", type:"file"},
+  { fieldName: "proofOfDelivery", label: "Proof Of Delivery", id: "proofOfDelivery", type:"file"},
 ];

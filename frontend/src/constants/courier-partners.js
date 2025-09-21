@@ -186,9 +186,16 @@ export function getDocketCharges(partnerName){
 }
 
 export function getCourierType(partnerName){
-    console.log("partner name:", partnerName);
     if(!partnerName) return null;
     const option = courierPartners.find(item => item.name === partnerName);
     return option.type;
+}
+
+export function getAppointmentCharges (partnerName,appointmentChannel) {
+    if(!partnerName) return 0;
+    const option = courierPartners.find(item => item.name === partnerName);
+    
+    if(appointmentChannel === "yes") return option.appointmentChargeYes;
+    else return option.appointmentChargeNo;
 }
 

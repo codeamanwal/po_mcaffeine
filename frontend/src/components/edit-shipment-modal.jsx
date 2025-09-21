@@ -91,6 +91,7 @@ const adminFields = [
   "channelInwardingRemarks",
   "dispatchDateTentative",
   "workingDatePlanner",
+  // "productWeight",
   "firstAppointmentDateCOPT",
   "orderNo1",
   "orderNo2",
@@ -99,6 +100,7 @@ const adminFields = [
   "channelType",
   "labelsLink",
   "invoiceValue",
+  "document"
 ]
 
 const warehouseFields = [
@@ -118,6 +120,7 @@ const warehouseFields = [
   "secondDocketNo",
   "thirdTransporter",
   "thirdDocketNo",
+  "proofOfDispatch",
 ]
 
 const logisticsFields = [
@@ -132,7 +135,12 @@ const logisticsFields = [
   "finalRemarks",
   "physicalWeight",
   "tentativeDeliveryDate",
-  "asset"
+  "deliveryCharges",
+  "halting",
+  "unloadingCharges",
+  "dedicatedVehicle",
+  "otherCharges",
+  "proofOfDelivery",
 ]
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
@@ -437,7 +445,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   }
 
   const renderField = (field) => {
-    const value = formData[field.fieldName]
+    let value = formData[field.fieldName]
     const isBackendControlled = isBackendControlledField(field.fieldName)
     const isPoNumberField = field.fieldName === "poNumber"
     const needsPoReason = isPoNumberField && poNumberChanged && (user?.role === "admin" || user?.role === "superadmin")
@@ -541,6 +549,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
     // handle dynamic availble locations
     if(field.fieldName === "location"){
+      
       return (
           <div className="space-y-2">
             <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
@@ -559,6 +568,39 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        )
+    }
+
+    if(field.fieldName === "physicalWeight"){
+      let val = value;
+      if(!value){
+        val = formData["actualWeight"];
+      }
+        return (
+          <div className="space-y-2">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
+              {field.label}
+              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
+            </Label>
+            <Input
+              id={field.id}
+              type="number"
+              value={value ?? formData["actualWeight"] ?? 0}
+              onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
+              className={cn(
+                "h-10",
+                needsPoReason && !poEditReason && "border-red-300 bg-red-50",
+                hasValidationError && "border-red-300 bg-red-50",
+              )}
+              step={field.fieldName.includes("Weight") ? "0.01" : "1"}
+            />
+            {needsPoReason && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Reason required for PO Number change
+              </p>
+            )}
           </div>
         )
     }
