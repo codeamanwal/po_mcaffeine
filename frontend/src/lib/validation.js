@@ -60,20 +60,20 @@ export const validateShipmentData = (shipmentData)=> {
   }
 
   // Validate channel
-  if (shipmentData.channel) {
-    const channelValidation = validateField("Channel", shipmentData.channel, master_channel_options)
-    errors.push(...channelValidation.errors)
-  }
+  // if (shipmentData.channel) {
+  //   const channelValidation = validateField("Channel", shipmentData.channel, master_channel_options)
+  //   errors.push(...channelValidation.errors)
+  // }
 
   // Validate location
   // first get all the location for given channel
-  const locs =  master_channel_location_mapping[shipmentData.channel]?.map((loc) => {
-    return loc.location;
-  })
-  if (shipmentData.location) {
-    const locationValidation = validateField("Location", shipmentData.location, locs)
-    errors.push(...locationValidation.errors)
-  }
+  // const locs =  master_channel_location_mapping[shipmentData.channel]?.map((loc) => {
+  //   return loc.location;
+  // })
+  // if (shipmentData.location) {
+  //   const locationValidation = validateField("Location", shipmentData.location, locs)
+  //   errors.push(...locationValidation.errors)
+  // }
 
   // Validate status fields
   if (shipmentData.statusPlanning) {

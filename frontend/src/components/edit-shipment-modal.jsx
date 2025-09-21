@@ -556,7 +556,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
               {field.label}
               {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
             </Label>
-            <Select value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
+            <Select disabled={true} value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
               <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
                 <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
               </SelectTrigger>
@@ -654,7 +654,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
               {field.label}
               {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
             </Label>
-            <Select value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
+            <Select disabled={["location" ,"channel"].includes(field.fieldName)} value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
               <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
                 <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
               </SelectTrigger>

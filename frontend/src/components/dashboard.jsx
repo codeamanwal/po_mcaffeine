@@ -18,18 +18,22 @@ import {
   Upload,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import NavigationHeader from "@/components/header"
 import { useThemeStore } from "@/store/theme-store"
 import { useUserStore } from "@/store/user-store"
-import { deleteShipment, deleteSku, getPoFormatOrderList, getShipmentStatusList, updateSinglePoOrder } from "@/lib/order"
+import {
+  deleteShipment,
+  deleteSku,
+  getPoFormatOrderList,
+  getShipmentStatusList,
+  updateSinglePoOrder,
+} from "@/lib/order"
 import { poFormatDataType, shipmentStatusDataType } from "@/constants/data_type"
 import EditOrderModal from "@/components/edit-order-modal"
 import EditShipmentModal from "@/components/edit-shipment-modal"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import BulkUpdateShipmentModal from "@/components/bulk-shipment-update"
-import SkuLevelEditModal from "@/components/sku-level-edit-modal"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
@@ -48,7 +52,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog"
-
 
 // Sample data based on provided format
 const poData = [
@@ -312,6 +315,7 @@ export default function DashboardPage({ onNavigate }) {
     brand: [],
     channel: [],
     location: [],
+    facility: [], // Added facility filter
     poDateFrom: null,
     poDateTo: null,
     skuCode: "",
@@ -333,6 +337,7 @@ export default function DashboardPage({ onNavigate }) {
     brand: [],
     channel: [],
     location: [],
+    facility: [], // Added facility filter
     poDateFrom: null,
     poDateTo: null,
     currentAppointmentDateFrom: null,
@@ -350,9 +355,10 @@ export default function DashboardPage({ onNavigate }) {
   const [isShipmentViewModal, setShipmentViewModal] = useState(false)
   const [isSkuEditModal, setSkuEditModal] = useState(false)
   const [isBulkSkuUpdateModal, setBulkSkuUpdateModal] = useState(false)
-  const [orderType, setType] = useState("");
-  const [selectedId, setSelectedId] = useState("");
-  const [dialogType, setDialogType] = useState(null);
+  const [orderType, setType] = useState("")
+  const [selectedId, setSelectedId] = useState("")
+  const [dialogType, setDialogType] = useState(null)
+  const [error, setError] = useState(null) // Added setError state
 
   // Check if user has access to bulk CSV SKU update
   const hasBulkSkuAccess = user?.role === "warehouse" || user?.role === "superadmin"
@@ -379,18 +385,17 @@ export default function DashboardPage({ onNavigate }) {
     return [...new Set(values)].sort()
   }
 
+  const getFacilityOptions = (data, field) => {
+    const values = data.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
+    const uniqueValues = [...new Set(values)].sort()
+    return ["Not Assigned", ...uniqueValues] // Add "Not Assigned" as first option
+  }
+
   async function getPoFormateData() {
     try {
       const res = await getPoFormatOrderList()
       console.log(res.data)
       setPoFormatData(res.data.orders)
-      setPoFormatData((prev) => {
-        const updated = prev.map((poSingle) => ({
-          ...poSingle,
-          updatedQty: poSingle["updatedQty"] || poSingle["qty"]
-        }))
-        return updated
-      })
     } catch (error) {
       console.log(error)
       setPoFormatData(poData)
@@ -423,7 +428,15 @@ export default function DashboardPage({ onNavigate }) {
     const workingDate = parseDate(item.workingDate)
     const dispatchDate = parseDate(item.dispatchDate)
     const currentAppointmentDate = parseDate(item.currentAppointmentDate)
-    const updatedQty = poFormatData["updatedQty"] || poFormatData["qty"]
+
+    const facilityMatch =
+      poFilters.facility.length === 0 ||
+      poFilters.facility.some((selectedFacility) => {
+        if (selectedFacility === "Not Assigned") {
+          return !item.facility || item.facility === "" || item.facility === "0"
+        }
+        return item.facility === selectedFacility
+      })
 
     const matchesFilters =
       (!poFilters.entryDateFrom || (entryDate && entryDate >= poFilters.entryDateFrom)) &&
@@ -431,6 +444,7 @@ export default function DashboardPage({ onNavigate }) {
       (poFilters.brand.length === 0 || poFilters.brand.includes(item.brand)) &&
       (poFilters.channel.length === 0 || poFilters.channel.includes(item.channel)) &&
       (poFilters.location.length === 0 || poFilters.location.includes(item.location)) &&
+      facilityMatch && // Added facility filter
       (!poFilters.poDateFrom || (poDate && poDate >= poFilters.poDateFrom)) &&
       (!poFilters.poDateTo || (poDate && poDate <= poFilters.poDateTo)) &&
       (!poFilters.skuCode || item.skuCode?.toLowerCase().includes(poFilters.skuCode.toLowerCase())) &&
@@ -463,12 +477,22 @@ export default function DashboardPage({ onNavigate }) {
     const poDate = parseDate(item.poDate)
     const currentAppointmentDate = parseDate(item.currentAppointmentDate)
 
+    const facilityMatch =
+      shipmentFilters.facility.length === 0 ||
+      shipmentFilters.facility.some((selectedFacility) => {
+        if (selectedFacility === "Not Assigned") {
+          return !item.facility || item.facility === "" || item.facility === "0"
+        }
+        return item.facility === selectedFacility
+      })
+
     const matchesFilters =
       (!shipmentFilters.entryDateFrom || (entryDate && entryDate >= shipmentFilters.entryDateFrom)) &&
       (!shipmentFilters.entryDateTo || (entryDate && entryDate <= shipmentFilters.entryDateTo)) &&
       (shipmentFilters.brand.length === 0 || shipmentFilters.brand.includes(item.brandName)) &&
       (shipmentFilters.channel.length === 0 || shipmentFilters.channel.includes(item.channel)) &&
       (shipmentFilters.location.length === 0 || shipmentFilters.location.includes(item.location)) &&
+      facilityMatch && // Added facility filter
       (!shipmentFilters.poDateFrom || (poDate && poDate >= shipmentFilters.poDateFrom)) &&
       (!shipmentFilters.poDateTo || (poDate && poDate <= shipmentFilters.poDateTo)) &&
       (!shipmentFilters.currentAppointmentDateFrom ||
@@ -522,6 +546,7 @@ export default function DashboardPage({ onNavigate }) {
       brand: [],
       channel: [],
       location: [],
+      facility: [], // Added facility
       poDateFrom: null,
       poDateTo: null,
       skuCode: "",
@@ -545,6 +570,7 @@ export default function DashboardPage({ onNavigate }) {
       brand: [],
       channel: [],
       location: [],
+      facility: [], // Added facility
       poDateFrom: null,
       poDateTo: null,
       currentAppointmentDateFrom: null,
@@ -593,50 +619,51 @@ export default function DashboardPage({ onNavigate }) {
   }
 
   const handleDeleteOrder = (data) => {
-    if(data.id){
-      setSelectedId(data.id);
-      setType("sku");
-    }else if(data.uid){
-      setSelectedId(data.uid);
+    if (data.id) {
+      setSelectedId(data.id)
+      setType("sku")
+    } else if (data.uid) {
+      setSelectedId(data.uid)
       setType("shipment")
     }
-    setDialogType("delete");
-  };
+    setDialogType("delete")
+  }
 
-  const handleDialogConfirm = async (data) => {
+  const handleDialogConfirm = async () => {
+    // Removed 'data' parameter as it's not used
     if (dialogType === "edit") {
       // Implement edit logic here (e.g., navigate to edit page or open edit form)
       // alert(`Edit user: ${selectedUser.name}`);
-      console.log(selectedUser)
+      // console.log(selectedUser) // selectedUser is undeclared, removed
     } else if (dialogType === "delete") {
       // Implement delete logic here (e.g., API call)
       // alert(`Delete user: ${selectedUser.name}`);
       // Optionally remove user from state after successful delete
-      console.log("type:", orderType, "id:", selectedId )
+      console.log("type:", orderType, "id:", selectedId)
       try {
-        if(orderType == "sku"){
+        if (orderType == "sku") {
           const res = await deleteSku(selectedId)
-          console.log(res.data);
-        }
-        else if(orderType == "shipment"){
+          console.log(res.data)
+        } else if (orderType == "shipment") {
           const res = await deleteShipment(selectedId)
-          console.log(res.data);
+          console.log(res.data)
         }
-      }catch(error){
+      } catch (error) {
         console.log(error)
-        setError( error?.response?.data?.msg ||"Failed to delete user")
-      }finally {
-        setDialogType(null);
+        setError(error?.response?.data?.msg || "Failed to delete user")
+      } finally {
+        setDialogType(null)
+        setSelectedId(null) // Clear selectedId after confirmation
+        setType(null) // Clear orderType after confirmation
       }
     }
-    
-  };
+  }
 
   const handleDialogCancel = () => {
-    setDialogType(null);
-    setSelectedId(null);
-    setType(null);
-  };
+    setDialogType(null)
+    setSelectedId(null) // Clear selectedId on cancel
+    setType(null) // Clear orderType on cancel
+  }
 
   function handleViewShipment(data) {
     console.log(data)
@@ -689,28 +716,23 @@ export default function DashboardPage({ onNavigate }) {
     await getShipmentData()
   }
 
-  // Get fixed columns for PO Format (up to PO Number)
   const getPoFixedColumns = () => {
-    const poNumberIndex = poFormatDataType.findIndex((item) => item.fieldName === "poNumber")
-    return poFormatDataType.slice(0, poNumberIndex + 1)
+    return poFormatDataType.slice(0, 6)
   }
 
-  // Get scrollable columns for PO Format (after PO Number)
+  // Get scrollable columns for PO Format (after first 6 columns)
   const getPoScrollableColumns = () => {
-    const poNumberIndex = poFormatDataType.findIndex((item) => item.fieldName === "poNumber")
-    return poFormatDataType.slice(poNumberIndex + 1)
+    return poFormatDataType.slice(6)
   }
 
-  // Get fixed columns for Shipment (up to PO Number)
+  // Get fixed columns for Shipment (first 6 columns)
   const getShipmentFixedColumns = () => {
-    const poNumberIndex = shipmentStatusDataType.findIndex((item) => item.fieldName === "poNumber")
-    return shipmentStatusDataType.slice(0, poNumberIndex + 1)
+    return shipmentStatusDataType.slice(0, 6)
   }
 
-  // Get scrollable columns for Shipment (after PO Number)
+  // Get scrollable columns for Shipment (after first 6 columns)
   const getShipmentScrollableColumns = () => {
-    const poNumberIndex = shipmentStatusDataType.findIndex((item) => item.fieldName === "poNumber")
-    return shipmentStatusDataType.slice(poNumberIndex + 1)
+    return shipmentStatusDataType.slice(6)
   }
 
   useEffect(() => {
@@ -831,6 +853,15 @@ export default function DashboardPage({ onNavigate }) {
                       placeholder="Select channels"
                     />
 
+                    {/* Multi-select Facility filter for PO Format */}
+                    <MultiSelectFilter
+                      label="Facility"
+                      options={getFacilityOptions(poFormatData, "facility")}
+                      selectedValues={poFilters.facility}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, facility: values }))}
+                      placeholder="Select facilities"
+                    />
+
                     {/* Multi-select Location */}
                     <MultiSelectFilter
                       label="Location"
@@ -882,48 +913,48 @@ export default function DashboardPage({ onNavigate }) {
 
               <CardContent>
                 <div className="relative">
-                  {/* Fixed columns container */}
-                  <div className="flex overflow-auto">
-                    {/* Fixed columns (up to PO Number) */}
-                     <div className="absolute left-0 top-0 z-20 w-[36.5rem] overflow-x-hidden bg-background border-r border-gray-200 dark:border-gray-800">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-                            {getPoFixedColumns().map((item, index) => (
-                              <TableHead
-                                key={index}
-                                className="font-semibold mx-1 border-1 border-x-white py-1 whitespace-nowrap"
-                              >
-                                {item.label}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredPoData.map((row, index) => (
-                            <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                              {getPoFixedColumns().map((item, idx) => (
-                                <TableCell key={idx} className="mx-1 border-1 border-x-white py-1 whitespace-nowrap">
-                                  {row[item.fieldName]}
-                                </TableCell>
+                  <div className="max-h-[70vh] overflow-y-auto">
+                    {/* Fixed columns container */}
+                    <div className="flex">
+                      {/* Fixed columns (first 6 columns) */}
+                      <div className="sticky left-0 z-20 w-[36.5rem] bg-background border-r border-gray-200 dark:border-gray-800">
+                        <Table>
+                          <TableHeader className="sticky top-0 z-30">
+                            <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
+                              {getPoFixedColumns().map((item, index) => (
+                                <TableHead
+                                  key={index}
+                                  className="font-semibold mx-1 border-1 border-x-white py-1 whitespace-nowrap bg-background"
+                                >
+                                  {item.label}
+                                </TableHead>
                               ))}
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredPoData.map((row, index) => (
+                              <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                {getPoFixedColumns().map((item, idx) => (
+                                  <TableCell key={idx} className="mx-1 border-1 border-x-white py-1 whitespace-nowrap">
+                                    {row[item.fieldName]}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
 
-                    {/* Scrollable columns container */}
-                    <div className="flex-1 ml-[36.5rem]">
-                      <ScrollArea className="w-full">
+                      {/* Scrollable columns container */}
+                      <div className="flex-1 overflow-x-auto">
                         <div className="min-w-max">
-                          <Table className={"relative"}>
-                            <TableHeader className={""}>
+                          <Table>
+                            <TableHeader className="sticky top-0 z-30">
                               <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
                                 {getPoScrollableColumns().map((item, index) => (
                                   <TableHead
                                     key={index}
-                                    className="font-semibold mx-1 border-1 border-x-white py-1 whitespace-nowrap"
+                                    className="font-semibold mx-1 border-1 border-x-white py-1 whitespace-nowrap bg-background"
                                   >
                                     {item.label}
                                   </TableHead>
@@ -947,53 +978,54 @@ export default function DashboardPage({ onNavigate }) {
                             </TableBody>
                           </Table>
                         </div>
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </div>
+                      </div>
 
-                    {/* Sticky Action Column */}
-                    <div className="absolute right-0 top-0 z-20 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-                            <TableHead className="font-semibold py-2 px-4 w-32 text-center">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredPoData.map((row, index) => (
-                            <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-none">
-                              <TableCell className="py-0 px-2 w-28 border-none">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="py-0 my-[-0.23rem] flex flex-row">
-                                      <span className="sr-only">Open menu</span>
-                                      <MoreHorizontal className="h-5 w-5 my-0" />
-                                      <span className="hidden md:block py-0 my-0">Action</span>
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem
-                                      onClick={() => handleViewShipment(row)}
-                                      className="cursor-pointer"
-                                    >
-                                      <Eye className="mr-2 h-4 w-4 text-blue-500" />
-                                      View Details
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() => handleDeleteOrder(row)}
-                                      className="cursor-pointer text-red-600 focus:text-red-600"
-                                    >
-                                      <Trash className="mr-2 h-4 w-4" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
+                      {/* Sticky Action Column */}
+                      <div className="sticky right-0 z-20 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
+                        <Table>
+                          <TableHeader className="sticky top-0 z-30">
+                            <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
+                              <TableHead className="font-semibold py-2 px-4 w-32 text-center bg-background">
+                                Actions
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredPoData.map((row, index) => (
+                              <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-none">
+                                <TableCell className="py-0 px-2 w-28 border-none">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" className="py-0 my-[-0.23rem] flex flex-row">
+                                        <span className="sr-only">Open menu</span>
+                                        <MoreHorizontal className="h-5 w-5 my-0" />
+                                        <span className="hidden md:block py-0 my-0">Action</span>
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48">
+                                      <DropdownMenuItem
+                                        onClick={() => handleViewShipment(row)}
+                                        className="cursor-pointer"
+                                      >
+                                        <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                        View Details
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={() => handleDeleteOrder(row)}
+                                        className="cursor-pointer text-red-600 focus:text-red-600"
+                                      >
+                                        <Trash className="mr-2 h-4 w-4" />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1092,6 +1124,15 @@ export default function DashboardPage({ onNavigate }) {
                       placeholder="Select channels"
                     />
 
+                    {/* Multi-select Facility filter for Shipment Status */}
+                    <MultiSelectFilter
+                      label="Facility"
+                      options={getFacilityOptions(shipmentStatusData, "facility")}
+                      selectedValues={shipmentFilters.facility}
+                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, facility: values }))}
+                      placeholder="Select facilities"
+                    />
+
                     {/* Multi-select Location */}
                     <MultiSelectFilter
                       label="Location"
@@ -1139,48 +1180,48 @@ export default function DashboardPage({ onNavigate }) {
 
               <CardContent>
                 <div className="relative">
-                  {/* Fixed columns container */}
-                  <div className="flex overflow-auto">
-                    {/* Fixed columns (up to PO Number) */}
-                    <div className="absolute left-0 top-0 z-20 w-[43.5rem] bg-background border-r border-gray-200 dark:border-gray-800">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-                            {getShipmentFixedColumns().map((item, idx) => (
-                              <TableHead
-                                key={idx}
-                                className="font-semibold mx-1 border-1 border-x-white py-3 whitespace-nowrap"
-                              >
-                                {item.label}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredShipmentData.map((row, index) => (
-                            <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <div className="max-h-[70vh] overflow-y-auto">
+                    {/* Fixed columns container */}
+                    <div className="flex">
+                      {/* Fixed columns (first 6 columns) */}
+                      <div className="sticky left-0 z-20 w-[43.5rem] bg-background border-r border-gray-200 dark:border-gray-800">
+                        <Table>
+                          <TableHeader className="sticky top-0 z-30">
+                            <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
                               {getShipmentFixedColumns().map((item, idx) => (
-                                <TableCell key={idx} className="mx-1 border-1 border-x-white py-3 whitespace-nowrap">
-                                  {row[item.fieldName]}
-                                </TableCell>
+                                <TableHead
+                                  key={idx}
+                                  className="font-semibold mx-1 border-1 border-x-white py-3 whitespace-nowrap bg-background"
+                                >
+                                  {item.label}
+                                </TableHead>
                               ))}
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredShipmentData.map((row, index) => (
+                              <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                {getShipmentFixedColumns().map((item, idx) => (
+                                  <TableCell key={idx} className="mx-1 border-1 border-x-white py-3 whitespace-nowrap">
+                                    {row[item.fieldName]}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
 
-                    {/* Scrollable columns container */}
-                    <div className="flex-1 ml-[43.5rem]">
-                      <ScrollArea className="w-full">
+                      {/* Scrollable columns container */}
+                      <div className="flex-1 overflow-x-auto">
                         <div className="min-w-max">
                           <Table>
-                            <TableHeader>
+                            <TableHeader className="sticky top-0 z-30">
                               <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
                                 {getShipmentScrollableColumns().map((item, idx) => (
                                   <TableHead
                                     key={idx}
-                                    className="font-semibold mx-1 border-1 border-x-white py-3 whitespace-nowrap"
+                                    className="font-semibold mx-1 border-1 border-x-white py-3 whitespace-nowrap bg-background"
                                   >
                                     {item.label}
                                   </TableHead>
@@ -1204,70 +1245,64 @@ export default function DashboardPage({ onNavigate }) {
                             </TableBody>
                           </Table>
                         </div>
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </div>
+                      </div>
 
-                    {/* Sticky Action Column */}
-                    <div className="absolute right-0 top-0 z-20 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-                            <TableHead className="font-semibold py-3 px-4 w-32 text-center">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredShipmentData.map((row, index) => (
-                            <TableRow
-                              key={index}
-                              className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
-                            >
-                              <TableCell className="py-[0.26rem] px-2 w-28">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="p-0 m-0 flex flex-row">
-                                      <span className="sr-only">Open menu</span>
-                                      <MoreHorizontal className="h-5 w-5" />
-                                      <span className="hidden md:block">Action</span>
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem
-                                      onClick={() => handleViewShipment(row)}
-                                      className="cursor-pointer"
-                                    >
-                                      <Eye className="mr-2 h-4 w-4 text-blue-500" />
-                                      View Details
-                                    </DropdownMenuItem>
-                                    {/* <DropdownMenuItem
-                                      onClick={() => handleEditSkuShipment(row)}
-                                      className="cursor-pointer"
-                                    >
-                                      <Package className="mr-2 h-4 w-4 text-green-500" />
-                                      Edit SKU Level
-                                    </DropdownMenuItem> */}
-                                    <DropdownMenuItem
-                                      onClick={() => handleEditShipment(row)}
-                                      className="cursor-pointer"
-                                    >
-                                      <Edit className="mr-2 h-4 w-4 text-orange-500" />
-                                      Edit Shipment
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                       onClick={() => handleDeleteOrder(row)}
-                                      className="cursor-pointer text-red-600 focus:text-red-600"
-                                    >
-                                      <Trash className="mr-2 h-4 w-4" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
+                      {/* Sticky Action Column */}
+                      <div className="sticky right-0 z-20 bg-background border-l border-gray-200 dark:border-gray-800 shadow-lg">
+                        <Table>
+                          <TableHeader className="sticky top-0 z-30">
+                            <TableRow className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
+                              <TableHead className="font-semibold py-3 px-4 w-32 text-center bg-background">
+                                Actions
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredShipmentData.map((row, index) => (
+                              <TableRow
+                                key={index}
+                                className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+                              >
+                                <TableCell className="py-[0.26rem] px-2 w-28">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" className="p-0 m-0 flex flex-row">
+                                        <span className="sr-only">Open menu</span>
+                                        <MoreHorizontal className="h-5 w-5" />
+                                        <span className="hidden md:block">Action</span>
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48">
+                                      <DropdownMenuItem
+                                        onClick={() => handleViewShipment(row)}
+                                        className="cursor-pointer"
+                                      >
+                                        <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                        View Details
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => handleEditShipment(row)}
+                                        className="cursor-pointer"
+                                      >
+                                        <Edit className="mr-2 h-4 w-4 text-orange-500" />
+                                        Edit Shipment
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={() => handleDeleteOrder(row)}
+                                        className="cursor-pointer text-red-600 focus:text-red-600"
+                                      >
+                                        <Trash className="mr-2 h-4 w-4" />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1321,17 +1356,6 @@ export default function DashboardPage({ onNavigate }) {
           }}
         />
 
-        {/* <SkuLevelEditModal
-          isOpen={isSkuEditModal}
-          onClose={() => {
-            setSkuEditModal(false)
-          }}
-          shipmentId={selectedShipment.uid}
-          onSave={() => {
-            onSavingUpdate()
-          }}
-        /> */}
-
         <ShipmentViewModal
           isOpen={isShipmentViewModal}
           onClose={() => {
@@ -1344,40 +1368,36 @@ export default function DashboardPage({ onNavigate }) {
         />
 
         <ConfirmDialog
-            open={!!dialogType}
-            type={dialogType}
-            id={selectedId}
-            onConfirm={handleDialogConfirm}
-            onCancel={handleDialogCancel}
+          open={!!dialogType}
+          type={dialogType}
+          id={selectedId}
+          onConfirm={handleDialogConfirm}
+          onCancel={handleDialogCancel}
         />
-
       </main>
     </div>
   )
 }
 
 const ConfirmDialog = ({ open, type, id, onConfirm, onCancel }) => (
-    <Dialog open={open} onOpenChange={onCancel}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {type === "edit" ? "Edit User" : "Delete User"}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="py-4">
-          {type === "edit"
-            ? `Are you sure you want to edit user "${data?.name}"?`
-            : `Are you sure you want to delete order "${id}"? This action cannot be undone.`}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button
-            variant={type === "delete" ? "destructive" : "default"}
-            onClick={onConfirm}
-          >
-            {type === "edit" ? "Edit" : "Delete"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+  <Dialog open={open} onOpenChange={onCancel}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{type === "edit" ? "Edit User" : "Delete User"}</DialogTitle>
+      </DialogHeader>
+      <div className="py-4">
+        {type === "edit"
+          ? `Are you sure you want to edit user?`
+          : `Are you sure you want to delete order "${id}"? This action cannot be undone.`}
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant={type === "delete" ? "destructive" : "default"} onClick={onConfirm}>
+          {type === "edit" ? "Edit" : "Delete"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 )
