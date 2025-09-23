@@ -71,6 +71,39 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
   finalRemarks: { type: DataTypes.TEXT },
   updatedGmv: { type: DataTypes.FLOAT },
   physicalWeight: { type: DataTypes.FLOAT },
+  deliveryCharges: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  halting: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  unloadingCharges: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  dedicatedVehicle: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  otherCharges: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  document: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  proofOfDispatch: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  proofOfDelivery: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+
   // apointment dates
   allAppointmentDate: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
   appointmentRemarks: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
