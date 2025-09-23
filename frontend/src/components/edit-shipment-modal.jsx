@@ -548,29 +548,29 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     }
 
     // handle dynamic availble locations
-    if(field.fieldName === "location"){
+    // if(field.fieldName === "location"){
       
-      return (
-          <div className="space-y-2">
-            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
-              {field.label}
-              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
-            </Label>
-            <Select disabled={true} value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
-              <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
-                <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {locationOtions?.map((location, idx) => (
-                  <SelectItem key={idx} value={location.location}>
-                    {`${location.location} - ${location.drop_location}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )
-    }
+    //   return (
+    //       <div className="space-y-2">
+    //         <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
+    //           {field.label}
+    //           {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
+    //         </Label>
+    //         <Select disabled={true} value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
+    //           <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
+    //             <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+    //           </SelectTrigger>
+    //           <SelectContent>
+    //             {locationOtions?.map((location, idx) => (
+    //               <SelectItem key={idx} value={location.location}>
+    //                 {`${location.location} - ${location.drop_location}`}
+    //               </SelectItem>
+    //             ))}
+    //           </SelectContent>
+    //         </Select>
+    //       </div>
+    //     )
+    // }
 
     if(field.fieldName === "physicalWeight"){
       let val = value;
@@ -654,7 +654,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
               {field.label}
               {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
             </Label>
-            <Select disabled={["location" ,"channel"].includes(field.fieldName)} value={value || " "} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
+            <Select disabled={["location" ,"channel"].includes(field.fieldName)} value={value} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
               <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
                 <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
               </SelectTrigger>
@@ -727,6 +727,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
             <Input
               id={field.id}
               type="text"
+              disabled={["location" ,"channel"].includes(field.fieldName)}
               value={value || ""}
               onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
               className={cn(

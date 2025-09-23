@@ -80,12 +80,12 @@ export default function LogisticsCost({ shipmentData }) {
 
     // Basic info extraction
     const uid = shipmentData.uid || "N/A"
-    const entryDate = shipmentData.entryDate || null
-    const poDate = shipmentData.poDate || null
-    const channel = shipmentData.channel || "Default"
-    const location = shipmentData.location || "N/A"
-    const facility = shipmentData.facility || "Default"
-    const poNumber = shipmentData.poNumber || "N/A"
+    const entryDate = shipmentData?.entryDate || null
+    const poDate = shipmentData?.poDate || null
+    const channel = shipmentData?.channel || "Default"
+    const location = shipmentData?.location || "N/A"
+    const facility = shipmentData?.facility || "Default"
+    const poNumber = shipmentData?.poNumber || "N/A"
     const chargeableWeight = Number.parseFloat(shipmentData.chargeableWeight || shipmentData.physicalWeight || shipmentData.actualWeight) || 0
     const updatedPoValue = totalUpdatedPoValue() || 0
     const firstTransporter = shipmentData.firstTransporter || null
@@ -123,7 +123,7 @@ export default function LogisticsCost({ shipmentData }) {
     if (thirdTransporter) docketCharges += getDocketCharges(thirdTransporter)
 
     // Appointment charges
-    const apptChannel = master_channel_location_mapping[channel][0]["apptChannel"]
+    const apptChannel = master_channel_location_mapping[channel] ? master_channel_location_mapping[channel][0]["apptChannel"] : "no";
     const appointmentCharges = getAppointmentCharges(firstTransporter, apptChannel);
       // APPOINTMENT_CHARGES_MAPPING[channel]?.[firstTransporter] ||
       // APPOINTMENT_CHARGES_MAPPING[channel]?.["Default"] ||
