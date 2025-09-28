@@ -6,7 +6,8 @@ export const courierPartners = [
     appointmentChargeYes: 700,
     appointmentChargeNo: 0,
     docketCharges: 80,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Porter - Local",
@@ -15,7 +16,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 0,
-    type: "Type C"
+    type: "Type C",
+    tat: 1,
   },
   {
     name: "Tushar - Local",
@@ -24,7 +26,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 0,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Blue Dart - PTL",
@@ -33,7 +36,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 0,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Om Logistics - PTL",
@@ -42,7 +46,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 0,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Rocket Box - PTL",
@@ -51,7 +56,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 0,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Dhanaji - Local",
@@ -60,7 +66,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 0,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Airtrans - Train",
@@ -69,7 +76,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 100,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Airtrans - Air",
@@ -78,7 +86,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 100,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Buraq Logistics - PTL",
@@ -87,7 +96,8 @@ export const courierPartners = [
     appointmentChargeYes: 500,
     appointmentChargeNo: 0,
     docketCharges: 50,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Buraq Logistics - FTL",
@@ -96,7 +106,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 50,
-    type: "Type C"
+    type: "Type C",
+    tat: 1,
   },
   {
     name: "Sitics Logistics - FTL",
@@ -105,7 +116,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 50,
-    type: "Type C"
+    type: "Type C",
+    tat: 1,
   },
   {
     name: "Sitics Logistics - PTL",
@@ -114,7 +126,8 @@ export const courierPartners = [
     appointmentChargeYes: 450,
     appointmentChargeNo: 0,
     docketCharges: 50,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Sitics Logistics - Train",
@@ -123,7 +136,8 @@ export const courierPartners = [
     appointmentChargeYes: 500,
     appointmentChargeNo: 500,
     docketCharges: 50,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Sitics Logistics - Air",
@@ -132,7 +146,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 50,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   },
   {
     name: "Everest Logistics - PTL",
@@ -141,7 +156,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 50,
-    type: "Type B"
+    type: "Type B",
+    tat: 1,
   },
   {
     name: "Everest Logistics - Train",
@@ -150,7 +166,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 50,
-    type: "Type B"
+    type: "Type B",
+    tat: 1,
   },
   {
     name: "Everest Logistics - Air",
@@ -159,7 +176,8 @@ export const courierPartners = [
     appointmentChargeYes: 0,
     appointmentChargeNo: 0,
     docketCharges: 50,
-    type: "Type B"
+    type: "Type B",
+    tat: 1,
   },
   {
     name: "Shiprocket - PTL",
@@ -168,7 +186,8 @@ export const courierPartners = [
     appointmentChargeYes: 500,
     appointmentChargeNo: 0,
     docketCharges: 75,
-    type: "Type A"
+    type: "Type A",
+    tat: 1,
   }
 ];
 
@@ -197,5 +216,12 @@ export function getAppointmentCharges (partnerName,appointmentChannel) {
     
     if(appointmentChannel === "yes") return option.appointmentChargeYes;
     else return option.appointmentChargeNo;
+}
+
+export function getTAT (partnerName) {
+  // console.log("Getting TAT for courier: ", partnerName);
+  if(!partnerName || partnerName == "") return 0;
+  const option = courierPartners.find(item => item.name === partnerName);
+  return option.tat;
 }
 

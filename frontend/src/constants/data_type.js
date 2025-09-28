@@ -277,4 +277,7 @@ export const shipmentStatusDataType = [
   { fieldName: "document", label: "Document", id: "document", type:"file"},
   { fieldName: "proofOfDispatch", label: "Proof Of Dispatch", id: "proofOfDispatch", type:"file"},
   { fieldName: "proofOfDelivery", label: "Proof Of Delivery", id: "proofOfDelivery", type:"file"},
+  // some new fields
+  { fieldName: "tat", label: "TAT", id: "tat", type: "number" },
+  { fieldName: "criticalDispatchDate", label: "Critical Dispatch Date", id: "criticalDispatchDate", type: "date" },
 ];

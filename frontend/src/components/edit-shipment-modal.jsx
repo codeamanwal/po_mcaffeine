@@ -42,6 +42,7 @@ import SearchableSelect from "./ui/searchable-select"
 import {master_appointment_change_options} from "@/constants/master_sheet"
 import SkuLevelEditModal from "./sku-level-edit-modal"
 import LogisticsCost from "./logistics-cost"
+import { getTAT } from "@/constants/courier-partners"
 
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
@@ -141,6 +142,8 @@ const logisticsFields = [
   "dedicatedVehicle",
   "otherCharges",
   "proofOfDelivery",
+  "tat",
+  "criticalDispatchDate",
 ]
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
@@ -605,9 +608,24 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         )
     }
 
+    if (field.fieldName === 'criticalDispatchDate') {
+      const tat = getTAT(formData.firstTransporter) ?? 0; // TAT in days
+      const cad = formData?.currentAppointmentDate;
+
+      if (cad instanceof Date && !isNaN(cad)) {
+        value = new Date(cad?.getTime() - tat * 24 * 60 * 60 * 1000);
+
+        // console.log("cad:", cad?.toISOString());
+        // console.log("cdd:", value?.toISOString()); 
+      } else {
+        // console.log("Invalid currentAppointmentDate:", cad);
+      }
+    }
+
+
     switch (field.type) {
       case "date":
-        const shouldDisableDate = isBackendControlled
+        const shouldDisableDate = isBackendControlled || field.fieldName === "criticalDispatchDate" ? true : false;
 
         return (
           <div className="space-y-2">
@@ -670,6 +688,9 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         )
 
       case "number":
+        let val = value;
+        if(field.fieldName === "tat")
+          val = getTAT(shipmentData.firstTransporter)
         return (
           <div className="space-y-2">
             <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
@@ -678,8 +699,9 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
             </Label>
             <Input
               id={field.id}
+              disabled={field.fieldName === "tat" ? true : false}
               type="number"
-              value={value || ""}
+              value={val || ""}
               onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
               className={cn(
                 "h-10",
