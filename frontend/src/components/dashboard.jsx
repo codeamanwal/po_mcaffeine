@@ -55,6 +55,7 @@ import { Label } from "@/components/ui/label"
 
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { getFinalStatus } from "@/constants/status_master"
+import { getTAT } from "@/constants/courier-partners"
 
 // Sample data based on provided format
 const poData = [
@@ -411,6 +412,24 @@ export default function DashboardPage({ onNavigate }) {
       const res = await getShipmentStatusList()
       console.log("Shipment Data: ", res.data.shipments)
       setShipmentStatusData(res.data.shipments)
+      setShipmentStatusData((prev) => {
+        const arr = prev.map(item => {
+          let criticalDispatchDate;
+          const cad = item.currentAppointmentDate  ?? null;
+          const tat = getTAT(item.firstTransporter) ?? 0;
+          if (cad instanceof Date && !isNaN(cad)) {
+            criticalDispatchDate = new Date(cad?.getTime() - tat * 24 * 60 * 60 * 1000);
+          } else {
+            criticalDispatchDate = "NA";
+          }
+          return {
+            ...item,
+            tat,
+            criticalDispatchDate,
+          }
+        })
+        return arr;
+      })
     } catch (error) {
       console.log(error)
       setShipmentStatusData(shipmentData)
@@ -480,6 +499,15 @@ export default function DashboardPage({ onNavigate }) {
     const entryDate = parseDate(item.entryDate)
     const poDate = parseDate(item.poDate)
     const currentAppointmentDate = parseDate(item.currentAppointmentDate)
+
+    let criticalDispatchDate = item?.currentAppointmentDate;
+    const cad = item?.currentAppointmentDate;
+    const tat = getTAT(item.firstTransporter) ?? 0;
+    if (cad instanceof Date && !isNaN(cad)) {
+      criticalDispatchDate = new Date(cad?.getTime() - tat * 24 * 60 * 60 * 1000);
+    } else {
+      // console.log("Invalid currentAppointmentDate:", cad);
+    }
 
     const facilityMatch =
       shipmentFilters.facility.length === 0 ||
