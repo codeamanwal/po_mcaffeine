@@ -1488,7 +1488,7 @@ const ConfirmDialog = ({ open, type, id, onConfirm, onCancel }) => (
 )
 
 const StatusModal = ({ isOpen, onClose, data }) => {
-    const finalStatus = getFinalStatus(data.statusPlanning, data.statusWarehouse, data.statusLogistics) ?? "No mapping available!"
+    const finalStatus = getFinalStatus(data.statusPlanning ?? "Confirmed", data.statusWarehouse ?? "Confirmed", data.statusLogistics ?? "Confirmed") ?? "No mapping available!"
     return (
        <Dialog open={isOpen} onOpenChange={onClose}>
             {/* <DialogTitle> Final Status </DialogTitle> */}
@@ -1500,9 +1500,9 @@ const StatusModal = ({ isOpen, onClose, data }) => {
                 </DialogTitle>
                 </DialogHeader>
                 
-                <p>Status (Planning): { data.statusPlanning }</p>
-                <p>Status (Warehouse): { data.statusWarehouse }</p>
-                <p>Status (Logistics): { data.statusLogistics }</p>
+                <p>Status (Planning): { data.statusPlanning ?? "Confirmed" }</p>
+                <p>Status (Warehouse): { data.statusWarehouse ?? "Confirmed" }</p>
+                <p>Status (Logistics): { data.statusLogistics ?? "Confirmed" }</p>
                 <p>Final Status: {finalStatus}</p>
 
                 <Button variant="outline" onClick={onClose}>
