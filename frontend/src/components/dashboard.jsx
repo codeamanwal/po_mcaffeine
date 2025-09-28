@@ -396,6 +396,22 @@ export default function DashboardPage({ onNavigate }) {
     return ["Not Assigned", ...uniqueValues] // Add "Not Assigned" as first option
   }
 
+  function getTimeFromDDMMYYYY(dateStr) {
+    if (!dateStr) {
+        return null; // or return "NA" or undefined
+    }
+
+    const [day, month, year] = dateStr.split('-').map(Number);
+
+    // Check for invalid date parts
+    if (!day || !month || !year) {
+        return null; // or "NA"
+    }
+
+    const date = new Date(year, month - 1, day);
+    return date.getTime();
+}
+
   async function getPoFormateData() {
     try {
       const res = await getPoFormatOrderList()
@@ -414,14 +430,11 @@ export default function DashboardPage({ onNavigate }) {
       setShipmentStatusData(res.data.shipments)
       setShipmentStatusData((prev) => {
         const arr = prev.map(item => {
-          let criticalDispatchDate;
-          const cad = item.currentAppointmentDate  ?? null;
+          let criticalDispatchDate = item.currentAppointmentDate;
+          const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
           const tat = getTAT(item.firstTransporter) ?? 0;
-          if (cad instanceof Date && !isNaN(cad)) {
-            criticalDispatchDate = new Date(cad?.getTime() - tat * 24 * 60 * 60 * 1000);
-          } else {
-            criticalDispatchDate = "NA";
-          }
+          const cdd = cad ? cad - tat * 24*60*60*1000 : null;
+          criticalDispatchDate = formatDate(cdd)
           return {
             ...item,
             tat,
