@@ -414,6 +414,7 @@ export const getChannelSuggestions = (searchTerm, limit = 10) => {
   return master_channel_options.filter((channel) => channel.toLowerCase().includes(term)).slice(0, limit)
 }
 
+
 // Export master data for use in components
 export {
   master_facility_option,

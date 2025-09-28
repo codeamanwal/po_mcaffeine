@@ -16,8 +16,9 @@ import {
   Calendar,
   X,
   Upload,
-  AlertTriangle,
+  Inspect,
   CircleAlert,
+  AlertTriangle,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import NavigationHeader from "@/components/header"
@@ -298,7 +299,7 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
   )
 }
 
-export default function DashboardPage({ onNavigate }) {
+export default function Test({ onNavigate }) {
   const router = useRouter()
   const { isDarkMode, setIsDarkMode } = useThemeStore()
   const { user } = useUserStore()
@@ -768,436 +769,155 @@ export default function DashboardPage({ onNavigate }) {
 
           {/* PO Format Table */}
           <TabsContent value="po-format">
-            <Card className="shadow-lg">
-              <CardHeader className="pb-6">
-                <CardTitle className="flex items-center justify-between text-xl">
-                  <span>PO Format Data</span>
-                  <div className="flex items-center gap-3">
-                    <Badge
-                      variant="secondary"
-                      className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-sm px-3 py-1"
-                    >
-                      {filteredPoData.length} of {poFormatData.length} Records
-                    </Badge>
-                    <Button
-                      onClick={() => exportToCSV(filteredPoData, "po-format-data.csv", poFormatDataType)}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Export CSV
-                    </Button>
-                    {hasBulkSkuAccess && (
-                      <Button
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
-                        onClick={() => {
-                          setBulkSkuUpdateModal(true)
-                        }}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Bulk SKU Update
-                      </Button>
-                    )}
-                  </div>
-                </CardTitle>
-
-                {/* Search and Filters */}
-                <div className="space-y-4">
-                  {/* Search */}
-                  <div className="flex items-center space-x-2">
-                    <div className="relative flex-1 max-w-sm">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input
-                        placeholder="Search by PO Number or SKU Code..."
-                        value={poSearchTerm}
-                        onChange={(e) => setPoSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <Button variant="outline" onClick={clearPoFilters}>
-                      <X className="h-4 w-4 mr-2" />
-                      Clear All
-                    </Button>
-                  </div>
-
-                  {/* Filters */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {/* Entry Date Range */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date From</label>
-                      <DatePicker
-                        date={poFilters.entryDateFrom}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, entryDateFrom: date }))}
-                        placeholder="From date"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date To</label>
-                      <DatePicker
-                        date={poFilters.entryDateTo}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, entryDateTo: date }))}
-                        placeholder="To date"
-                      />
-                    </div>
-
-                    {/* Multi-select Brand */}
-                    <MultiSelectFilter
-                      label="Brand"
-                      options={getUniqueValues(poFormatData, "brand")}
-                      selectedValues={poFilters.brand}
-                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, brand: values }))}
-                      placeholder="Select brands"
-                    />
-
-                    {/* Multi-select Channel */}
-                    <MultiSelectFilter
-                      label="Channel"
-                      options={getUniqueValues(poFormatData, "channel")}
-                      selectedValues={poFilters.channel}
-                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, channel: values }))}
-                      placeholder="Select channels"
-                    />
-
-                    {/* Multi-select Facility filter for PO Format */}
-                    <MultiSelectFilter
-                      label="Facility"
-                      options={getFacilityOptions(poFormatData, "facility")}
-                      selectedValues={poFilters.facility}
-                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, facility: values }))}
-                      placeholder="Select facilities"
-                    />
-
-                    {/* Multi-select Location */}
-                    <MultiSelectFilter
-                      label="Location"
-                      options={getUniqueValues(poFormatData, "location")}
-                      selectedValues={poFilters.location}
-                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, location: values }))}
-                      placeholder="Select locations"
-                    />
-
-                    {/* SKU Code */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">SKU Code</label>
-                      <Input
-                        placeholder="Enter SKU code"
-                        value={poFilters.skuCode}
-                        onChange={(e) => setPoFilters((prev) => ({ ...prev, skuCode: e.target.value }))}
-                      />
-                    </div>
-
-                    {/* Multi-select Status Planning */}
-                    <MultiSelectFilter
-                      label="Status Planning"
-                      options={getUniqueValues(poFormatData, "statusPlanning")}
-                      selectedValues={poFilters.statusPlanning}
-                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusPlanning: values }))}
-                      placeholder="Select status"
-                    />
-
-                    {/* Multi-select Status Warehouse */}
-                    <MultiSelectFilter
-                      label="Status Warehouse"
-                      options={getUniqueValues(poFormatData, "statusWarehouse")}
-                      selectedValues={poFilters.statusWarehouse}
-                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusWarehouse: values }))}
-                      placeholder="Select status"
-                    />
-
-                    {/* Multi-select Status Logistics */}
-                    <MultiSelectFilter
-                      label="Status Logistics"
-                      options={getUniqueValues(poFormatData, "statusLogistics")}
-                      selectedValues={poFilters.statusLogistics}
-                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusLogistics: values }))}
-                      placeholder="Select status"
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="max-w-full overflow-x-auto">
-                    <div className="max-h-[70vh] overflow-y-auto">
-                    <table className="min-w-full border border-gray-200 relative">
-                        {/* Table Head */}
-                        <TableHeader className="bg-background sticky top-0 z-20">
-                        <TableRow className={"text-xs"}>
-                            {poFormatDataType.map((item, idx) => {
-                            const leftOffset = idx < 7 ? `${idx * 100}px` : "auto";
-                            return (
-                                <TableCell
-                                key={idx}
-                                className="px-4 py-2 border-b border-r border-gray-200 text-left text-wrap bg-background"
-                                style={{
-                                    position: idx < 7 ? "sticky" : "static",
-                                    left: leftOffset,
-                                    minWidth: "100px",
-                                    maxWidth: "150px",
-                                    zIndex: idx < 7 ? 30 : 10,
-                                }}
-                                >
-                                {item.label}
-                                </TableCell>
-                            );
-                            })}
-
-                            {/* Sticky Right Columns */}
-                            <TableCell
-                            className="px-4 py-2 border-b border-gray-200 text-left bg-background"
-                            style={{
-                                position: "sticky",
-                                right: "70px",
-                                minWidth: "50px",
-                                zIndex: 40,
-                            }}
-                            >
-                            Action
-                            </TableCell>
-                            <TableCell
-                            className="px-4 py-2 border-b  border-gray-200 text-left bg-background"
-                            style={{
-                                position: "sticky",
-                                right: "0px", 
-                                minWidth: "70px",
-                                zIndex: 40,
-                            }}
-                            >
-                            Status
-                            </TableCell>
-                        </TableRow>
-                        </TableHeader>
-
-                        {/* Table Body */}
-                        <TableBody className={"text-xs"}>
-                        {filteredPoData.map((row, rowIdx) => (
-                            <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            {poFormatDataType.map((item, colIdx) => {
-                                const leftOffset = colIdx < 7 ? `${colIdx * 100}px` : "auto";
-                                return (
-                                <TableCell
-                                    key={colIdx}
-                                    className="px-4 py-2 border-b border-r border-gray-200 bg-background text-wrap overflow-hidden"
-                                    style={{
-                                    position: colIdx < 7 ? "sticky" : "static",
-                                    left: leftOffset,
-                                    minWidth: "100px",
-                                    maxWidth: "150px",
-                                    zIndex: colIdx < 7 ? 10 : 1,
-                                    }}
-                                >
-                                    { row[item.fieldName] }
-                                </TableCell>
-                                );
-                            })}
-
-                            {/* Sticky Right Columns */}
-                            <TableCell
-                                className="px-4 py-2 border-b border-gray-200 bg-background"
-                                style={{
-                                position: "sticky",
-                                right: "70px",
-                                minWidth: "50px",
-                                zIndex: 5,
-                                }}
-                            >
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="p-0 m-0 flex flex-row">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-5 w-5" />
-                                    {/* <span className="hidden md:block">Action</span> */}
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem
-                                    onClick={() => handleViewShipment(row)}
-                                    className="cursor-pointer"
-                                    >
-                                    <Eye className="mr-2 h-4 w-4 text-blue-500" />
-                                    View Details
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                    onClick={() => handleDeleteOrder(row)}
-                                    className="cursor-pointer text-red-600 focus:text-red-600"
-                                    >
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                            <TableCell
-                                className="px-4 py-2 border-b border-gray-200 bg-background"
-                                style={{
-                                position: "sticky",
-                                right: "0px",
-                                minWidth: "70px",
-                                zIndex: 5,
-                                }}
-                            >
-                                <Button
-                                    onClick={() => {setSelectedShipment(row); setStatusModal(true);}}
-                                    variant="ghost" className="p-0 m-0 flex flex-row"
-                                >
-                                    <span className="sr-only">Open menu</span>
-                                    <CircleAlert className="h-5 w-5" />
-                                </Button>
-                            </TableCell>
-                            </TableRow>
-                        ))}
-                        </TableBody>
-                    </table>
-                    </div>
-                </div>
-                </CardContent>
-            </Card>
+            <div>
+                Nothing
+            </div>
           </TabsContent>
 
           {/* Shipment Table */}
           <TabsContent value="shipment-status">
             <Card className="shadow-lg">
-              <CardHeader className="pb-6">
-                <CardTitle className="flex items-center justify-between text-xl">
-                  <span>Shipment Status Data</span>
-                  <div className="flex items-center gap-3">
-                    <Badge
-                      variant="secondary"
-                      className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-sm px-3 py-1"
-                    >
-                      {filteredShipmentData.length} of {shipmentStatusData.length} Records
-                    </Badge>
-                    <Button
-                      onClick={() =>
-                        exportToCSV(filteredShipmentData, "shipment-status-data.csv", shipmentStatusDataType)
-                      }
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Export CSV
-                    </Button>
-                    <Button
-                      className="bg-blue-500 text-white hover:bg-blue-600"
-                      onClick={() => {
-                        setShipmentBulkEditModal(true)
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Bulk Edit
-                    </Button>
-                  </div>
-                </CardTitle>
-
-                {/* Search and Filters */}
-                <div className="space-y-4">
-                  {/* Search */}
-                  <div className="flex items-center space-x-2">
-                    <div className="relative flex-1 max-w-sm">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input
-                        placeholder="Search by PO Number or UID..."
-                        value={shipmentSearchTerm}
-                        onChange={(e) => setShipmentSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
+                <CardHeader className="pb-6">
+                    <CardTitle className="flex items-center justify-between text-xl">
+                    <span>Shipment Status Data</span>
+                    <div className="flex items-center gap-3">
+                        <Badge
+                        variant="secondary"
+                        className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-sm px-3 py-1"
+                        >
+                        {filteredShipmentData.length} of {shipmentStatusData.length} Records
+                        </Badge>
+                        <Button
+                        onClick={() =>
+                            exportToCSV(filteredShipmentData, "shipment-status-data.csv", shipmentStatusDataType)
+                        }
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export CSV
+                        </Button>
+                        <Button
+                        className="bg-blue-500 text-white hover:bg-blue-600"
+                        onClick={() => {
+                            setShipmentBulkEditModal(true)
+                        }}
+                        >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Bulk Edit
+                        </Button>
                     </div>
-                    <Button variant="outline" onClick={clearShipmentFilters}>
-                      <X className="h-4 w-4 mr-2" />
-                      Clear All
-                    </Button>
-                  </div>
+                    </CardTitle>
 
-                  {/* Filters */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {/* Entry Date Range */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date From</label>
-                      <DatePicker
-                        date={shipmentFilters.entryDateFrom}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateFrom: date }))}
-                        placeholder="From date"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date To</label>
-                      <DatePicker
-                        date={shipmentFilters.entryDateTo}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateTo: date }))}
-                        placeholder="To date"
-                      />
+                    {/* Search and Filters */}
+                    <div className="space-y-4">
+                    {/* Search */}
+                    <div className="flex items-center space-x-2">
+                        <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                            placeholder="Search by PO Number or UID..."
+                            value={shipmentSearchTerm}
+                            onChange={(e) => setShipmentSearchTerm(e.target.value)}
+                            className="pl-10"
+                        />
+                        </div>
+                        <Button variant="outline" onClick={clearShipmentFilters}>
+                        <X className="h-4 w-4 mr-2" />
+                        Clear All
+                        </Button>
                     </div>
 
-                    {/* Multi-select Brand */}
-                    <MultiSelectFilter
-                      label="Brand"
-                      options={getUniqueValues(shipmentStatusData, "brandName")}
-                      selectedValues={shipmentFilters.brand}
-                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, brand: values }))}
-                      placeholder="Select brands"
-                    />
+                    {/* Filters */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {/* Entry Date Range */}
+                        <div className="space-y-2">
+                        <label className="text-sm font-medium">Entry Date From</label>
+                        <DatePicker
+                            date={shipmentFilters.entryDateFrom}
+                            onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateFrom: date }))}
+                            placeholder="From date"
+                        />
+                        </div>
+                        <div className="space-y-2">
+                        <label className="text-sm font-medium">Entry Date To</label>
+                        <DatePicker
+                            date={shipmentFilters.entryDateTo}
+                            onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateTo: date }))}
+                            placeholder="To date"
+                        />
+                        </div>
 
-                    {/* Multi-select Channel */}
-                    <MultiSelectFilter
-                      label="Channel"
-                      options={getUniqueValues(shipmentStatusData, "channel")}
-                      selectedValues={shipmentFilters.channel}
-                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, channel: values }))}
-                      placeholder="Select channels"
-                    />
+                        {/* Multi-select Brand */}
+                        <MultiSelectFilter
+                        label="Brand"
+                        options={getUniqueValues(shipmentStatusData, "brandName")}
+                        selectedValues={shipmentFilters.brand}
+                        onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, brand: values }))}
+                        placeholder="Select brands"
+                        />
 
-                    {/* Multi-select Facility filter for Shipment Status */}
-                    <MultiSelectFilter
-                      label="Facility"
-                      options={getFacilityOptions(shipmentStatusData, "facility")}
-                      selectedValues={shipmentFilters.facility}
-                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, facility: values }))}
-                      placeholder="Select facilities"
-                    />
+                        {/* Multi-select Channel */}
+                        <MultiSelectFilter
+                        label="Channel"
+                        options={getUniqueValues(shipmentStatusData, "channel")}
+                        selectedValues={shipmentFilters.channel}
+                        onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, channel: values }))}
+                        placeholder="Select channels"
+                        />
 
-                    {/* Multi-select Location */}
-                    <MultiSelectFilter
-                      label="Location"
-                      options={getUniqueValues(shipmentStatusData, "location")}
-                      selectedValues={shipmentFilters.location}
-                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, location: values }))}
-                      placeholder="Select locations"
-                    />
+                        {/* Multi-select Facility filter for Shipment Status */}
+                        <MultiSelectFilter
+                        label="Facility"
+                        options={getFacilityOptions(shipmentStatusData, "facility")}
+                        selectedValues={shipmentFilters.facility}
+                        onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, facility: values }))}
+                        placeholder="Select facilities"
+                        />
 
-                    {/* Multi-select Status Planning */}
-                    <MultiSelectFilter
-                      label="Status Planning"
-                      options={getUniqueValues(shipmentStatusData, "statusPlanning")}
-                      selectedValues={shipmentFilters.statusPlanning}
-                      onSelectionChange={(values) =>
-                        setShipmentFilters((prev) => ({ ...prev, statusPlanning: values }))
-                      }
-                      placeholder="Select status"
-                    />
+                        {/* Multi-select Location */}
+                        <MultiSelectFilter
+                        label="Location"
+                        options={getUniqueValues(shipmentStatusData, "location")}
+                        selectedValues={shipmentFilters.location}
+                        onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, location: values }))}
+                        placeholder="Select locations"
+                        />
 
-                    {/* Multi-select Status Warehouse */}
-                    <MultiSelectFilter
-                      label="Status Warehouse"
-                      options={getUniqueValues(shipmentStatusData, "statusWarehouse")}
-                      selectedValues={shipmentFilters.statusWarehouse}
-                      onSelectionChange={(values) =>
-                        setShipmentFilters((prev) => ({ ...prev, statusWarehouse: values }))
-                      }
-                      placeholder="Select status"
-                    />
+                        {/* Multi-select Status Planning */}
+                        <MultiSelectFilter
+                        label="Status Planning"
+                        options={getUniqueValues(shipmentStatusData, "statusPlanning")}
+                        selectedValues={shipmentFilters.statusPlanning}
+                        onSelectionChange={(values) =>
+                            setShipmentFilters((prev) => ({ ...prev, statusPlanning: values }))
+                        }
+                        placeholder="Select status"
+                        />
 
-                    {/* Multi-select Status Logistics */}
-                    <MultiSelectFilter
-                      label="Status Logistics"
-                      options={getUniqueValues(shipmentStatusData, "statusLogistics")}
-                      selectedValues={shipmentFilters.statusLogistics}
-                      onSelectionChange={(values) =>
-                        setShipmentFilters((prev) => ({ ...prev, statusLogistics: values }))
-                      }
-                      placeholder="Select status"
-                    />
-                  </div>
-                </div>
-              </CardHeader>
+                        {/* Multi-select Status Warehouse */}
+                        <MultiSelectFilter
+                        label="Status Warehouse"
+                        options={getUniqueValues(shipmentStatusData, "statusWarehouse")}
+                        selectedValues={shipmentFilters.statusWarehouse}
+                        onSelectionChange={(values) =>
+                            setShipmentFilters((prev) => ({ ...prev, statusWarehouse: values }))
+                        }
+                        placeholder="Select status"
+                        />
+
+                        {/* Multi-select Status Logistics */}
+                        <MultiSelectFilter
+                        label="Status Logistics"
+                        options={getUniqueValues(shipmentStatusData, "statusLogistics")}
+                        selectedValues={shipmentFilters.statusLogistics}
+                        onSelectionChange={(values) =>
+                            setShipmentFilters((prev) => ({ ...prev, statusLogistics: values }))
+                        }
+                        placeholder="Select status"
+                        />
+                    </div>
+                    </div>
+                </CardHeader>
 
                 <CardContent>
                 <div className="max-w-full overflow-x-auto">
@@ -1347,8 +1067,7 @@ export default function DashboardPage({ onNavigate }) {
         </Tabs>
 
         {/* Modals */}
-
-         <StatusModal 
+        <StatusModal 
             isOpen={statusModal}
             onClose={() => {
                 setStatusModal(false);
