@@ -104,6 +104,11 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
     allowNull: true,
   },
 
+  rpk: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+
   // apointment dates
   allAppointmentDate: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
   appointmentRemarks: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},

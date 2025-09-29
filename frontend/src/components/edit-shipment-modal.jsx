@@ -101,7 +101,8 @@ const adminFields = [
   "channelType",
   "labelsLink",
   "invoiceValue",
-  "document"
+  "document",
+  "rpk"
 ]
 
 const warehouseFields = [

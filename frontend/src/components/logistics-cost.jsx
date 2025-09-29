@@ -95,7 +95,7 @@ export default function LogisticsCost({ shipmentData }) {
     // Get mapped values
     const pickupLocation = FACILITY_PICKUP_MAPPING[facility] || FACILITY_PICKUP_MAPPING["Default"] || "Unknown"
     const courierType = getCourierType(firstTransporter)
-    const ratePerKg = RATE_PER_KG_MAPPING[channel] || RATE_PER_KG_MAPPING["Default"] || 65
+    const ratePerKg = shipmentData.rpk || RATE_PER_KG_MAPPING[channel] || RATE_PER_KG_MAPPING["Default"] || 65
 
     // Cost calculations
     const frightCost = chargeableWeight * ratePerKg

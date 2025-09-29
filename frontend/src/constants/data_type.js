@@ -280,4 +280,5 @@ export const shipmentStatusDataType = [
   // some new fields
   { fieldName: "tat", label: "TAT", id: "tat", type: "number" },
   { fieldName: "criticalDispatchDate", label: "Critical Dispatch Date", id: "criticalDispatchDate", type: "date" },
+  { fieldName: "rpk", label: "Rates/kg", id: "rpk", type: "number" },
 ];
