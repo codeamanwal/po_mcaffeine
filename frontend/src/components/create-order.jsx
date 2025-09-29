@@ -205,10 +205,21 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
         // Auto-fill when SKU code changes
         if (field === "skuCode") {
           const masterSku = master_sku_code_options.find((item) => item.sku_code === value)
+          const prefix = `${value}`.substring(0,3);
+          if(prefix === "HYP"){
+              updatedSku.brandName = "Hyphen"
+            } else if(prefix === "AMA"){
+              updatedSku.brandName = "Aman"
+            } else if(prefix === "VIV"){
+              updatedSku.brandName = "Vivek"
+            } else {
+              updatedSku.brandName = masterSku.brand_name
+            }
           if (masterSku) {
             updatedSku.skuName = masterSku.sku_name
-            updatedSku.brandName = masterSku.brand_name
+            // updatedSku.brandName = masterSku.brand_name
             updatedSku.mrp = masterSku.mrp
+            
 
             // Auto-fill channel SKU code if channel is selected
             if (shipmentOrder.channel && channelSkuMapping[shipmentOrder.channel]?.[value]) {
@@ -222,7 +233,6 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
           } else {
             // Clear auto-filled fields if SKU not found
             updatedSku.skuName = ""
-            updatedSku.brandName = ""
             updatedSku.mrp = ""
             updatedSku.channelSkuCode = ""
           }
@@ -655,7 +665,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                             placeholder="Auto-filled"
                             value={sku.brandName}
                             className="h-10"
-                            disabled
+                            disabled={!!sku.skuCode}
                           />
                         </div>
 
@@ -672,7 +682,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                             value={sku.channelSkuCode}
                             onChange={(e) => handleSkuChange(sku.id, "channelSkuCode", e.target.value)}
                             className="h-10"
-                            // disabled={!!(sku.skuCode && shipmentOrder.channel)}
+                            disabled={!!(sku.skuCode)}
                           />
                         </div>
 
