@@ -9,6 +9,7 @@ import { format } from "date-fns"
 import { getAppointmentCharges, getCourierType, getDocketCharges } from "@/constants/courier-partners"
 import { getSkuOrdersByShipment } from "@/lib/order"
 import { master_channel_location_mapping } from "@/constants/master_sheet"
+import { getRates } from "@/constants/rates-per-kg"
 
 const FACILITY_PICKUP_MAPPING = {
   HYP_SRGWHT: "Guwahati",
@@ -95,7 +96,7 @@ export default function LogisticsCost({ shipmentData }) {
     // Get mapped values
     const pickupLocation = FACILITY_PICKUP_MAPPING[facility] || FACILITY_PICKUP_MAPPING["Default"] || "Unknown"
     const courierType = getCourierType(firstTransporter)
-    const ratePerKg = shipmentData.rpk || RATE_PER_KG_MAPPING[channel] || RATE_PER_KG_MAPPING["Default"] || 65
+    const ratePerKg = shipmentData.rpk || getRates(firstTransporter, pickupLocation, location)
 
     // Cost calculations
     const frightCost = chargeableWeight * ratePerKg
