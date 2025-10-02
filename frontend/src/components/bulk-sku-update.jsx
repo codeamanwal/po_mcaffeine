@@ -54,7 +54,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
     }
 
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
-    const expectedHeaders = ["ponumber", "skucode", "updatedqty"]
+    const expectedHeaders = ["uid", "ponumber", "skucode", "updatedqty"]
 
     // Validate headers
     const missingHeaders = expectedHeaders.filter((h) => !headers.includes(h))
@@ -213,8 +213,8 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
 
   // Download CSV template
   const downloadTemplate = () => {
-    const template = `poNumber,skuCode,updatedQty
-    PO_SAMPLE,MCaf100,1`
+    const template = `uid,poNumber,skuCode,updatedQty
+    1,PO_SAMPLE,MCaf100,1`
 
     const blob = new Blob([template], { type: "text/csv;charset=utf-8;" })
     const link = document.createElement("a")
