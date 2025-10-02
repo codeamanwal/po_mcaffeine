@@ -29,13 +29,14 @@ import {
   Lock,
   Clock,
   AlertTriangle,
-  User,
+  User, History, Loader2, Pen
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/store/user-store"
 import { shipmentStatusDataType } from "@/constants/data_type"
 import { updateShipment } from "@/lib/order"
+import { getLogsOfShipment } from '@/lib/order'
 import { toast } from "sonner"
 import SearchableSelect from "./ui/searchable-select"
 
@@ -102,7 +103,6 @@ const adminFields = [
   "labelsLink",
   "invoiceValue",
   "document",
-  "rpk"
 ]
 
 const warehouseFields = [
@@ -145,11 +145,104 @@ const logisticsFields = [
   "proofOfDelivery",
   "tat",
   "criticalDispatchDate",
+  "rpk",
 ]
+
+const getFieldLabel = (key) => {
+    if(!key) return "";
+    const labelMap = {
+      uid: 'UID',
+      entryDate: 'Entry Date',
+      poDate: 'PO Date',
+      facility: 'Facility',
+      channel: 'Channel',
+      location: 'Location',
+      poNumber: 'PO Number',
+      brandName: 'Brand Name',
+      remarksPlanning: 'Planning Remarks',
+      specialRemarksCOPT: 'Special Remarks (COPT)',
+      newShipmentReference: 'Shipment Reference',
+      statusActive: 'Active Status',
+      statusPlanning: 'Planning Status',
+      statusWarehouse: 'Warehouse Status',
+      statusLogistics: 'Logistics Status',
+      channelInwardingRemarks: 'Channel Inwarding Remarks',
+      dispatchRemarksLogistics: 'Dispatch Remarks (Logistics)',
+      dispatchRemarksWarehouse: 'Dispatch Remarks (Warehouse)',
+      dispatchDateTentative: 'Tentative Dispatch Date',
+      workingDatePlanner: 'Working Date (Planner)',
+      rtsDate: 'RTS Date',
+      dispatchDate: 'Dispatch Date',
+      currentAppointmentDate: 'Current Appointment Date',
+      // firstAppointmentDateCOPT: 'First Appointment Date (COPT)',
+      noOfBoxes: 'Number of Boxes',
+      orderNo1: 'Order No 1',
+      orderNo2: 'Order No 2',
+      orderNo3: 'Order No 3',
+      pickListNo: 'Pick List No',
+      workingTypeWarehouse: 'Working Type (Warehouse)',
+      inventoryRemarksWarehouse: 'Inventory Remarks (Warehouse)',
+      b2bWorkingTeamRemarks: 'B2B Working Team Remarks',
+      volumetricWeight: 'Volumetric Weight',
+      channelType: 'Channel Type',
+      firstTransporter: 'First Transporter',
+      firstDocketNo: 'First Docket No',
+      secondTransporter: 'Second Transporter',
+      secondDocketNo: 'Second Docket No',
+      thirdTransporter: 'Third Transporter',
+      thirdDocketNo: 'Third Docket No',
+      appointmentLetter: 'Appointment Letter/STN',
+      labelsLink: 'Labels Link',
+      invoiceDate: 'Invoice Date',
+      invoiceLink: 'Invoice Link',
+      cnLink: 'CN Link',
+      ewayLink: 'E-Way Link',
+      invoiceValue: 'Invoice Value',
+      remarksAccountsTeam: 'Accounts Team Remarks',
+      invoiceChallanNumber: 'Invoice/Challan Number',
+      invoiceCheckedBy: 'Invoice Checked By',
+      tallyCustomerName: 'Tally Customer Name',
+      customerCode: 'Customer Code',
+      poEntryCount: 'PO Entry Count',
+      temp: 'Temporary',
+      deliveryDate: 'Delivery Date',
+      rescheduleLag: 'Reschedule Lag',
+      finalRemarks: 'Final Remarks',
+      updatedGmv: 'Updated GMV',
+      physicalWeight: 'Physical Weight'
+    }
+    return labelMap[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+}
+
+const fetchShipmentLogs = async (shipmentId) => {
+  // await new Promise(resolve => setTimeout(resolve, 800))
+  const logs = await getLogsOfShipment(shipmentId)
+  // console.log(logs?.data?.logs.messages);
+  const logContent = logs?.data?.logs.messages;
+  return logContent;
+}
 
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
 
+  const [logs, setLogs] = useState([])
+  const [logsLoading, setLogsLoading] = useState(false)
+  
+  const fetchLogData = async () => {
+    try {
+      setLogsLoading(true)
+    //   setShipmentData(shipment)
+      const logsData = await fetchShipmentLogs(shipmentData.uid);
+      console.log(logsData);
+      setLogs(logsData)
+    } catch (err) {
+      setError('Failed to fetch shipment data')
+      console.error('Error fetching shipment data:', err)
+    } finally {
+      setLogsLoading(false)
+    }
+  }
   useEffect(() => {
+    fetchLogData();
     console.log("shipmentData: ",shipmentData)
   },[shipmentData])
 
@@ -793,15 +886,15 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const getAvailableTabs = () => {
     const tabs = []
 
-    if (user?.role === "superadmin") {
+    if (user?.role === "superadmin" || user?.role === "admin") {
       tabs.push(
         { value: "admin", label: "Admin", icon: Shield, count: adminFields.length },
         { value: "warehouse", label: "Warehouse", icon: Warehouse, count: warehouseFields.length },
         { value: "logistics", label: "Logistics", icon: Truck, count: logisticsFields.length },
         // { value: "logistics-cost", label: "Logistics Costs", icon: User, count:0},
       )
-    } else if (user?.role === "admin") {
-      tabs.push({ value: "admin", label: "Admin", icon: Shield, count: adminFields.length })
+    // } else if (user?.role === "admin") {
+      // tabs.push({ value: "admin", label: "Admin", icon: Shield, count: adminFields.length })
     } else if (user?.role === "warehouse") {
       tabs.push({ value: "warehouse", label: "Warehouse", icon: Warehouse, count: warehouseFields.length })
     } else if (user?.role === "logistics") {
@@ -815,7 +908,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[70vw] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-[85vw] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Save className="h-5 w-5" />
@@ -873,13 +966,18 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 {/* <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"></span> */}
               </TabsTrigger> 
               {
-                user?.role === "superadmin" ? 
+                user?.role === "superadmin" || user?.role === "logistics" ? 
                 (<TabsTrigger value={"logistics-cost"} className="flex items-center space-x-2">
                   {/* <Icon className="h-4 w-4" /> */}
                   <span>Logistics Costs</span>
                   {/* <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"></span> */}
                 </TabsTrigger>) : (<></>)
               } 
+              <TabsTrigger value={"logs"} className="flex items-center space-x-2">
+                  {/* <Icon className="h-4 w-4" /> */}
+                  <span>Change Logs</span>
+                  {/* <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"></span> */}
+              </TabsTrigger>
             </TabsList>
 
             {availableTabs.map((tab) => (
@@ -909,6 +1007,59 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
             <TabsContent value={"logistics-cost"}>
               <LogisticsCost shipmentData={shipmentData} />
+            </TabsContent>
+
+            <TabsContent value="logs" className="flex-1 overflow-hidden mt-4">
+              {logsLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <p className="text-sm text-muted-foreground">Loading change logs...</p>
+                  </div>
+                </div>
+              ) : (
+                <ScrollArea className="h-[60vh]">
+                  <div className="space-y-4">
+                    {logs?.length === 0 ? (
+                      <div className="text-center py-8">
+                        <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">No change logs available</p>
+                      </div>
+                    ) : (
+                      logs?.map((log, idx) => (
+                        <Card key={idx}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline">{log.action || "Updated"}</Badge>
+                                  <span className="text-sm font-medium">{getFieldLabel(log?.fieldName) || ""}</span>
+                                </div>
+                                <div className="text-sm">
+                                  <span>{log?.change}</span>
+                                </div>
+                                <span className="flex items-center gap-1 text-xs text-black/90">
+                                    <Pen className="h-3 w-3 text-blue-500" />
+                                    <span className='text-blue-500'>Remark: </span>{log?.remark}
+                                  </span>
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <User className="h-3 w-3" />
+                                    {log?.createdBy?.email}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    {new Date(log?.timestamp)?.toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              )}
             </TabsContent>
 
           </Tabs>
