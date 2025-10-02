@@ -423,16 +423,21 @@ export default function SkuLevelEditModal({
                             </div>
                           )}
                           </div>
-
-                          <div className="mt-2 text-xs text-gray-600">GMV (updatedGmv)</div>
-                          <div className="font-semibold tabular-nums">
-                            ₹{Number(sku.updatedGmv ?? 0).toLocaleString()}
+                          
+                          <div>
+                            <div className="mt-2 text-xs text-gray-600">GMV (updatedGmv)</div>
+                            <div className="font-semibold tabular-nums">
+                              ₹{Number(sku.updatedGmv ?? 0).toLocaleString()}
+                            </div>
                           </div>
 
-                          <div className="mt-2 text-xs text-gray-600">PO Value (updatedPoValue)</div>
-                          <div className="font-semibold tabular-nums">
-                            ₹{Number(sku.updatedPoValue ?? 0).toLocaleString()}
+                          <div>
+                            <div className="mt-2 text-xs text-gray-600">PO Value (updatedPoValue)</div>
+                            <div className="font-semibold tabular-nums">
+                              ₹{Number(sku.updatedPoValue ?? 0).toLocaleString()}
+                            </div>
                           </div>
+                          
                         </div>
                       </div>
                     </CardContent>
