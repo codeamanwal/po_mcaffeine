@@ -286,7 +286,19 @@ async function getAllSkuOrders(req, res) {
         model: ShipmentOrder,
         as: 'shipmentOrder',
       }],
-      order: [['shipmentOrderId', 'DESC']]
+      order: [
+        ['shipmentOrderId', 'DESC'],
+        [
+          sequelize.literal(`
+            CASE
+              WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+              ELSE NULL
+            END
+          `),
+          'ASC NULLS LAST'
+        ], // postgresql
+        //  [sequelize.literal('CAST(srNo AS UNSIGNED)'), 'ASC'] // mysql
+      ]
     });
 
     const skuDataList = skuOrders.map(sku => {
