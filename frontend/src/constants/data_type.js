@@ -213,7 +213,7 @@ export const shipmentStatusDataType = [
   { fieldName: "rtsDate", label: "RTS Date", id: "rtsDate", type: "date" },
   { fieldName: "dispatchDate", label: "Dispatch Date", id: "dispatchDate", type: "date" },
   { fieldName: "currentAppointmentDate", label: "Current Appointment Date", id: "currentAppointmentDate", type: "date" },
-  // { fieldName: "firstAppointmentDateCOPT", label: "First Appointment Date (COPT)", id: "firstAppointmentDateCOPT", type: "date" },
+  { fieldName: "firstAppointmentDateCOPT", label: "First Appointment Date", id: "firstAppointmentDateCOPT", type: "date" },
   { fieldName: "noOfBoxes", label: "No of Boxes", id: "noOfBoxes", type: "number" },
   { fieldName: "orderNo1", label: "Order No 1", id: "orderNo1", type: "text" },
   { fieldName: "orderNo2", label: "Order No 2", id: "orderNo2", type: "text" },

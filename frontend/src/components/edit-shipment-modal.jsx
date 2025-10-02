@@ -228,6 +228,9 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const [logsLoading, setLogsLoading] = useState(false)
   
   const fetchLogData = async () => {
+    if(!shipmentData.uid){
+      return ;
+    }
     try {
       setLogsLoading(true)
     //   setShipmentData(shipment)
@@ -445,6 +448,11 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       }
 
       // Validate new appointment if partially filled
+      if(formData.firstAppointmentDateCOPT !== originalData.firstAppointmentDateCOPT){
+        // let newAppDate = format(formData.firstAppointmentDateCOPT, "dd-MM-yyyy");
+        formData.currentAppointmentDate = formData.firstAppointmentDateCOPT
+      }
+
       if (newAppointmentDate && !newAppointmentRemark.trim()) {
         setError("Remark is required when adding a new appointment date")
         setIsLoading(false)
@@ -543,12 +551,18 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   const renderField = (field) => {
     let value = formData[field.fieldName]
-    const isBackendControlled = isBackendControlledField(field.fieldName)
+    let isBackendControlled = isBackendControlledField(field.fieldName)
     const isPoNumberField = field.fieldName === "poNumber"
     const needsPoReason = isPoNumberField && poNumberChanged && (user?.role === "admin" || user?.role === "superadmin")
     const hasValidationError = validationErrors.some((error) => error.toLowerCase().includes(field.label.toLowerCase()))
 
     // Handle appointment display
+    // if(field.fieldName === "firstAppointmentDateCOPT") {
+    //   if(originalData["firstAppointmentDateCOPT"]){
+    //     isBackendControlled = true;
+    //     return;
+    //   }
+    // }
     if (field.type === "appointment_display") {
       return (
         <div className="space-y-2 md:col-span-4">
@@ -719,7 +733,10 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
     switch (field.type) {
       case "date":
-        const shouldDisableDate = isBackendControlled || field.fieldName === "criticalDispatchDate" ? true : false;
+        let shouldDisableDate = isBackendControlled ||  field.fieldName === "criticalDispatchDate" ? true : false;
+        // if(field.fieldName === "firstAppointmentDateCOPT" && originalData["firstAppointmentDateCOPT"]){
+        //   shouldDisableDate = true;
+        // }
 
         return (
           <div className="space-y-2">
@@ -741,7 +758,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {value ? format(value, "PPP") : "Pick a date"}
+                  {value ? format(value, "PPP"): "Pick a date"}
                   {isBackendControlled && <Server className="ml-auto h-3 w-3 text-blue-500" />}
                 </Button>
               </PopoverTrigger>
