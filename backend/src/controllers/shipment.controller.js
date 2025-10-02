@@ -188,8 +188,8 @@ async function createBulkShipment(req, res) {
         channelInwardingQuantity: order.channelInwardingQuantity,
       }));
       console.log(`One orders(${poNumber}):`, shipmentOrder, skuOrders);
+      const t = await sequelize.transaction();
       try {
-        const t = await sequelize.transaction();
         const parent = await ShipmentOrder.create(shipmentOrder, { transaction: t });
         // attached the shared fields to each sku-order and link to parent UID
         const skusToCreate = skuOrders.map(sku => ({

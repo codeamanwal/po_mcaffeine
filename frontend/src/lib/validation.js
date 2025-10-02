@@ -145,64 +145,64 @@ export const validateBulkOrderData = (orders) => {
   }, {})
 
   // Check brand consistency within each PO
-  Object.entries(ordersByPO).forEach(([poNumber, poOrders]) => {
-    const brands = new Set()
+  // Object.entries(ordersByPO).forEach(([poNumber, poOrders]) => {
+  //   const brands = new Set()
 
-    poOrders.forEach((order) => {
-      const masterSku = master_sku_code_options.find((m) => m.sku_code === order.skuCode)
-      if (masterSku) {
-        brands.add(masterSku.brand_name)
-      }
-    })
+  //   poOrders.forEach((order) => {
+  //     const masterSku = master_sku_code_options.find((m) => m.sku_code === order.skuCode)
+  //     if (masterSku) {
+  //       brands.add(masterSku.brand_name)
+  //     }
+  //   })
 
-    if (brands.size > 1) {
-      errors.push(
-        `PO ${poNumber}: Multiple brands detected: ${Array.from(brands).join(", ")}. All SKUs in a PO must be from the same brand.`,
-      )
-    }
-  })
+  //   if (brands.size > 1) {
+  //     errors.push(
+  //       `PO ${poNumber}: Multiple brands detected: ${Array.from(brands).join(", ")}. All SKUs in a PO must be from the same brand.`,
+  //     )
+  //   }
+  // })
 
   // Validate each order
   orders.forEach((order, index) => {
     const orderPrefix = `Order ${index + 1}`
 
     // Validate SKU code exists in master data
-    if (order.skuCode) {
-      const masterSku = master_sku_code_options.find((m) => m.sku_code === order.skuCode)
-      if (!masterSku) {
-        errors.push(`${orderPrefix}: SKU Code "${order.skuCode}" not found in master data`)
-      } else {
-        // Auto-fill validation - check if provided data matches master data
-        if (order.skuName && order.skuName !== masterSku.sku_name) {
-          warnings.push(`${orderPrefix}: SKU Name should be "${masterSku.sku_name}" for SKU Code "${order.skuCode}"`)
-        }
+    // if (order.skuCode) {
+    //   const masterSku = master_sku_code_options.find((m) => m.sku_code === order.skuCode)
+    //   if (!masterSku) {
+    //     errors.push(`${orderPrefix}: SKU Code "${order.skuCode}" not found in master data`)
+    //   } else {
+    //     // Auto-fill validation - check if provided data matches master data
+    //     if (order.skuName && order.skuName !== masterSku.sku_name) {
+    //       warnings.push(`${orderPrefix}: SKU Name should be "${masterSku.sku_name}" for SKU Code "${order.skuCode}"`)
+    //     }
 
-        if (order.brand && order.brand !== masterSku.brand_name) {
-          errors.push(`${orderPrefix}: Brand should be "${masterSku.brand_name}" for SKU Code "${order.skuCode}"`)
-        }
+    //     if (order.brand && order.brand !== masterSku.brand_name) {
+    //       errors.push(`${orderPrefix}: Brand should be "${masterSku.brand_name}" for SKU Code "${order.skuCode}"`)
+    //     }
 
-        // Validate GMV calculation
-        if (masterSku.mrp && order.qty) {
-          const expectedGmv = order.qty * masterSku.mrp
-          if (order.gmv && Math.abs(order.gmv - expectedGmv) > 0.01) {
-            warnings.push(`${orderPrefix}: GMV should be ${expectedGmv} (Qty: ${order.qty} × MRP: ${masterSku.mrp})`)
-          }
-        }
-      }
-    }
+    //     // Validate GMV calculation
+    //     if (masterSku.mrp && order.qty) {
+    //       const expectedGmv = order.qty * masterSku.mrp
+    //       if (order.gmv && Math.abs(order.gmv - expectedGmv) > 0.01) {
+    //         warnings.push(`${orderPrefix}: GMV should be ${expectedGmv} (Qty: ${order.qty} × MRP: ${masterSku.mrp})`)
+    //       }
+    //     }
+    //   }
+    // }
 
     // Validate channel SKU code mapping
-    if (order.channel && order.skuCode && order.channelSkuCode) {
-      const channelMapping = channelSkuMapping[order.channel]
-      if (channelMapping && channelMapping[order.skuCode]) {
-        const expectedChannelSkuCode = channelMapping[order.skuCode]
-        if (order.channelSkuCode !== expectedChannelSkuCode) {
-          warnings.push(
-            `${orderPrefix}: Channel SKU Code should be "${expectedChannelSkuCode}" for Channel "${order.channel}" and SKU "${order.skuCode}"`,
-          )
-        }
-      }
-    }
+    // if (order.channel && order.skuCode && order.channelSkuCode) {
+    //   const channelMapping = channelSkuMapping[order.channel]
+    //   if (channelMapping && channelMapping[order.skuCode]) {
+    //     const expectedChannelSkuCode = channelMapping[order.skuCode]
+    //     if (order.channelSkuCode !== expectedChannelSkuCode) {
+    //       warnings.push(
+    //         `${orderPrefix}: Channel SKU Code should be "${expectedChannelSkuCode}" for Channel "${order.channel}" and SKU "${order.skuCode}"`,
+    //       )
+    //     }
+    //   }
+    // }
 
     // Validate other fields using existing validation
     const shipmentValidation = validateShipmentData(order)

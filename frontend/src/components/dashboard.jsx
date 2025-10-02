@@ -697,6 +697,7 @@ export default function DashboardPage({ onNavigate }) {
         console.log(error)
         setError(error?.response?.data?.msg || "Failed to delete user")
       } finally {
+        onSavingUpdate()
         setDialogType(null)
         setSelectedId(null) // Clear selectedId after confirmation
         setType(null) // Clear orderType after confirmation
