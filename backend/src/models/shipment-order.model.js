@@ -1,5 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../db/postgresql.js';
+// import { sequelize } from '../db/postgresql.js';
+import { sequelize } from '../db/mysql.js';
+
 
 const ShipmentOrder = sequelize.define('ShipmentOrder', {
   uid: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },

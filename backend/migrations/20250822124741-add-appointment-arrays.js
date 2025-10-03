@@ -6,12 +6,12 @@ export default {
     const tableName = 'shipment_orders';
 
     await queryInterface.addColumn(tableName, 'allAppointmentDate', {
-      type: Sequelize.ARRAY(Sequelize.STRING),
+      type: Sequelize.JSON,
       allowNull: true,
     });
 
     await queryInterface.addColumn(tableName, 'appointmentRemarks', {
-      type: Sequelize.ARRAY(Sequelize.STRING),
+      type: Sequelize.JSON,
       allowNull: true,
     });
   },

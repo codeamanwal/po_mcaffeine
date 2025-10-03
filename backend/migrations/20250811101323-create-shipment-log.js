@@ -6,7 +6,7 @@ export default {
     await queryInterface.createTable('logs', {
       id: { type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true },
       messages: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         defaultValue: [],
       },

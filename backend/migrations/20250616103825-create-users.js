@@ -28,7 +28,7 @@ export default {
         allowNull: false
       },
       permissions: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
+        type: Sequelize.JSON,
         allowNull: true
       },
       location: {
