@@ -3,10 +3,19 @@
 /** @type {import('sequelize-cli').Migration} */
 export default {
   async up(queryInterface, Sequelize) {
+
+    let jsonType ;
+    if (dialect === 'postgres') {
+      jsonType = Sequelize.ARRAY(Sequelize.STRING);
+    } else {
+      // For MySQL 
+      jsonType = Sequelize.JSON;
+    }
+
     await queryInterface.createTable('logs', {
       id: { type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true },
       messages: {
-        type: Sequelize.JSON,
+        type: jsonType,
         allowNull: false,
         defaultValue: [],
       },
