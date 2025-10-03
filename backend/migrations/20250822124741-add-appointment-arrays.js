@@ -5,13 +5,21 @@ export default {
   async up(queryInterface, Sequelize) {
     const tableName = 'shipment_orders';
 
+    let jsonType ;
+    if (dialect === 'postgres') {
+      jsonType = Sequelize.ARRAY(Sequelize.STRING);
+    } else {
+      // For MySQL 
+      jsonType = Sequelize.JSON;
+    }
+
     await queryInterface.addColumn(tableName, 'allAppointmentDate', {
-      type: Sequelize.ARRAY(Sequelize.STRING),
+      type: jsonType,
       allowNull: true,
     });
 
     await queryInterface.addColumn(tableName, 'appointmentRemarks', {
-      type: Sequelize.ARRAY(Sequelize.STRING),
+      type: jsonType,
       allowNull: true,
     });
   },

@@ -1,5 +1,8 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../db/postgresql.js';
+// import { sequelize } from '../db/postgresql.js';
+import { sequelize } from '../db/mysql.js';
+
+
 
 const Order = sequelize.define('Order', {
   entryDate: { type: DataTypes.STRING, allowNull: true },

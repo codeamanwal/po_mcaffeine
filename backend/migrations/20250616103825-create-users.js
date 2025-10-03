@@ -3,6 +3,14 @@
 /** @type {import('sequelize-cli').Migration} */
 export default {
   async up(queryInterface, Sequelize) {
+    let jsonType ;
+    if (dialect === 'postgres') {
+      jsonType = Sequelize.ARRAY(Sequelize.STRING);
+    } else {
+      // For MySQL 
+      jsonType = Sequelize.JSON;
+    }
+
     await queryInterface.createTable('users', {
       id: {
         allowNull: false,
@@ -28,7 +36,7 @@ export default {
         allowNull: false
       },
       permissions: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
+        type: jsonType,
         allowNull: true
       },
       location: {

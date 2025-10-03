@@ -1,5 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../db/postgresql.js';
+// import { sequelize } from '../db/postgresql.js';
+import { sequelize } from '../db/mysql.js';
+
 
 const ShipmentOrder = sequelize.define('ShipmentOrder', {
   uid: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -112,6 +114,8 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
   // apointment dates
   allAppointmentDate: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
   appointmentRemarks: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
+  // old po numbers
+  poNumbers: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true}
 }, {
   timestamps: true,
   tableName: 'shipment_orders'

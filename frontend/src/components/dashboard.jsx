@@ -455,6 +455,9 @@ export default function DashboardPage({ onNavigate }) {
     const searchLower = poSearchTerm.toLowerCase()
     const matchesSearch =
       !poSearchTerm ||
+      (item.poNumbers && item.poNumbers.some(po =>
+        po.toString().toLowerCase().includes(searchLower)
+      )) ||
       item.poNumber?.toString().toLowerCase().includes(searchLower) ||
       item.skuCode?.toString().toLowerCase().includes(searchLower)
 
@@ -505,6 +508,9 @@ export default function DashboardPage({ onNavigate }) {
     const searchLower = shipmentSearchTerm.toLowerCase()
     const matchesSearch =
       !shipmentSearchTerm ||
+      (item.poNumbers && item.poNumbers.some(po =>
+        po.toString().toLowerCase().includes(searchLower)
+      )) ||
       item.poNumber?.toString().toLowerCase().includes(searchLower) ||
       item.uid?.toString().toLowerCase().includes(searchLower)
 
