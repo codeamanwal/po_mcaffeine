@@ -400,16 +400,21 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     if (fieldName === "poNumber" && (user?.role === "admin" || user?.role === "superadmin")) {
       const originalPoNumber = originalData.poNumber || ""
       const newPoNumber = value || ""
+      const oldPoNumbers = originalData.poNumbers || [];
 
       if (originalPoNumber !== newPoNumber) {
         setPoNumberChanged(true)
+        setFormData((prev) => ({
+          ...prev,
+          poNumbers: [...oldPoNumbers, originalData.poNumber],
+          [fieldName]: value,
+        }))
       } else {
         setPoNumberChanged(false)
         setPoEditReason("")
         setPoEditComments("")
       }
     }
-
     setFormData((prev) => ({
       ...prev,
       [fieldName]: value,
