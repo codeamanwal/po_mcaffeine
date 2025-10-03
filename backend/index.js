@@ -4,8 +4,8 @@ import cors from "cors"
 import { adminRouter } from "./src/routes/admin.routes.js";
 import { warehouseRouter } from "./src/routes/warehouse.routes.js";
 import { logisticRouter } from "./src/routes/logistic.routes.js";
-// import { connectToDatabase } from "./src/db/postgresql.js"; // Import DB connection
-import { connectToDatabase } from "./src/db/mysql.js";
+import { connectToDatabase } from "./src/db/postgresql.js"; // Import DB connection
+// import { connectToDatabase } from "./src/db/mysql.js";
 import { AuthMiddleware, WarehouseMiddleware } from "./src/middleware/auth.middleware.js";
 import User from "./src/models/user.model.js";
 import { generateToken } from "./src/utils/jwt.js";
