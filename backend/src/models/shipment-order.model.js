@@ -115,7 +115,9 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
   allAppointmentDate: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
   appointmentRemarks: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
   // old po numbers
-  poNumbers: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true}
+  poNumbers: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},
+  // delivery type
+  deliveryType: {type: DataTypes.STRING, allowNull: true},
 }, {
   timestamps: true,
   tableName: 'shipment_orders'

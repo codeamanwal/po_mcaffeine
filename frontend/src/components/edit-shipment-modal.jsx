@@ -103,6 +103,7 @@ const adminFields = [
   "labelsLink",
   "invoiceValue",
   "document",
+  "deliveryType",
 ]
 
 const warehouseFields = [

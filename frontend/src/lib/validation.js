@@ -425,6 +425,15 @@ export const getChannelSuggestions = (searchTerm, limit = 10) => {
   return master_channel_options.filter((channel) => channel.toLowerCase().includes(term)).slice(0, limit)
 }
 
+// Get Delivery type
+export const getDeliveryType = (channel, type) => {
+  if(type) return type;
+  if(!channel) return "";
+  const ch = `${channel}`.toLowerCase()
+  if(ch === "amazon" || ch === "flipkart") return "Pick up";
+  else return "Drop in";
+}
+
 
 // Export master data for use in components
 export {

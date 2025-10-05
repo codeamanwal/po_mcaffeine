@@ -56,6 +56,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { getFinalStatus } from "@/constants/status_master"
 import { getTAT } from "@/constants/courier-partners"
+import { getDeliveryType } from "@/lib/validation"
 
 // Sample data based on provided format
 const poData = [
@@ -430,15 +431,19 @@ export default function DashboardPage({ onNavigate }) {
       setShipmentStatusData(res.data.shipments)
       setShipmentStatusData((prev) => {
         const arr = prev.map(item => {
+          // add tat and critical dispatch date
           let criticalDispatchDate = item.currentAppointmentDate;
           const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
           const tat = getTAT(item.firstTransporter) ?? 0;
           const cdd = cad ? cad - tat * 24*60*60*1000 : null;
           criticalDispatchDate = formatDate(cdd)
+          // deliveryType
+          const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
           return {
             ...item,
             tat,
             criticalDispatchDate,
+            deliveryType,
           }
         })
         return arr;
