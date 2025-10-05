@@ -81,10 +81,22 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
 
       // Auto-fill SKU data
       const skuData = autoFillSkuData(skuCode)
+      let brand = "";
+      const prefix = `${skuCode}`.substring(0,3).toLowerCase();
+      if(prefix === "hyp"){
+        brand = "Hyphen"
+      } else if(prefix === "ama"){
+        brand = "Aman"
+      } else if(prefix === "viv"){
+        brand = "Vivek"
+      } else {
+        brand = "MCaffeine"
+      }
 
       const order = {
         entryDate: `${String(new Date().getDate()).padStart(2, "0")}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${new Date().getFullYear()}`,
-        brand: skuData?.brandName || "",
+        brand: brand ,
+        brandName: brand ,
         channel: channel,
         location: values[headers.indexOf("Location")] || "",
         poDate: values[headers.indexOf("PO Date")] || "",

@@ -324,9 +324,20 @@ export const autoFillSkuData = (skuCode) => {
   const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
   if (!masterSku) return null
 
+  let brand = "";
+  const prefix = `${skuCode}`.substring(0,3).toLowerCase();
+  if(prefix === "hyp"){
+      brand = "Hyphen"
+    } else if(prefix === "ama"){
+      brand = "Aman"
+    } else if(prefix === "viv"){
+      brand = "Vivek"
+    } else {
+      brand = masterSku.brand_name
+    }
   return {
     skuName: masterSku.sku_name,
-    brandName: masterSku.brand_name,
+    brandName: brand ?? "MCaffeine",
     mrp: masterSku.mrp,
   }
 }
