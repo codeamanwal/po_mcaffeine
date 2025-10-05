@@ -380,7 +380,7 @@ async function updateShipment(req, res) {
     if (!shipment) {
       return res.status(404).json({ error: 'Shipment not found' });
     }
-    // check log for 
+    // check log for appointment date change
     if(shipment?.dataValues?.allAppointmentDate?.length !== updateData.allAppointmentDate.length){
       const len = updateData.allAppointmentDate.length;
       updateData.currentAppointmentDate = updateData.allAppointmentDate[len-1];
@@ -391,6 +391,18 @@ async function updateShipment(req, res) {
         fieldName: "Appointment Date",
         change: `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`,
         remark:  updateData.appointmentRemarks[len-1] || "No remark provided",
+      }
+      logs = [...logs, new_log]
+    }
+    // check log for facility change
+    if(shipment?.dataValues?.facility !== updateData?.facility){
+      isLog = true;
+      const new_log = {
+        shipmentId: shipment.uid,
+        createdBy: req.user,
+        fieldName: "Facility",
+        change: `Facility changed from ${shipment?.dataValues?.facility} to ${updateData?.facility}`,
+        remark: "No extra remark provided",
       }
       logs = [...logs, new_log]
     }
