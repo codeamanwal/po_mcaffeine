@@ -33,14 +33,13 @@ import { updateBulkShipment } from "@/lib/order"
 import {
   validateShipmentData,
   master_facility_option,
-  master_channel_options,
   master_status_planning_options,
   master_status_warehouse_options,
   master_status_logistics_options,
   master_courier_partner_options,
   master_rejection_reasons,
-  master_location_options,
 } from "@/lib/validation"
+import { master_rto_remark_options } from "@/constants/master_sheet"
 
 // Field definitions with role permissions, CSV headers, and validation rules
 const fieldDefinitions = {
@@ -61,22 +60,22 @@ const fieldDefinitions = {
     category: "admin",
     validation: master_facility_option,
   },
-  channel: {
-    label: "Channel",
-    csvHeader: "Channel",
-    roles: ["superadmin", "admin"],
-    type: "text",
-    category: "admin",
-    validation: master_channel_options,
-  },
-  location: {
-    label: "Location",
-    csvHeader: "Location",
-    roles: ["superadmin", "admin"],
-    type: "text",
-    category: "admin",
-    validation: master_location_options,
-  },
+  // channel: {
+  //   label: "Channel",
+  //   csvHeader: "Channel",
+  //   roles: ["superadmin", "admin"],
+  //   type: "text",
+  //   category: "admin",
+  //   validation: master_channel_options,
+  // },
+  // location: {
+  //   label: "Location",
+  //   csvHeader: "Location",
+  //   roles: ["superadmin", "admin"],
+  //   type: "text",
+  //   category: "admin",
+  //   validation: master_location_options,
+  // },
   remarksPlanning: {
     label: "Remarks (Planning)",
     csvHeader: "Remarks (Planning)",
@@ -375,7 +374,7 @@ const fieldDefinitions = {
     roles: ["superadmin", "admin", "logistics"],
     type: "text",
     category: "logistics",
-    validation: master_rejection_reasons,
+    validation: master_rto_remark_options,
   },
   finalRemarks: {
     label: "Final Remarks",
@@ -411,7 +410,6 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
   const getAvailableFields = () => {
     if (!user?.role) return []
-
     return Object.entries(fieldDefinitions).filter(([_, field]) => field.roles.includes(user.role))
   }
 
@@ -454,28 +452,13 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
     // Sort selected fields based on their original order in fieldDefinitions
     const fieldDefinitionKeys = Object.keys(fieldDefinitions)
-    const sortedSelectedFields = selectedFields.sort((a, b) => {
+    const sortedSelectedFields = [...selectedFields].sort((a, b) => {
       return fieldDefinitionKeys.indexOf(a) - fieldDefinitionKeys.indexOf(b)
     })
 
     const headers = ["UID", "PO Number", ...sortedSelectedFields.map((field) => fieldDefinitions[field].csvHeader)]
 
-    // Add validation notes as comments in the CSV
-    const validationNotes = []
-    sortedSelectedFields.forEach((fieldName) => {
-      const field = fieldDefinitions[fieldName]
-      if (field.validation) {
-        validationNotes.push(`# ${field.label} must be one of: ${field.validation.slice(0, 3).join(", ")}...`)
-      }
-    })
-
-    const csvContent = [
-      "# Bulk Update Template - MCaffeine Dashboard",
-      "# Instructions: Fill in the data below. Do not modify the header row.",
-      ...validationNotes,
-      "",
-      headers.join(","),
-    ].join("\n")
+    const csvContent = [headers.join(",")].join("\n")
 
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
@@ -524,9 +507,9 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
   }
 
   const validateFieldValue = (fieldName, value) => {
-    const field = fieldDefinitions[fieldName]
+    const field = (fieldDefinitions )[fieldName]
     if (!field || !field.validation || !value || value.trim() === "") {
-      return { isValid: true, errors: [] }
+      return { isValid: true, errors: []  }
     }
 
     const allowedValues = field.validation
@@ -539,23 +522,49 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       }
     }
 
-    return { isValid: true, errors: [] }
+    return { isValid: true, errors: []  }
   }
 
+  // Updated: ignore empty cells, only accept role-allowed selected fields, skip rows with no updatable values
   const parseCSV = (csvText) => {
-    const lines = csvText.split("\n").filter((line) => line.trim() && !line.startsWith("#"))
+    const lines = csvText
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((line) => line && !line.startsWith("#"))
+
+    if (lines.length === 0) {
+      setValidationSummary({ errors: 0, warnings: 0 })
+      return []
+    }
+
     const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
-    // Validate required headers
+    // Required identifiers
     if (!headers.includes("UID") || !headers.includes("PO Number")) {
       throw new Error("CSV must contain UID and PO Number columns")
     }
 
-    // Validate selected field headers
-    const expectedHeaders = selectedFields.map((field) => fieldDefinitions[field].csvHeader)
+    // Only consider fields the user selected AND is allowed to update by role
+    const allowedSelectedFields = selectedFields.filter((fname) => {
+      const def = (fieldDefinitions)[fname]
+      return def?.roles?.includes(user?.role || "")
+    })
+
+    // Validate selected field headers exist
+    const expectedHeaders = allowedSelectedFields.map((field) => (fieldDefinitions)[field].csvHeader)
     const missingHeaders = expectedHeaders.filter((header) => !headers.includes(header))
     if (missingHeaders.length > 0) {
       throw new Error(`Missing required columns: ${missingHeaders.join(", ")}`)
+    }
+
+    // Fast header index lookup
+    const headerIndex = new Map()
+    headers.forEach((h, i) => headerIndex.set(h, i))
+
+    const getCell = (rowValues, header) => {
+      const idx = headerIndex.get(header)
+      const raw = idx !== undefined ? (rowValues[idx] ?? "") : ""
+      return String(raw).replace(/"/g, "").trim()
     }
 
     const updates = []
@@ -563,51 +572,79 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     let totalWarnings = 0
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""))
+      const rawLine = lines[i]
+      if (!rawLine || !rawLine.trim()) continue // ignore completely empty lines
+
+      const values = rawLine.split(",").map((v) => v.trim())
+
+      const uidCell = getCell(values, "UID")
+      const poCell = getCell(values, "PO Number")
 
       const update = {
-        uid: Number.parseInt(values[headers.indexOf("UID")]) || null,
-        poNumber: values[headers.indexOf("PO Number")] || "",
         status: "valid",
-        errors: [],
-        warnings: [],
+        errors: [] ,
+        warnings: [] ,
         rowNumber: i + 1,
       }
 
-      // Parse selected fields
-      selectedFields.forEach((fieldName) => {
-        const fieldDef = fieldDefinitions[fieldName]
-        const headerIndex = headers.indexOf(fieldDef.csvHeader)
-        const value = values[headerIndex] || ""
+      // Identifier validation
+      const uidNum = Number.parseInt(uidCell, 10)
+      if (!uidCell || Number.isNaN(uidNum) || uidNum <= 0) {
+        update.errors.push("UID is required and must be a positive number")
+      } else {
+        update.uid = uidNum
+      }
 
-        if (fieldDef.type === "number") {
-          update[fieldName] = value
-            ? fieldName.includes("Weight")
-              ? Number.parseFloat(value)
-              : Number.parseInt(value)
-            : null
+      if (!poCell) {
+        update.errors.push("PO Number is required")
+      } else {
+        update.poNumber = poCell
+      }
+
+      // Parse only allowed selected fields; ignore all other CSV columns
+      let hasAnyUpdatableValue = false
+
+      for (const fieldName of allowedSelectedFields) {
+        const def = (fieldDefinitions)[fieldName]
+        const cell = getCell(values, def.csvHeader)
+
+        // Ignore empty cells completely
+        if (cell === "") continue
+
+        hasAnyUpdatableValue = true
+
+        // Type parsing
+        if (def.type === "number") {
+          const isWeight = fieldName.toLowerCase().includes("weight")
+          const parsed = isWeight ? Number.parseFloat(cell) : Number.parseInt(cell, 10)
+          if (Number.isNaN(parsed)) {
+            update.errors.push(`${def.label} must be a valid ${isWeight ? "number" : "integer"}`)
+          } else {
+            update[fieldName] = parsed
+          }
         } else {
-          update[fieldName] = value
+          update[fieldName] = cell
         }
 
-        // Validate field value
-        if (value && value.trim() !== "") {
-          const validation = validateFieldValue(fieldName, value)
-          if (!validation.isValid) {
-            update.errors.push(...validation.errors)
+        // Enum-like validation when provided
+        if (def.validation) {
+          const allowedValues = def.validation
+          if (!allowedValues.includes(cell)) {
+            update.errors.push(
+              `${def.label} "${cell}" is not valid. Must be one of: ${allowedValues
+                .slice(0, 3)
+                .join(", ")}${allowedValues.length > 3 ? "..." : ""}`,
+            )
           }
         }
-      })
+      }
 
-      // Basic validation
-      const errors = []
-      if (!update.uid || update.uid <= 0) errors.push("UID is required and must be a positive number")
-      if (!update.poNumber) errors.push("PO Number is required")
+      // If no updatable values (only UID/PO present), skip this row entirely
+      if (!hasAnyUpdatableValue) {
+        continue
+      }
 
-      // Add basic errors
-      update.errors.push(...errors)
-
-      // Comprehensive shipment validation
+      // Shipment-level validation
       try {
         const shipmentValidation = validateShipmentData(update)
         if (!shipmentValidation.isValid) {
@@ -620,7 +657,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
         update.errors.push(`Validation error: ${validationError.message}`)
       }
 
-      // Set status based on errors and warnings
+      // Status
       if (update.errors.length > 0) {
         update.status = "error"
         totalErrors++
@@ -662,6 +699,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     setIsProcessing(false)
   }
 
+  // Updated: Only send identifiers and non-empty selected fields allowed for the current role
   const handleUploadUpdates = async () => {
     try {
       const validUpdates = parsedUpdates.filter((update) => update.status === "valid" || update.status === "warning")
@@ -670,19 +708,45 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
         return
       }
 
-      // Prepare data to send in bulk to backend
-      let data = []
+      // Only keep UID, PO Number, and allowed+selected fields with non-empty values
+      const allowedSelectedFields = selectedFields.filter((fname) => {
+        const def = (fieldDefinitions )[fname]
+        return def?.roles?.includes(user?.role || "")
+      })
+      const allowedKeys = new Set(["uid", "poNumber", ...allowedSelectedFields])
+
+      const data = []
       validUpdates.forEach((item) => {
         const { errors, warnings, status, rowNumber, ...extractedFields } = item
-        // final only field with data inside them
+
+        // Remove empty-ish values
         const cleanedData = {}
         for (const [key, value] of Object.entries(extractedFields)) {
-          if (value !== null && value !== undefined && value !== "" && !(typeof value === "number" && isNaN(value))) {
+          const isEmptyNumber = typeof value === "number" && Number.isNaN(value)
+          const isEmptyString = typeof value === "string" && value.trim() === ""
+          if (value !== null && value !== undefined && !isEmptyNumber && !isEmptyString) {
             cleanedData[key] = value
           }
         }
-        data = [...data, cleanedData]
+
+        // Keep only UID, PO Number, and allowed selected fields
+        for (const key of Object.keys(cleanedData)) {
+          if (!allowedKeys.has(key)) {
+            delete cleanedData[key]
+          }
+        }
+
+        // Must have at least one updatable field besides identifiers
+        const hasUpdates = Object.keys(cleanedData).some((k) => k !== "uid" && k !== "poNumber")
+        if (hasUpdates) {
+          data.push(cleanedData)
+        }
       })
+
+      if (data.length === 0) {
+        setError("No rows with updatable values after filtering. Ensure cells are not empty.")
+        return
+      }
 
       setIsUploading(true)
       setUploadProgress(0)
@@ -690,14 +754,14 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       // Simulate upload progress
       for (let i = 0; i <= 100; i += 10) {
         setUploadProgress(i)
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 80))
       }
 
       const res = await updateBulkShipment(data)
       console.log(res.data)
 
-      onSave(validUpdates)
-      setSuccess(`Successfully updated ${validUpdates.length} shipments`)
+      onSave?.(validUpdates)
+      setSuccess(`Successfully updated ${data.length} shipments`)
       setIsUploading(false)
       setUploadProgress(0)
 
@@ -708,7 +772,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       }, 3000)
     } catch (error) {
       console.error("Error: ", error)
-      setError(`Error: ${error.response?.msg || error.message}`)
+      setError(`Error: ${error?.response?.msg || error.message}`)
       setIsUploading(false)
       setUploadProgress(0)
     }
@@ -976,8 +1040,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                       <div className="flex flex-wrap gap-2">
                         {selectedFields.map((fieldName) => (
                           <Badge key={fieldName} variant="secondary" className="bg-blue-100 text-blue-800">
-                            {fieldDefinitions[fieldName].label}
-                            {fieldDefinitions[fieldName].validation && <span className="ml-1 text-xs">✓</span>}
+                            {(fieldDefinitions)[fieldName].label}
+                            {(fieldDefinitions)[fieldName].validation && <span className="ml-1 text-xs">✓</span>}
                           </Badge>
                         ))}
                       </div>
@@ -1121,7 +1185,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                           <TableHead>UID</TableHead>
                           <TableHead>PO Number</TableHead>
                           {selectedFields.map((fieldName) => (
-                            <TableHead key={fieldName}>{fieldDefinitions[fieldName].label}</TableHead>
+                            <TableHead key={fieldName}>{(fieldDefinitions)[fieldName].label}</TableHead>
                           ))}
                           <TableHead>Issues</TableHead>
                         </TableRow>
@@ -1143,7 +1207,9 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                             <TableCell className="font-mono">{update.uid}</TableCell>
                             <TableCell className="font-mono">{update.poNumber}</TableCell>
                             {selectedFields.map((fieldName) => (
-                              <TableCell key={fieldName}>{update[fieldName] || "-"}</TableCell>
+                              <TableCell key={fieldName}>
+                                {update[fieldName] !== undefined && update[fieldName] !== "" ? update[fieldName] : "-"}
+                              </TableCell>
                             ))}
                             <TableCell>
                               {(update.errors && update.errors.length > 0) ||

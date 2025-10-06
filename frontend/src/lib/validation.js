@@ -1,5 +1,5 @@
 // Import master data from existing files
-import { master_facility_option } from "@/constants/master_sheet"
+import { master_facility_option, master_rto_remark_options } from "@/constants/master_sheet"
 import { master_channel_options } from "@/constants/master_sheet"
 import { master_status_planning_options } from "@/constants/master_sheet"
 import { master_status_warehouse_options } from "@/constants/master_sheet"
@@ -117,7 +117,7 @@ export const validateShipmentData = (shipmentData)=> {
     const rescheduleValidation = validateField(
       "Reschedule Lag Remark",
       shipmentData.rescheduleLag,
-      master_rejection_reasons,
+      master_rto_remark_options,
     )
     errors.push(...rescheduleValidation.errors)
   }

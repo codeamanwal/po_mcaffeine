@@ -987,6 +987,9 @@ export default function DashboardPage({ onNavigate }) {
                                     minWidth: "100px",
                                     maxWidth: "150px",
                                     zIndex: idx < 7 ? 30 : 10,
+                                    whiteSpace: "normal",  
+                                    wordWrap: "break-word",
+                                    overflowWrap: "break-word",
                                 }}
                                 >
                                 {item.label}
@@ -1271,6 +1274,9 @@ export default function DashboardPage({ onNavigate }) {
                                     minWidth: "100px",
                                     maxWidth: "150px",
                                     zIndex: idx < 7 ? 30 : 10,
+                                    whiteSpace: "normal",  
+                                    wordWrap: "break-word",
+                                    overflowWrap: "break-word",
                                 }}
                                 >
                                 {item.label}

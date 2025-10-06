@@ -5,6 +5,7 @@ import {ShipmentOrder} from "../models/index.js";
 import {SkuOrder} from "../models/index.js";
 import Log from "../models/log.model.js";
 import User from "../models/user.model.js";
+import { isBulkShipmentUpdateAllowed } from "../utils/shipment.js";
 
 function checkNullCond(value, prevValue) {
   // return true if prev == non-null and now == null
@@ -459,6 +460,14 @@ async function updateBulkShipment(req, res){
     if(user.role === "superadmin"){
       for(const shipment of shipments) {
         let { uid, poNumber, ...updateData } = shipment;
+
+        // check for allowed fields only
+        let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
+        if (!isBulkShipmentUpdateAllowed(updatedFields, "superadmin")) {
+          // await t.rollback();
+          return res.status(401).json({ msg: "Unauthorized to update some fields!" });
+        }
+
         const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
         if (!existingShipment) {
           errs.push({ uid, poNumber, error: 'Shipment not found with given uid' });
@@ -491,9 +500,17 @@ async function updateBulkShipment(req, res){
       return res.status(200).json({ msg: "Shipments updated successfully" });
     }
 
-    if(user.role === "admin"){
+    else if(user.role === "admin"){
       for(const shipment of shipments) {
         const { uid, ...updateData } = shipment;
+        
+        // check for allowed fields only
+        let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
+        if (!isBulkShipmentUpdateAllowed(updatedFields, "admin")) {
+          // await t.rollback();
+          return res.status(401).json({ msg: "Unauthorized to update some fields!" });
+        }
+
         const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
         if (!existingShipment) {
           errs.push({ uid, error: 'Shipment not found' });
@@ -508,14 +525,65 @@ async function updateBulkShipment(req, res){
       return res.status(200).json({ msg: "Shipments updated successfully" });
     }
 
-    // if(user.role === "warehouse"){
-    //   return res.status(200).json({msg: "You are a warehoue"})
-    // }
+    else if(user.role === "warehouse"){
+      for(const shipment of shipments) {
+        const { uid, ...updateData } = shipment;
 
-    // return res.status(200).json({msg:`You are a ${user.role}`});
+        // check for allowed fields only
+        let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
+        if (!isBulkShipmentUpdateAllowed(updatedFields, "warehouse")) {
+          // await t.rollback();
+          return res.status(401).json({ msg: "Unauthorized to update some fields!" });
+        }
+
+        const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
+        if (!existingShipment) {
+          errs.push({ uid, error: 'Shipment not found' });
+          continue; // Skip to the next shipment if not found
+        }
+        await existingShipment.update(updateData, { transaction: t });
+      }
+      await t.commit();
+      if (errs.length > 0) {
+        return res.status(204).json({ errors: errs });
+      }
+      return res.status(200).json({ msg: "Shipments updated successfully" });
+    }
+
+    else if(user.role === "logistics"){
+      for(const shipment of shipments) {
+        const { uid, ...updateData } = shipment;
+
+        // check for allowed fields only
+        let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
+        if (!isBulkShipmentUpdateAllowed(updatedFields, "logistics")) {
+          console.log("updatedFields: ", updatedFields);
+          console.log("flag:", isBulkShipmentUpdateAllowed(updatedFields, "logistics"))
+          // await t.rollback();
+          return res.status(401).json({ msg: "Unauthorized to update some fields!" });
+        }
+
+        const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
+        if (!existingShipment) {
+          errs.push({ uid, error: 'Shipment not found' });
+          continue; // Skip to the next shipment if not found
+        }
+        await existingShipment.update(updateData, { transaction: t });
+      }
+      await t.commit();
+      if (errs.length > 0) {
+        return res.status(204).json({ errors: errs });
+      }
+      return res.status(200).json({ msg: "Shipments updated successfully" });
+    }
     
+    else {
+      await t.rollback();
+      return res.status(401).json({msg:"Unauthorized!", error: error.message})
+    }
 
   } catch (error) {
+    console.log(error);
     await t.rollback();
     console.error("Error: ", error);
     return res.status(500).json({msg:"Something went wrong while updating Shipments!", error: error.message})
