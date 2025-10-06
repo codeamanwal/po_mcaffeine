@@ -209,7 +209,7 @@ export const shipmentStatusDataType = [
   { fieldName: "dispatchRemarksLogistics", label: "Dispatch Remarks (Logistics)", id: "dispatchRemarksLogistics", type: "text" },
   { fieldName: "dispatchRemarksWarehouse", label: "Dispatch Remarks (Warehouse)", id: "dispatchRemarksWarehouse", type: "text" },
   { fieldName: "dispatchDateTentative", label: "Dispatch Date - Tentative (Planning)", id: "dispatchDateTentative", type: "date" },
-  { fieldName: "workingDatePlanner", label: "Working Date (Planner)", id: "workingDatePlanner", type: "date" },
+  { fieldName: "workingDatePlanner", label: "Working Date", id: "workingDatePlanner", type: "date" },
   { fieldName: "rtsDate", label: "RTS Date", id: "rtsDate", type: "date" },
   { fieldName: "dispatchDate", label: "Dispatch Date", id: "dispatchDate", type: "date" },
   { fieldName: "currentAppointmentDate", label: "Current Appointment Date", id: "currentAppointmentDate", type: "date" },

@@ -162,6 +162,28 @@ export default function SkuLevelEditModal({
     return { qtyFillRate, gmvFillRate }
   }
 
+  const calculateOverallFillRates = () => {
+    if (!originalSkus?.length || !editedSkus?.length) {
+      return { qtyRate: 100, gmvRate: 100 }; // or 0, based on how you define "empty" fill rate
+    }
+
+    let qtyRate = 0;
+    let gmvRate = 0;
+    const length = Math.min(originalSkus.length, editedSkus.length);
+
+    for (let x = 0; x < length; x++) {
+      const singleRates = calculateFillRates(editedSkus[x], originalSkus[x]);
+      qtyRate += singleRates.qtyFillRate;
+      gmvRate += singleRates.gmvFillRate;
+    }
+
+    qtyRate = qtyRate / length;
+    gmvRate = gmvRate / length;
+
+    return { qtyRate, gmvRate };
+  };
+
+
   // Changes detection
   const hasChanges = useMemo(() => {
     if (!shipmentData) return false
@@ -285,7 +307,7 @@ export default function SkuLevelEditModal({
         {/* SKU Cards */}
         <ScrollArea className="pr-3 overflow-auto">
           {/* Top basic info (optional) */}
-          {shipment && (
+          {shipment && !isLoading && (
             <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
               <CardHeader>
                 <CardTitle className="text-sm md:text-base">Shipment Details</CardTitle>
@@ -307,6 +329,14 @@ export default function SkuLevelEditModal({
                   <div>
                     <Label className="text-xs text-gray-600 dark:text-gray-400">PO Number</Label>
                     <div className="font-semibold">{shipment.poNumber ?? "-"}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Overall Qty Fill Rate</Label>
+                    <div className="font-semibold">{calculateOverallFillRates().qtyRate.toFixed(1) ?? 100}%</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Overall GMV Fill Rate</Label>
+                    <div className="font-semibold">{calculateOverallFillRates().gmvRate.toFixed(1) ?? 100}%</div>
                   </div>
                 </div>
               </CardContent>
