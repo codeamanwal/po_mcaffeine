@@ -388,7 +388,8 @@ export default function DashboardPage({ onNavigate }) {
   // Get unique values for dropdown filters
   const getUniqueValues = (data, field) => {
     const values = data.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
-    return [...new Set(values)].sort()
+    const uniqueValues = [...new Set(values)].sort()
+    return ["Not Assigned", ...uniqueValues]
   }
 
   const getFacilityOptions = (data, field) => {
@@ -481,13 +482,26 @@ export default function DashboardPage({ onNavigate }) {
         }
         return item.facility === selectedFacility
       })
+    
+    const filterMatchField = (filterName) => {
+      return poFilters[filterName].length === 0 || 
+        poFilters[filterName].some((selected) => {
+          if (selected === "Not Assigned") {
+            return !item[filterName] || item[filterName] === "" || item[filterName] === "0"
+          }
+          return item[filterName] === selected
+        });
+    }
 
     const matchesFilters =
       (!poFilters.entryDateFrom || (entryDate && entryDate >= poFilters.entryDateFrom)) &&
       (!poFilters.entryDateTo || (entryDate && entryDate <= poFilters.entryDateTo)) &&
       (poFilters.brand.length === 0 || poFilters.brand.includes(item.brand)) &&
-      (poFilters.channel.length === 0 || poFilters.channel.includes(item.channel)) &&
-      (poFilters.location.length === 0 || poFilters.location.includes(item.location)) &&
+      // (poFilters.channel.length === 0 || poFilters.channel.includes(item.channel)) &&
+      // (poFilters.location.length === 0 || poFilters.location.includes(item.location)) &&
+      // filterMatchField("brand") &&
+      filterMatchField("channel") &&
+      filterMatchField("location") &&
       facilityMatch && // Added facility filter
       (!poFilters.poDateFrom || (poDate && poDate >= poFilters.poDateFrom)) &&
       (!poFilters.poDateTo || (poDate && poDate <= poFilters.poDateTo)) &&
@@ -500,9 +514,13 @@ export default function DashboardPage({ onNavigate }) {
         (currentAppointmentDate && currentAppointmentDate >= poFilters.currentAppointmentDateFrom)) &&
       (!poFilters.currentAppointmentDateTo ||
         (currentAppointmentDate && currentAppointmentDate <= poFilters.currentAppointmentDateTo)) &&
-      (poFilters.statusPlanning.length === 0 || poFilters.statusPlanning.includes(item.statusPlanning)) &&
-      (poFilters.statusWarehouse.length === 0 || poFilters.statusWarehouse.includes(item.statusWarehouse)) &&
-      (poFilters.statusLogistics.length === 0 || poFilters.statusLogistics.includes(item.statusLogistics))
+      filterMatchField("statusPlanning") &&
+      filterMatchField("statusWarehouse") &&
+      filterMatchField("statusLogistics") 
+      // filterMatchField("statusPlanning") &&
+      // (poFilters.statusPlanning.length === 0 || poFilters.statusPlanning.includes(item.statusPlanning)) &&
+      // (poFilters.statusWarehouse.length === 0 || poFilters.statusWarehouse.includes(item.statusWarehouse)) &&
+      // (poFilters.statusWarehouse.length === 0 || poFilters.statusLogistics.includes(item.statusLogistics))
 
     return matchesSearch && matchesFilters
   })
@@ -541,13 +559,26 @@ export default function DashboardPage({ onNavigate }) {
         }
         return item.facility === selectedFacility
       })
+    
+    const filterMatchField = (filterName) => {
+      return shipmentFilters[filterName].length === 0 || 
+        shipmentFilters[filterName].some((selected) => {
+          if (selected === "Not Assigned") {
+            return !item[filterName] || item[filterName] === "" || item[filterName] === "0"
+          }
+          return item[filterName] === selected
+        });
+    }
 
     const matchesFilters =
       (!shipmentFilters.entryDateFrom || (entryDate && entryDate >= shipmentFilters.entryDateFrom)) &&
       (!shipmentFilters.entryDateTo || (entryDate && entryDate <= shipmentFilters.entryDateTo)) &&
       (shipmentFilters.brand.length === 0 || shipmentFilters.brand.includes(item.brandName)) &&
-      (shipmentFilters.channel.length === 0 || shipmentFilters.channel.includes(item.channel)) &&
-      (shipmentFilters.location.length === 0 || shipmentFilters.location.includes(item.location)) &&
+      // (shipmentFilters.channel.length === 0 || shipmentFilters.channel.includes(item.channel)) &&
+      // (shipmentFilters.location.length === 0 || shipmentFilters.location.includes(item.location)) &&
+      // filterMatchField("brand") &&
+      filterMatchField("channel") &&
+      filterMatchField("location") &&
       facilityMatch && // Added facility filter
       (!shipmentFilters.poDateFrom || (poDate && poDate >= shipmentFilters.poDateFrom)) &&
       (!shipmentFilters.poDateTo || (poDate && poDate <= shipmentFilters.poDateTo)) &&
@@ -555,10 +586,13 @@ export default function DashboardPage({ onNavigate }) {
         (currentAppointmentDate && currentAppointmentDate >= shipmentFilters.currentAppointmentDateFrom)) &&
       (!shipmentFilters.currentAppointmentDateTo ||
         (currentAppointmentDate && currentAppointmentDate <= shipmentFilters.currentAppointmentDateTo)) &&
-      (shipmentFilters.statusPlanning.length === 0 || shipmentFilters.statusPlanning.includes(item.statusPlanning)) &&
-      (shipmentFilters.statusWarehouse.length === 0 ||
-        shipmentFilters.statusWarehouse.includes(item.statusWarehouse)) &&
-      (shipmentFilters.statusLogistics.length === 0 || shipmentFilters.statusLogistics.includes(item.statusLogistics))
+      filterMatchField("statusPlanning") &&
+      filterMatchField("statusWarehouse") &&
+      filterMatchField("statusLogistics") 
+      // (shipmentFilters.statusPlanning.length === 0 || shipmentFilters.statusPlanning.includes(item.statusPlanning)) &&
+      // (shipmentFilters.statusWarehouse.length === 0 ||
+        // shipmentFilters.statusWarehouse.includes(item.statusWarehouse)) &&
+      // (shipmentFilters.statusLogistics.length === 0 || shipmentFilters.statusLogistics.includes(item.statusLogistics))
 
     return matchesSearch && matchesFilters
   })
