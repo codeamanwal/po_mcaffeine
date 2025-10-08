@@ -392,6 +392,46 @@ const fieldDefinitions = {
     category: "logistics",
     validation: null,
   },
+  deliveryCharges: {
+    label: "Delivery Charges",
+    csvHeader: "Delivery Charges",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "number",
+    category: "logistics",
+    validation: null,
+  },
+  halting: {
+    label: "Halting",
+    csvHeader: "Halting",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "number",
+    category: "logistics",
+    validation: null,
+  },
+  unloadingCharges: {
+    label: "Unloading Charges",
+    csvHeader: "Unloading Charges",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "number",
+    category: "logistics",
+    validation: null,
+  },
+  dedicatedVehicle: {
+    label: "Dedicated Vehicle",
+    csvHeader: "Dedicated Vehicle",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "number",
+    category: "logistics",
+    validation: null,
+  },
+  otherCharges: {
+    label: "Other Charges",
+    csvHeader: "Other Charges",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "number",
+    category: "logistics",
+    validation: null,
+  },
 }
 
 export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
@@ -835,7 +875,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[95vh] max-w-7xl overflow-auto">
+      <DialogContent className="max-h-[95vh] min-w-[90vw] overflow-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Database className="h-5 w-5" />
@@ -1132,7 +1172,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
             {/* Step 3: Preview Updates */}
             {step === "preview" && parsedUpdates.length > 0 && (
-              <Card className="">
+              <Card className="my-10">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -1176,7 +1216,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                     </div>
                   )}
 
-                  <ScrollArea className="max-w-7xl">
+                  <ScrollArea className="max-w-full">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -1244,12 +1284,13 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                         ))}
                       </TableBody>
                     </Table>
+                    <ScrollBar orientation="horizontal" />
                   </ScrollArea>
                 </CardContent>
               </Card>
             )}
           </div>
-          <ScrollBar orientation="horizontal" />
+          <ScrollBar orientation="vertical" />
         </ScrollArea>
 
         <div className="flex justify-end space-x-4 pt-4 border-t">
