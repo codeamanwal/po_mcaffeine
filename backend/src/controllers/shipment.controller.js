@@ -260,14 +260,49 @@ async function getSkusByShipment(req, res) {
   }
 }
 
-async function getAllShipments(req, res){
-    try {
-        const shipments = await ShipmentOrder.findAll({order: [['uid', 'DESC']]});
-        return res.status(200).json({msg:"Data fetched successfully", shipments, success: true, status: 200});
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({msg:"Something went wrong While fetching data!", success: false, error, status: 500});
+async function getAllShipments(req, res) {
+  try {
+    const shipments = await ShipmentOrder.findAll({
+      order: [["uid", "DESC"]],
+      include: [{
+        model: SkuOrder,
+        as: 'skuOrders',
+      }]
+    });
+
+    if (!shipments || shipments.length === 0) {
+      return res.status(404).json({ error: 'No shipments found!' });
     }
+
+    // Process each shipment to calculate totalUnits and remove skuOrders
+    const shipmentsWithTotals = shipments.map(shipment => {
+      const shipmentData = shipment.toJSON();
+
+      // Sum total quantity from related skuOrders
+      const totalUnits = shipmentData.skuOrders.reduce((sum, sku) => {
+        const qty = Number(sku.updatedQty ?? sku.qty ?? 0);
+        return sum + qty;
+      }, 0);
+
+      // Add totalUnits and remove skuOrders to reduce payload
+      shipmentData.totalUnits = totalUnits;
+      delete shipmentData.skuOrders;
+
+      return shipmentData;
+    });
+
+    return res.status(200).json({
+      msg: "Data fetched successfully",
+      shipments: shipmentsWithTotals
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      msg: "Something went wrong while fetching data!",
+      error: error.message
+    });
+  }
 }
 
 async function getAllSkuOrders(req, res) {
