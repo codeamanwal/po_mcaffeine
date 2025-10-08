@@ -246,7 +246,7 @@ export const shipmentStatusDataType = [
   },
   { fieldName: "thirdDocketNo", label: "3rd Docket No/ Vehicle Number (Last Mile)", id: "thirdDocketNo", type: "text" },
   { fieldName: "appointmentLetter", label: "Appointment Letter/STN", id: "appointmentLetter", type: "text" },
-  { fieldName: "labelsLink", label: "Labels - Amazon/Flipkart (Link)", id: "labelsLink", type: "text" },
+  { fieldName: "labelsLink", label: "PO Expiry Date", id: "labelsLink", type: "date" },
   { fieldName: "invoiceDate", label: "Invoice Date", id: "invoiceDate", type: "date" },
   { fieldName: "invoiceLink", label: "Invoice Link", id: "invoiceLink", type: "text" },
   { fieldName: "cnLink", label: "CN Link", id: "cnLink", type: "text" },
