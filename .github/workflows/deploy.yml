@@ -1,0 +1,81 @@
+name: Deploy to EC2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Access
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+
+      - name: Copy Code to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_rsa" \
+            ./ ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/app
+
+      - name: Add environment files on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+          FRONTEND_ENV: ${{ secrets.FRONTEND_ENV }}
+        run: |
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << 'EOF'
+          cd ~/app
+          echo "$BACKEND_ENV" > backend/.env
+          echo "$FRONTEND_ENV" > frontend/.env.local
+          EOF
+
+      - name: Install and Build Frontend
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << 'EOF'
+          cd ~/app/frontend
+          npm install
+          npm run build
+          EOF
+
+      - name: Install Backend Dependencies and Restart via PM2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << 'EOF'
+          cd ~/app/backend
+          npm install
+
+          # Ensure PM2 is installed
+          pm2 -v || npm install -g pm2
+
+          # Start or reload the app
+          if pm2 list | grep -q "backend"; then
+            pm2 reload ecosystem.config.js
+          else
+            pm2 start ~/ecosystem.config.js
+          fi
+
+          pm2 save
+          EOF
