@@ -41,7 +41,7 @@ jobs:
           BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
           FRONTEND_ENV: ${{ secrets.FRONTEND_ENV }}
         run: |
-          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << EOF
           cd ~/app
           echo "$BACKEND_ENV" > backend/.env
           echo "$FRONTEND_ENV" > frontend/.env.local
@@ -52,7 +52,7 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << EOF
           cd ~/app/frontend
           npm install
           npm run build
@@ -63,13 +63,16 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << EOF
           cd ~/app/backend
           npm install
 
           # Ensure PM2 is installed
           pm2 -v || npm install -g pm2
-
+          
+          # go back to home
+          cd
+          
           # Start or reload the app
           if pm2 list | grep -q "backend"; then
             pm2 reload ecosystem.config.js
