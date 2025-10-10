@@ -72,6 +72,7 @@ jobs:
           
           # go back to home
           cd
+          pm2 kill && pm2 delete all
           
           # Start or reload the app
           if pm2 list | grep -q "backend"; then
