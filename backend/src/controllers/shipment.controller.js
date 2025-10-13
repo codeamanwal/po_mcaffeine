@@ -1,4 +1,4 @@
-import { where } from "sequelize";
+import { Op, where } from "sequelize";
 // import { sequelize } from "../db/postgresql.js";
 import { sequelize } from '../db/mysql.js';
 import {ShipmentOrder} from "../models/index.js";
@@ -262,13 +262,38 @@ async function getSkusByShipment(req, res) {
 
 async function getAllShipments(req, res) {
   try {
-    const shipments = await ShipmentOrder.findAll({
-      order: [["uid", "DESC"]],
-      include: [{
-        model: SkuOrder,
-        as: 'skuOrders',
-      }]
-    });
+    const currUser = req.user;
+    let shipments;
+    if(currUser.role === "superadmin" || currUser.role === "admin"){
+      shipments = await ShipmentOrder.findAll({
+        order: [["uid", "DESC"]],
+        include: [{
+          model: SkuOrder,
+          as: 'skuOrders',
+        }]
+      });
+    } 
+    else if(currUser.role === "warehouse" || currUser.role === "logistics"){
+      const allotedFacilities = currUser.allotedFacilities;
+      // console.log("Facilities: ", allotedFacilities)
+      if(!allotedFacilities || allotedFacilities.length === 0){
+        shipments = [];
+      }
+      else{ 
+        shipments = await ShipmentOrder.findAll({
+          // where facility is one of currUser.allotedFacilities that is array or can be null
+          where: {facility: { [Op.in]: allotedFacilities }},
+          order: [["uid", "DESC"]],
+          include: [{
+            model: SkuOrder,
+            as: 'skuOrders',
+          }]
+        });
+      }
+    }
+    else {
+      shipments = [];
+    }
 
     if (!shipments || shipments.length === 0) {
       return res.status(404).json({ error: 'No shipments found!' });
@@ -308,6 +333,7 @@ async function getAllShipments(req, res) {
 async function getAllSkuOrders(req, res) {
   try {
     // pull shipmentOrderId from ?shipmentOrderId=... if provided
+    const currRole = req.user?.role;
     const query = req?.query;
     const shipmentOrderId = query?.shipmentOrderId ? query.shipmentOrderId : null;
     
@@ -317,34 +343,81 @@ async function getAllSkuOrders(req, res) {
       where.shipmentOrderId = shipmentOrderId;
     }
 
+    let skuOrders;
     // fetch all SKUs, optionally include parent ShipmentOrder
-    const skuOrders = await SkuOrder.findAll({
-      include: [{
-        model: ShipmentOrder,
-        as: 'shipmentOrder',
-      }],
-      order: [
-        ['shipmentOrderId', 'DESC'],
-        [
-          sequelize.literal(`
-            CASE
-              WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
-              ELSE NULL
-            END
-          `),
-          'ASC NULLS LAST'
-        ], // postgresql
-        // [ 
-        //   sequelize.literal(`
-        //   CASE
-        //     WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
-        //     ELSE NULL
-        //   END
-        //   `),
-        //   'ASC'
-        // ], // mysql
-      ]
-    });
+    if(currRole === "superadmin" || currRole === "admin"){
+      skuOrders = await SkuOrder.findAll({
+        include: [{
+          model: ShipmentOrder,
+          as: 'shipmentOrder',
+        }],
+        order: [
+          ['shipmentOrderId', 'DESC'],
+          [
+            sequelize.literal(`
+              CASE
+                WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+                ELSE NULL
+              END
+            `),
+            'ASC NULLS LAST'
+          ], // postgresql
+          // [ 
+          //   sequelize.literal(`
+          //   CASE
+          //     WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+          //     ELSE NULL
+          //   END
+          //   `),
+          //   'ASC'
+          // ], // mysql
+        ]
+      });
+    }
+    else {
+      const allotedFacilities = req.user?.allotedFacilities;
+      if(!allotedFacilities || allotedFacilities?.length === 0){
+        skuOrders = [];
+      }
+      else{
+        // const allotedFacilities = req.user?.allotedFacilities;
+        skuOrders = await SkuOrder.findAll({
+          include: [
+            {
+              model: ShipmentOrder,
+              as: "shipmentOrder",
+              required: true, // ensures only skuOrders having matching shipmentOrder are fetched
+              where: allotedFacilities.length > 0 ? {
+                facility: {
+                  [Op.in]: allotedFacilities,
+                },
+              } : undefined, // no filter if none are allotted
+            },
+          ],
+          order: [
+            ['shipmentOrderId', 'DESC'],
+            [
+              sequelize.literal(`
+                CASE
+                  WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+                  ELSE NULL
+                END
+              `),
+              'ASC NULLS LAST'
+            ], // postgresql
+            // [ 
+            //   sequelize.literal(`
+            //   CASE
+            //     WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+            //     ELSE NULL
+            //   END
+            //   `),
+            //   'ASC'
+            // ], // mysql
+          ]
+        });
+      }
+    }
 
     const skuDataList = skuOrders.map(sku => {
       const {shipmentOrder, ...skuData} = sku.dataValues;

@@ -9,10 +9,12 @@ async function loginUser( req, res ) {
 
         const user = await User.findOne({where: {email: email}})
         if(user && user.password === password) {
-
+            
+            console.log("User loggedIn, user:", user.toJSON());
             /**************************************************/
-            const {password, ...publicUser} = user.toJSON();
+            let {password, allotedFacilities , ...publicUser} = user.toJSON();
             /*************************************************/
+            publicUser = {...publicUser, allotedFacilities}
 
             const token = generateToken(publicUser)
             res.cookie('token', token, {

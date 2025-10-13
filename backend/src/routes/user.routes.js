@@ -11,4 +11,6 @@ router.get("/get-all-users", userControllers.getAllUsers);
 
 router.post("/change-user-password", userControllers.changeYourPassword);
 
+router.post("/update-user", userControllers.updateUser);
+
 export {router as userRouter};

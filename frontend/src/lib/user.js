@@ -1,5 +1,6 @@
 import {jwtDecode} from 'jwt-decode';
 import { parse } from 'cookie';
+import api from '@/hooks/axios';
 
 export const getUser = () => {
     const cookies = document.cookie;
@@ -32,4 +33,13 @@ export const logOut = () => {
     const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
     document.cookie = `${name.trim()}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
   }
+}
+
+export async function updateUser (data){
+    try {
+        const res = await api.post("/api/v1/user/update-user", data);
+        return res
+    } catch (error) {
+        throw error
+    }
 }

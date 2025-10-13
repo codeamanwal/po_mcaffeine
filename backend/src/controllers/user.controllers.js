@@ -1,3 +1,4 @@
+import { where } from "sequelize";
 import User  from "../models/user.model.js";
 
 async function createUser(req, res) {
@@ -156,10 +157,48 @@ async function getUser(req, res) {
     }
 }
 
+async function updateUser(req, res) {
+    try {
+        const loggedInUser = req.user;
+        if(!(loggedInUser.role === "superadmin" || loggedInUser.role === "admin")){
+            return res.status(400).json({msg: "User do not have perission to make these changes!"})
+        }
+
+        const body = req.body;
+        if(!body) {
+            return res.status(400).json({msg:"Please enter the details", success: false, status: 400})
+        }
+
+        const {name, email, role, allotedFacilities, id} = body
+        if(!id){
+            return res.status(400).json({msg:"Please enter the details", success: false, status: 400})
+        }
+
+        const existingUser = await User.findByPk(id);
+        if(!existingUser) {
+            return res.status(404).json({msg:"No such user exist"})
+        }
+
+        const updatedData = {
+            name: name ?? existingUser.name,
+            email: email ?? existingUser.email,
+            role: role ?? existingUser.role,
+            allotedFacilities: allotedFacilities?.length > 0 ? allotedFacilities : existingUser.allotedFacilities,
+        }
+
+        const updatedUser = await existingUser.update(updatedData)
+
+        return res.status(200).json({msg:"User updated successfully", updatedUser, success: true, status: 200})
+    } catch (error) {
+        return res.status(500).json({msg:"Something went wrong while updating data", success: false, error, status: 500})
+    }
+}
+
 export const userControllers = {
     createUser,
     deleteUser, 
     changeYourPassword, 
     getAllUsers,
-    getUser
+    getUser,
+    updateUser
 }
