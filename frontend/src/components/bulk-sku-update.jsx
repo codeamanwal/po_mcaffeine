@@ -275,10 +275,10 @@ export default function BulkSkuUpdateModal({
       return
     }
 
-    if (isWarehouse && !reason.trim()) {
-      setError("Reason is required for quantity updates")
-      return
-    }
+    // if (isWarehouse && !reason.trim()) {
+    //   setError("Reason is required for quantity updates")
+    //   return
+    // }
 
     const validRecords = parsedData.filter((record) => !record.error)
     if (validRecords.length === 0) {

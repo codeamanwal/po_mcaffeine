@@ -910,18 +910,18 @@ export default function DashboardPage({ onNavigate }) {
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {/* Entry Date Range */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date From</label>
+                      <label className="text-sm font-medium">PO Date From</label>
                       <DatePicker
-                        date={poFilters.entryDateFrom}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, entryDateFrom: date }))}
+                        date={poFilters.poDateFrom}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateFrom: date }))}
                         placeholder="From date"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date To</label>
+                      <label className="text-sm font-medium">PO Date To</label>
                       <DatePicker
-                        date={poFilters.entryDateTo}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, entryDateTo: date }))}
+                        date={poFilters.poDateTo}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateTo: date }))}
                         placeholder="To date"
                       />
                     </div>
@@ -1201,18 +1201,18 @@ export default function DashboardPage({ onNavigate }) {
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {/* Entry Date Range */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date From</label>
+                      <label className="text-sm font-medium">PO Date From</label>
                       <DatePicker
-                        date={shipmentFilters.entryDateFrom}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateFrom: date }))}
+                        date={shipmentFilters.poDateFrom}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateFrom: date }))}
                         placeholder="From date"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date To</label>
+                      <label className="text-sm font-medium">PO Date To</label>
                       <DatePicker
-                        date={shipmentFilters.entryDateTo}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateTo: date }))}
+                        date={shipmentFilters.poDateTo}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateTo: date }))}
                         placeholder="To date"
                       />
                     </div>
