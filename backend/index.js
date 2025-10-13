@@ -60,7 +60,7 @@ app.post("/api/v1/auth/login" ,async (req,res) => {
 
             const publicUser = getPublicUser(user.toJSON());
 
-            console.log("publicUser: ", publicUser);
+            // console.log("publicUser: ", publicUser);
 
             const token = generateToken(publicUser)
             res.cookie('token', token, {
