@@ -245,11 +245,33 @@ async function getShipmentWithSkuOrders(req, res) {
 
 async function getSkusByShipment(req, res) {
   try {
-    console.log("getSkusByShipment triggered")
+    // console.log("getSkusByShipment triggered")
       // shioment uid as uid
     const { uid } = req.body;
     console.log(uid);
-    const skus = await SkuOrder.findAll({where: {shipmentOrderId:uid} })
+    const skus = await SkuOrder.findAll(
+      {where: {shipmentOrderId:uid},
+      order: [
+        [
+            sequelize.literal(`
+              CASE
+                WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+                ELSE NULL
+              END
+            `),
+            'ASC NULLS LAST'
+          ], // postgresql
+          // [ 
+          //   sequelize.literal(`
+          //   CASE
+          //     WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+          //     ELSE NULL
+          //   END
+          //   `),
+          //   'ASC'
+          // ], // mysql
+      ] 
+    })
     if(!skus || skus.length == 0){
       return res.status(404).json({msg:"No sku orders found for given shipment order!"})
     }
