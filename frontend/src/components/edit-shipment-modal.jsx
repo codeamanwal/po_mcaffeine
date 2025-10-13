@@ -847,7 +847,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           <Input
             id={field.id}
             type="file"
-            value={value || ""}
+            value={""}
             onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
             className={cn(
               "h-10",
