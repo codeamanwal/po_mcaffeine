@@ -228,7 +228,8 @@ const fetchShipmentLogs = async (shipmentId) => {
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
 
   const [logs, setLogs] = useState([])
-  const [logsLoading, setLogsLoading] = useState(false)
+  const [logsLoading, setLogsLoading] = useState(true)
+  const [logsChanged, setIsLogsChanged] = useState(false)
   
   const fetchLogData = async () => {
     if(!shipmentData.uid){
@@ -250,7 +251,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   useEffect(() => {
     fetchLogData();
     console.log("shipmentData: ",shipmentData)
-  },[shipmentData])
+  },[shipmentData.uid, logsChanged])
 
   const [skuTabActive, setSkuTab] = useState(false)
 
@@ -545,6 +546,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       setSuccess("")
       setError("")
       setIsLoading(false)
+      setIsLogsChanged(!logsChanged)
     }
 
     
@@ -1097,7 +1099,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
               ) : (
                 <ScrollArea className="h-[60vh]">
                   <div className="space-y-4">
-                    {logs?.length === 0 ? (
+                    {!logs || logs?.length === 0 ? (
                       <div className="text-center py-8">
                         <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <p className="text-muted-foreground">No change logs available</p>
