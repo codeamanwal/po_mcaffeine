@@ -440,9 +440,11 @@ export default function DashboardPage({ onNavigate }) {
           criticalDispatchDate = formatDate(cdd)
           // deliveryType
           const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
+          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
           return {
             ...item,
             tat,
+            currentAppointmentDate,
             criticalDispatchDate,
             deliveryType,
           }
