@@ -419,6 +419,16 @@ export default function DashboardPage({ onNavigate }) {
       const res = await getPoFormatOrderList()
       console.log(res.data)
       setPoFormatData(res.data.orders)
+      setPoFormatData((prev) => {
+        const arr = prev.map(item => {
+          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
+          return {
+            ...item,
+            currentAppointmentDate,
+          }
+        })
+        return arr;
+      })
     } catch (error) {
       console.log(error)
       setPoFormatData(poData)
