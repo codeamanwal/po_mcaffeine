@@ -100,6 +100,7 @@ const poData = [
     channelType: "Quick-commerce",
     actualWeight: 2.376,
     check: "",
+    finalStatus: "null",
   },
   {
     entryDate: "04-12-2024",
@@ -141,6 +142,7 @@ const poData = [
     channelType: "Quick-commerce",
     actualWeight: 2.2,
     check: "",
+    finalStatus: "null",
   },
 ]
 
@@ -227,6 +229,7 @@ const shipmentData = [
     check2: 342657,
     uid2: 152,
     check: 4,
+    finalStatus: "null",
   },
 ]
 
@@ -333,6 +336,7 @@ export default function DashboardPage({ onNavigate }) {
     statusPlanning: [],
     statusWarehouse: [],
     statusLogistics: [],
+    finalStatus: [],
   })
 
   // Filter states for Shipment - Updated to support multi-select
@@ -350,6 +354,7 @@ export default function DashboardPage({ onNavigate }) {
     statusPlanning: [],
     statusWarehouse: [],
     statusLogistics: [],
+    finalStatus: [],
   })
 
   const [statusModal, setStatusModal] = useState(false)
@@ -422,9 +427,11 @@ export default function DashboardPage({ onNavigate }) {
       setPoFormatData((prev) => {
         const arr = prev.map(item => {
           const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
+          const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
           return {
             ...item,
             currentAppointmentDate,
+            finalStatus,
           }
         })
         return arr;
@@ -451,12 +458,14 @@ export default function DashboardPage({ onNavigate }) {
           // deliveryType
           const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
           const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
+          const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
           return {
             ...item,
             tat,
             currentAppointmentDate,
             criticalDispatchDate,
             deliveryType,
+            finalStatus,
           }
         })
         return arr;
@@ -528,7 +537,8 @@ export default function DashboardPage({ onNavigate }) {
         (currentAppointmentDate && currentAppointmentDate <= poFilters.currentAppointmentDateTo)) &&
       filterMatchField("statusPlanning") &&
       filterMatchField("statusWarehouse") &&
-      filterMatchField("statusLogistics") 
+      filterMatchField("statusLogistics") && 
+      filterMatchField("finalStatus")
       // filterMatchField("statusPlanning") &&
       // (poFilters.statusPlanning.length === 0 || poFilters.statusPlanning.includes(item.statusPlanning)) &&
       // (poFilters.statusWarehouse.length === 0 || poFilters.statusWarehouse.includes(item.statusWarehouse)) &&
@@ -600,7 +610,8 @@ export default function DashboardPage({ onNavigate }) {
         (currentAppointmentDate && currentAppointmentDate <= shipmentFilters.currentAppointmentDateTo)) &&
       filterMatchField("statusPlanning") &&
       filterMatchField("statusWarehouse") &&
-      filterMatchField("statusLogistics") 
+      filterMatchField("statusLogistics") &&
+      filterMatchField("finalStatus")
       // (shipmentFilters.statusPlanning.length === 0 || shipmentFilters.statusPlanning.includes(item.statusPlanning)) &&
       // (shipmentFilters.statusWarehouse.length === 0 ||
         // shipmentFilters.statusWarehouse.includes(item.statusWarehouse)) &&
@@ -661,6 +672,7 @@ export default function DashboardPage({ onNavigate }) {
       statusPlanning: [],
       statusWarehouse: [],
       statusLogistics: [],
+      finalStatus: [],
     })
     setPoSearchTerm("")
   }
@@ -680,6 +692,7 @@ export default function DashboardPage({ onNavigate }) {
       statusPlanning: [],
       statusWarehouse: [],
       statusLogistics: [],
+      finalStatus: [],
     })
     setShipmentSearchTerm("")
   }
@@ -1010,6 +1023,15 @@ export default function DashboardPage({ onNavigate }) {
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusLogistics: values }))}
                       placeholder="Select status"
                     />
+
+                    {/* Multi-select Final Status */}
+                    <MultiSelectFilter
+                      label="Final Status"
+                      options={getUniqueValues(poFormatData, "finalStatus")}
+                      selectedValues={poFilters.finalStatus}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, finalStatus: values }))}
+                      placeholder="Select status"
+                    />
                   </div>
                 </div>
               </CardHeader>
@@ -1294,6 +1316,17 @@ export default function DashboardPage({ onNavigate }) {
                       selectedValues={shipmentFilters.statusLogistics}
                       onSelectionChange={(values) =>
                         setShipmentFilters((prev) => ({ ...prev, statusLogistics: values }))
+                      }
+                      placeholder="Select status"
+                    />
+
+                    {/* Multi-select Final Status */}
+                    <MultiSelectFilter
+                      label="Final Status"
+                      options={getUniqueValues(shipmentStatusData, "finalStatus")}
+                      selectedValues={shipmentFilters.finalStatus}
+                      onSelectionChange={(values) =>
+                        setShipmentFilters((prev) => ({ ...prev, finalStatus: values }))
                       }
                       placeholder="Select status"
                     />
