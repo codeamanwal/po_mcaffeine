@@ -57,6 +57,7 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "
 import { getFinalStatus } from "@/constants/status_master"
 import { getTAT } from "@/constants/courier-partners"
 import { getDeliveryType } from "@/lib/validation"
+import { toast } from "sonner"
 
 // Sample data based on provided format
 const poData = [
@@ -306,7 +307,7 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
 export default function DashboardPage({ onNavigate }) {
   const router = useRouter()
   const { isDarkMode, setIsDarkMode } = useThemeStore()
-  const { user } = useUserStore()
+  const { user, logout } = useUserStore()
   const [activeTab, setActiveTab] = useState("po-format")
 
   const [poFormatData, setPoFormatData] = useState([])
@@ -438,6 +439,7 @@ export default function DashboardPage({ onNavigate }) {
       })
     } catch (error) {
       console.log(error)
+      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
       setPoFormatData(poData)
     }
   }
@@ -472,6 +474,7 @@ export default function DashboardPage({ onNavigate }) {
       })
     } catch (error) {
       console.log(error)
+      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
       setShipmentStatusData(shipmentData)
     }
   }

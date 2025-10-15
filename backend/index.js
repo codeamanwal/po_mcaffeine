@@ -21,8 +21,8 @@ app.use(cors({
   credentials: true, 
 }));
 
-app.use(express.json()); 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({limit: "50mb"})); 
+app.use(express.urlencoded({limit: "50mb", extended: true }));
 
 const port  = process.env.PORT || 8000;
 
@@ -81,9 +81,10 @@ app.post("/api/v1/auth/login" ,async (req,res) => {
     
 })
 
+
+
 // Connect to DB first, then start server
 connectToDatabase().then((res) => {
-    console.log(res);
     app.listen(port, () => {
         console.log(`Server is running on port ${port}`);
     });

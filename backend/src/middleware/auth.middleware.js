@@ -10,7 +10,7 @@ export async function AuthMiddleware (req, res, next) {
     } catch (error) {
         console.log(error)
         return res.status(401).json({
-            msg: "Authentication failed",
+            msg: "Authentication failed! Try after loggin in",
             error,
             success: false,
             status: 401

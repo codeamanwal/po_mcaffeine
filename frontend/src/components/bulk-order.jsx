@@ -92,8 +92,8 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       } else {
         brand = "MCaffeine"
       }
-
-      const order = {
+      
+      let order = {
         entryDate: `${String(new Date().getDate()).padStart(2, "0")}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${new Date().getFullYear()}`,
         brand: brand ,
         brandName: brand ,
@@ -113,8 +113,14 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
         errors: [],
         warnings: [],
       }
-
-      orders.push(order)
+      
+      // check for checking missing some crucial data
+      if(!order.channel || !order.location || !order.poNumber || !order.skuCode || !order.skuName || !order.channelSkuCode || order.qty === 0 || order.gmv === 0 || order.poValue === 0){
+        order = {...order, status:"invalid", errors: ["Missing mandetory fields"]}
+        orders.push(order)
+      } else{
+        orders.push(order)
+      }
     }
 
     // Validate all orders using the validation utility
