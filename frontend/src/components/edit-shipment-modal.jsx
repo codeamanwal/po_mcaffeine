@@ -539,9 +539,10 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       setPoEditReason("")
       setPoEditComments("")
     } catch (err) {
+      const errorMsg =  err?.response.data?.error?.errors?.at(0)?.message ?? err?.response.data?.error?.name ?? err?.response.data?.msg ?? err.message ?? "Failed to update data!";  
       console.error("Error: ", err)
-      setError("Failed to update shipment: " + (err.response.data.msg || err.message || err))
-      toast.error("Failed to update shipment: " + (err.response.data.msg || err.message || err))
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally{
       setSuccess("")
       setError("")

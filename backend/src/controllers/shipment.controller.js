@@ -252,24 +252,24 @@ async function getSkusByShipment(req, res) {
     const skus = await SkuOrder.findAll(
       {where: {shipmentOrderId:uid},
       order: [
-        [
+        // [
+        //     sequelize.literal(`
+        //       CASE
+        //         WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+        //         ELSE NULL
+        //       END
+        //     `),
+        //     'ASC NULLS LAST'
+        //   ], // postgresql
+          [ 
             sequelize.literal(`
-              CASE
-                WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
-                ELSE NULL
-              END
+            CASE
+              WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+              ELSE NULL
+            END
             `),
-            'ASC NULLS LAST'
-          ], // postgresql
-          // [ 
-          //   sequelize.literal(`
-          //   CASE
-          //     WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
-          //     ELSE NULL
-          //   END
-          //   `),
-          //   'ASC'
-          // ], // mysql
+            'ASC'
+          ], // mysql
       ] 
     })
     if(!skus || skus.length == 0){
@@ -375,24 +375,24 @@ async function getAllSkuOrders(req, res) {
         }],
         order: [
           ['shipmentOrderId', 'DESC'],
-          [
-            sequelize.literal(`
-              CASE
-                WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
-                ELSE NULL
-              END
-            `),
-            'ASC NULLS LAST'
-          ], // postgresql
-          // [ 
+          // [
           //   sequelize.literal(`
-          //   CASE
-          //     WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
-          //     ELSE NULL
-          //   END
+          //     CASE
+          //       WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+          //       ELSE NULL
+          //     END
           //   `),
-          //   'ASC'
-          // ], // mysql
+          //   'ASC NULLS LAST'
+          // ], // postgresql
+          [ 
+            sequelize.literal(`
+            CASE
+              WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+              ELSE NULL
+            END
+            `),
+            'ASC'
+          ], // mysql
         ]
       });
     }
@@ -418,24 +418,24 @@ async function getAllSkuOrders(req, res) {
           ],
           order: [
             ['shipmentOrderId', 'DESC'],
-            [
-              sequelize.literal(`
-                CASE
-                  WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
-                  ELSE NULL
-                END
-              `),
-              'ASC NULLS LAST'
-            ], // postgresql
-            // [ 
+            // [
             //   sequelize.literal(`
-            //   CASE
-            //     WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
-            //     ELSE NULL
-            //   END
+            //     CASE
+            //       WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+            //       ELSE NULL
+            //     END
             //   `),
-            //   'ASC'
-            // ], // mysql
+            //   'ASC NULLS LAST'
+            // ], // postgresql
+            [ 
+              sequelize.literal(`
+              CASE
+                WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+                ELSE NULL
+              END
+              `),
+              'ASC'
+            ], // mysql
           ]
         });
       }
@@ -493,6 +493,9 @@ async function updateShipment(req, res) {
     let logs = [];
 
     let { uid, poEditAudit, ...updateData } = req.body;
+    if(!req.body.poNumber){
+      return res.status(400).json({msg: "PO Number can not be empty!"});
+    }
     const shipment = await ShipmentOrder.findOne({ where: { uid } });
 
     if(poEditAudit){
@@ -552,7 +555,7 @@ async function updateShipment(req, res) {
     return res.status(200).json({ msg: "Shipment updated successfully", shipment: updatedShipment });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error });
   }
 }
 
