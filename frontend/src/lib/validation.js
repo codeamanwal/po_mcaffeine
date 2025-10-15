@@ -321,7 +321,7 @@ export const validateBulkSkuData = (csvSkus) => {
 
 // Auto-fill functions
 export const autoFillSkuData = (skuCode) => {
-  const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
+  const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
   if (!masterSku) return null
 
   let brand = "";
@@ -333,20 +333,20 @@ export const autoFillSkuData = (skuCode) => {
     } else if(prefix === "viv"){
       brand = "Vivek"
     } else {
-      brand = masterSku.brand_name
+      brand = masterSku?.brand_name || "MCaffeine"
     }
   return {
-    skuName: masterSku.sku_name,
+    skuName: masterSku?.sku_name || "",
     brandName: brand ?? "MCaffeine",
-    mrp: masterSku.mrp,
+    mrp: masterSku?.mrp || "",
   }
 }
 
 export const calculateGmv = (qty, skuCode) => {
-  const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
-  if (!masterSku || !masterSku.mrp) return 0
+  const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
+  if (!masterSku || !masterSku?.mrp) return 0
 
-  return qty * masterSku.mrp
+  return qty * masterSku?.mrp
 }
 
 export const generateChannelSkuCode = (channel, skuCode) => {
@@ -361,9 +361,9 @@ export const generateChannelSkuCode = (channel, skuCode) => {
 export const getBrandFromSkus = (skuCodes) => {
   const brands = new Set()
   skuCodes.forEach((skuCode) => {
-    const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
+    const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
     if (masterSku) {
-      brands.add(masterSku.brand_name)
+      brands.add(masterSku?.brand_name ?? "MCaffeine")
     }
   })
 
@@ -381,9 +381,9 @@ export const validateBrandConsistency = (skuCodes) => {
   const brands = new Set()
 
   skuCodes.forEach((skuCode) => {
-    const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
+    const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
     if (masterSku) {
-      brands.add(masterSku.brand_name)
+      brands.add(masterSku?.brand_name ?? "MCaffeine")
     }
   })
 
