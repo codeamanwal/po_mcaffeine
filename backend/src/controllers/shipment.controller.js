@@ -1,10 +1,11 @@
-import { where } from "sequelize";
+import { Op, where } from "sequelize";
 // import { sequelize } from "../db/postgresql.js";
 import { sequelize } from '../db/mysql.js';
 import {ShipmentOrder} from "../models/index.js";
 import {SkuOrder} from "../models/index.js";
 import Log from "../models/log.model.js";
 import User from "../models/user.model.js";
+import { isBulkShipmentUpdateAllowed } from "../utils/shipment.js";
 
 function checkNullCond(value, prevValue) {
   // return true if prev == non-null and now == null
@@ -244,7 +245,7 @@ async function getShipmentWithSkuOrders(req, res) {
 
 async function getSkusByShipment(req, res) {
   try {
-    console.log("getSkusByShipment triggered")
+    // console.log("getSkusByShipment triggered")
       // shioment uid as uid
     const { uid } = req.body;
     console.log(uid);
@@ -281,19 +282,80 @@ async function getSkusByShipment(req, res) {
   }
 }
 
-async function getAllShipments(req, res){
-    try {
-        const shipments = await ShipmentOrder.findAll({order: [['uid', 'DESC']]});
-        return res.status(200).json({msg:"Data fetched successfully", shipments, success: true, status: 200});
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({msg:"Something went wrong While fetching data!", success: false, error, status: 500});
+async function getAllShipments(req, res) {
+  try {
+    const currUser = req.user;
+    let shipments;
+    if(currUser.role === "superadmin" || currUser.role === "admin"){
+      shipments = await ShipmentOrder.findAll({
+        order: [["uid", "DESC"]],
+        include: [{
+          model: SkuOrder,
+          as: 'skuOrders',
+        }]
+      });
+    } 
+    else if(currUser.role === "warehouse" || currUser.role === "logistics"){
+      const allotedFacilities = currUser.allotedFacilities;
+      // console.log("Facilities: ", allotedFacilities)
+      if(!allotedFacilities || allotedFacilities.length === 0){
+        shipments = [];
+      }
+      else{ 
+        shipments = await ShipmentOrder.findAll({
+          // where facility is one of currUser.allotedFacilities that is array or can be null
+          where: {facility: { [Op.in]: allotedFacilities }},
+          order: [["uid", "DESC"]],
+          include: [{
+            model: SkuOrder,
+            as: 'skuOrders',
+          }]
+        });
+      }
     }
+    else {
+      shipments = [];
+    }
+
+    if (!shipments || shipments.length === 0) {
+      return res.status(404).json({ error: 'No shipments found!' });
+    }
+
+    // Process each shipment to calculate totalUnits and remove skuOrders
+    const shipmentsWithTotals = shipments.map(shipment => {
+      const shipmentData = shipment.toJSON();
+
+      // Sum total quantity from related skuOrders
+      const totalUnits = shipmentData.skuOrders.reduce((sum, sku) => {
+        const qty = Number(sku.updatedQty ?? sku.qty ?? 0);
+        return sum + qty;
+      }, 0);
+
+      // Add totalUnits and remove skuOrders to reduce payload
+      shipmentData.totalUnits = totalUnits;
+      delete shipmentData.skuOrders;
+
+      return shipmentData;
+    });
+
+    return res.status(200).json({
+      msg: "Data fetched successfully",
+      shipments: shipmentsWithTotals
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      msg: "Something went wrong while fetching data!",
+      error: error.message
+    });
+  }
 }
 
 async function getAllSkuOrders(req, res) {
   try {
     // pull shipmentOrderId from ?shipmentOrderId=... if provided
+    const currRole = req.user?.role;
     const query = req?.query;
     const shipmentOrderId = query?.shipmentOrderId ? query.shipmentOrderId : null;
     
@@ -303,6 +365,7 @@ async function getAllSkuOrders(req, res) {
       where.shipmentOrderId = shipmentOrderId;
     }
 
+    let skuOrders;
     // fetch all SKUs, optionally include parent ShipmentOrder
     if(currRole === "superadmin" || currRole === "admin"){
       skuOrders = await SkuOrder.findAll({
@@ -451,7 +514,7 @@ async function updateShipment(req, res) {
     if (!shipment) {
       return res.status(404).json({ error: 'Shipment not found' });
     }
-    // check log for 
+    // check log for appointment date change
     if(shipment?.dataValues?.allAppointmentDate?.length !== updateData.allAppointmentDate.length){
       const len = updateData.allAppointmentDate.length;
       updateData.currentAppointmentDate = updateData.allAppointmentDate[len-1];
@@ -462,6 +525,18 @@ async function updateShipment(req, res) {
         fieldName: "Appointment Date",
         change: `Appointment Date changed from ${shipment?.dataValues?.currentAppointmentDate} to ${updateData?.currentAppointmentDate}`,
         remark:  updateData.appointmentRemarks[len-1] || "No remark provided",
+      }
+      logs = [...logs, new_log]
+    }
+    // check log for facility change
+    if(shipment?.dataValues?.facility !== updateData?.facility){
+      isLog = true;
+      const new_log = {
+        shipmentId: shipment.uid,
+        createdBy: req.user,
+        fieldName: "Facility",
+        change: `Facility changed from ${shipment?.dataValues?.facility} to ${updateData?.facility}`,
+        remark: "No extra remark provided",
       }
       logs = [...logs, new_log]
     }
@@ -518,6 +593,14 @@ async function updateBulkShipment(req, res){
     if(user.role === "superadmin"){
       for(const shipment of shipments) {
         let { uid, poNumber, ...updateData } = shipment;
+
+        // check for allowed fields only
+        let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
+        if (!isBulkShipmentUpdateAllowed(updatedFields, "superadmin")) {
+          // await t.rollback();
+          return res.status(401).json({ msg: "Unauthorized to update some fields!" });
+        }
+
         const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
         if (!existingShipment) {
           errs.push({ uid, poNumber, error: 'Shipment not found with given uid' });
@@ -550,9 +633,17 @@ async function updateBulkShipment(req, res){
       return res.status(200).json({ msg: "Shipments updated successfully" });
     }
 
-    if(user.role === "admin"){
+    else if(user.role === "admin"){
       for(const shipment of shipments) {
         const { uid, ...updateData } = shipment;
+        
+        // check for allowed fields only
+        let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
+        if (!isBulkShipmentUpdateAllowed(updatedFields, "admin")) {
+          // await t.rollback();
+          return res.status(401).json({ msg: "Unauthorized to update some fields!" });
+        }
+
         const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
         if (!existingShipment) {
           errs.push({ uid, error: 'Shipment not found' });
@@ -567,14 +658,65 @@ async function updateBulkShipment(req, res){
       return res.status(200).json({ msg: "Shipments updated successfully" });
     }
 
-    // if(user.role === "warehouse"){
-    //   return res.status(200).json({msg: "You are a warehoue"})
-    // }
+    else if(user.role === "warehouse"){
+      for(const shipment of shipments) {
+        const { uid, ...updateData } = shipment;
 
-    // return res.status(200).json({msg:`You are a ${user.role}`});
+        // check for allowed fields only
+        let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
+        if (!isBulkShipmentUpdateAllowed(updatedFields, "warehouse")) {
+          // await t.rollback();
+          return res.status(401).json({ msg: "Unauthorized to update some fields!" });
+        }
+
+        const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
+        if (!existingShipment) {
+          errs.push({ uid, error: 'Shipment not found' });
+          continue; // Skip to the next shipment if not found
+        }
+        await existingShipment.update(updateData, { transaction: t });
+      }
+      await t.commit();
+      if (errs.length > 0) {
+        return res.status(204).json({ errors: errs });
+      }
+      return res.status(200).json({ msg: "Shipments updated successfully" });
+    }
+
+    else if(user.role === "logistics"){
+      for(const shipment of shipments) {
+        const { uid, ...updateData } = shipment;
+
+        // check for allowed fields only
+        let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
+        if (!isBulkShipmentUpdateAllowed(updatedFields, "logistics")) {
+          console.log("updatedFields: ", updatedFields);
+          console.log("flag:", isBulkShipmentUpdateAllowed(updatedFields, "logistics"))
+          // await t.rollback();
+          return res.status(401).json({ msg: "Unauthorized to update some fields!" });
+        }
+
+        const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
+        if (!existingShipment) {
+          errs.push({ uid, error: 'Shipment not found' });
+          continue; // Skip to the next shipment if not found
+        }
+        await existingShipment.update(updateData, { transaction: t });
+      }
+      await t.commit();
+      if (errs.length > 0) {
+        return res.status(204).json({ errors: errs });
+      }
+      return res.status(200).json({ msg: "Shipments updated successfully" });
+    }
     
+    else {
+      await t.rollback();
+      return res.status(401).json({msg:"Unauthorized!", error: error.message})
+    }
 
   } catch (error) {
+    console.log(error);
     await t.rollback();
     console.error("Error: ", error);
     return res.status(500).json({msg:"Something went wrong while updating Shipments!", error: error.message})

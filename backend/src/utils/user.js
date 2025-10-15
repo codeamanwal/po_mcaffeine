@@ -9,6 +9,7 @@ export function getPublicUser(user) {
         location: user.location,
         phone: user.phone,
         permissions: user.permissions,
+        allotedFacilities: user.allotedFacilities,
     }
     
     return publicUser;

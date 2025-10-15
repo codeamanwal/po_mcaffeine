@@ -44,6 +44,7 @@ import {master_appointment_change_options} from "@/constants/master_sheet"
 import SkuLevelEditModal from "./sku-level-edit-modal"
 import LogisticsCost from "./logistics-cost"
 import { getTAT } from "@/constants/courier-partners"
+import { getFinalStatus } from "@/constants/status_master"
 
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
@@ -92,7 +93,7 @@ const adminFields = [
   "statusPlanning",
   "channelInwardingRemarks",
   "dispatchDateTentative",
-  "workingDatePlanner",
+  // "workingDatePlanner",
   // "productWeight",
   "firstAppointmentDateCOPT",
   "orderNo1",
@@ -103,6 +104,7 @@ const adminFields = [
   "labelsLink",
   "invoiceValue",
   "document",
+  "deliveryType",
 ]
 
 const warehouseFields = [
@@ -110,6 +112,7 @@ const warehouseFields = [
   "dispatchRemarksWarehouse",
   "rtsDate",
   "dispatchDate",
+  "workingDatePlanner",
   "noOfBoxes",
   "pickListNo",
   "inventoryRemarksWarehouse",
@@ -225,7 +228,8 @@ const fetchShipmentLogs = async (shipmentId) => {
 export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSave }) {
 
   const [logs, setLogs] = useState([])
-  const [logsLoading, setLogsLoading] = useState(false)
+  const [logsLoading, setLogsLoading] = useState(true)
+  const [logsChanged, setIsLogsChanged] = useState(false)
   
   const fetchLogData = async () => {
     if(!shipmentData.uid){
@@ -247,7 +251,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   useEffect(() => {
     fetchLogData();
     console.log("shipmentData: ",shipmentData)
-  },[shipmentData])
+  },[shipmentData.uid, logsChanged])
 
   const [skuTabActive, setSkuTab] = useState(false)
 
@@ -543,6 +547,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       setSuccess("")
       setError("")
       setIsLoading(false)
+      setIsLogsChanged(!logsChanged)
     }
 
     
@@ -845,7 +850,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           <Input
             id={field.id}
             type="file"
-            value={value || ""}
+            value={""}
             onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
             className={cn(
               "h-10",
@@ -929,9 +934,12 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   const availableTabs = getAvailableTabs()
 
+  const finalStatus = getFinalStatus(shipmentData.statusPlanning ?? "Confirmed", shipmentData.statusWarehouse ?? "Confirmed", shipmentData.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[85vw] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="min-w-[75vw] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Save className="h-5 w-5" />
@@ -970,6 +978,55 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
               </AlertDescription>
             </Alert>
           )}
+
+          {/* Basic shipment info  */}
+          {
+            // let finalStatus = getFinalStatus(data.statusPlanning ?? "Confirmed", data.statusWarehouse ?? "Confirmed", data.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+            shipmentData && !isLoading &&
+            (
+              <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+                <CardHeader>
+                  <CardTitle className="text-sm md:text-base">Shipment Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Channel</Label>
+                      <div className="font-semibold">{shipmentData.channel ?? "-"}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Location</Label>
+                      <div className="font-semibold">{shipmentData.location ?? "-"}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">PO Date</Label>
+                      <div className="font-semibold">{shipmentData.poDate ?? "-"}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">PO Number</Label>
+                      <div className="font-semibold">{shipmentData.poNumber ?? "-"}</div>
+                    </div>
+                    {/* <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Overall Qty Fill Rate</Label>
+                      <div className="font-semibold">{calculateOverallFillRates().qtyRate.toFixed(1) ?? 100}%</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Overall GMV Fill Rate</Label>
+                      <div className="font-semibold">{calculateOverallFillRates().gmvRate.toFixed(1) ?? 100}%</div>
+                    </div> */}
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Appointment Date</Label>
+                      <div className="font-semibold">{shipmentData.currentAppointmentDate ?? "-"}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Final Status</Label>
+                      <div className="font-semibold">{finalStatus ?? "-"}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          }
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full flex md:flex-row justify-around items-center mb-6">
@@ -1043,7 +1100,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
               ) : (
                 <ScrollArea className="h-[60vh]">
                   <div className="space-y-4">
-                    {logs?.length === 0 ? (
+                    {!logs || logs?.length === 0 ? (
                       <div className="text-center py-8">
                         <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <p className="text-muted-foreground">No change logs available</p>

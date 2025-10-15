@@ -209,7 +209,7 @@ export const shipmentStatusDataType = [
   { fieldName: "dispatchRemarksLogistics", label: "Dispatch Remarks (Logistics)", id: "dispatchRemarksLogistics", type: "text" },
   { fieldName: "dispatchRemarksWarehouse", label: "Dispatch Remarks (Warehouse)", id: "dispatchRemarksWarehouse", type: "text" },
   { fieldName: "dispatchDateTentative", label: "Dispatch Date - Tentative (Planning)", id: "dispatchDateTentative", type: "date" },
-  { fieldName: "workingDatePlanner", label: "Working Date (Planner)", id: "workingDatePlanner", type: "date" },
+  { fieldName: "workingDatePlanner", label: "Working Date", id: "workingDatePlanner", type: "date" },
   { fieldName: "rtsDate", label: "RTS Date", id: "rtsDate", type: "date" },
   { fieldName: "dispatchDate", label: "Dispatch Date", id: "dispatchDate", type: "date" },
   { fieldName: "currentAppointmentDate", label: "Current Appointment Date", id: "currentAppointmentDate", type: "date" },
@@ -246,7 +246,7 @@ export const shipmentStatusDataType = [
   },
   { fieldName: "thirdDocketNo", label: "3rd Docket No/ Vehicle Number (Last Mile)", id: "thirdDocketNo", type: "text" },
   { fieldName: "appointmentLetter", label: "Appointment Letter/STN", id: "appointmentLetter", type: "text" },
-  { fieldName: "labelsLink", label: "Labels - Amazon/Flipkart (Link)", id: "labelsLink", type: "text" },
+  { fieldName: "labelsLink", label: "PO Expiry Date", id: "labelsLink", type: "date" },
   { fieldName: "invoiceDate", label: "Invoice Date", id: "invoiceDate", type: "date" },
   { fieldName: "invoiceLink", label: "Invoice Link", id: "invoiceLink", type: "text" },
   { fieldName: "cnLink", label: "CN Link", id: "cnLink", type: "text" },
@@ -281,4 +281,6 @@ export const shipmentStatusDataType = [
   { fieldName: "tat", label: "TAT", id: "tat", type: "number" },
   { fieldName: "criticalDispatchDate", label: "Critical Dispatch Date", id: "criticalDispatchDate", type: "date" },
   { fieldName: "rpk", label: "Rates/kg", id: "rpk", type: "number" },
+  // delivery type
+  { fieldName: "deliveryType", label: "DeliveryType", id: "deliveryType", type: "select", options: ["Pick up", "Drop in", ""], },
 ];

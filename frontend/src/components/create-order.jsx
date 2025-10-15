@@ -204,21 +204,21 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
 
         // Auto-fill when SKU code changes
         if (field === "skuCode") {
-          const masterSku = master_sku_code_options.find((item) => item.sku_code === value)
+          const masterSku = master_sku_code_options?.find((item) => item.sku_code === value)
           const prefix = `${value}`.substring(0,3);
           if(prefix === "HYP"){
               updatedSku.brandName = "Hyphen"
-            } else if(prefix === "AMA"){
-              updatedSku.brandName = "Aman"
-            } else if(prefix === "VIV"){
-              updatedSku.brandName = "Vivek"
-            } else {
-              updatedSku.brandName = masterSku.brand_name
-            }
+          } else if(prefix === "AMA"){
+            updatedSku.brandName = "Aman"
+          } else if(prefix === "VIV"){
+            updatedSku.brandName = "Vivek"
+          } else {
+            updatedSku.brandName = masterSku?.brand_name || "MCaffeine"
+          }
           if (masterSku) {
-            updatedSku.skuName = masterSku.sku_name
+            updatedSku.skuName = masterSku?.sku_name
             // updatedSku.brandName = masterSku.brand_name
-            updatedSku.mrp = masterSku.mrp
+            updatedSku.mrp = masterSku?.mrp
             
 
             // Auto-fill channel SKU code if channel is selected

@@ -56,6 +56,8 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog"
 import { getFinalStatus } from "@/constants/status_master"
 import { getTAT } from "@/constants/courier-partners"
+import { getDeliveryType } from "@/lib/validation"
+import { toast } from "sonner"
 
 // Sample data based on provided format
 const poData = [
@@ -99,6 +101,7 @@ const poData = [
     channelType: "Quick-commerce",
     actualWeight: 2.376,
     check: "",
+    finalStatus: "null",
   },
   {
     entryDate: "04-12-2024",
@@ -140,6 +143,7 @@ const poData = [
     channelType: "Quick-commerce",
     actualWeight: 2.2,
     check: "",
+    finalStatus: "null",
   },
 ]
 
@@ -226,6 +230,7 @@ const shipmentData = [
     check2: 342657,
     uid2: 152,
     check: 4,
+    finalStatus: "null",
   },
 ]
 
@@ -302,7 +307,7 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
 export default function DashboardPage({ onNavigate }) {
   const router = useRouter()
   const { isDarkMode, setIsDarkMode } = useThemeStore()
-  const { user } = useUserStore()
+  const { user, logout } = useUserStore()
   const [activeTab, setActiveTab] = useState("po-format")
 
   const [poFormatData, setPoFormatData] = useState([])
@@ -332,6 +337,7 @@ export default function DashboardPage({ onNavigate }) {
     statusPlanning: [],
     statusWarehouse: [],
     statusLogistics: [],
+    finalStatus: [],
   })
 
   // Filter states for Shipment - Updated to support multi-select
@@ -349,6 +355,7 @@ export default function DashboardPage({ onNavigate }) {
     statusPlanning: [],
     statusWarehouse: [],
     statusLogistics: [],
+    finalStatus: [],
   })
 
   const [statusModal, setStatusModal] = useState(false)
@@ -387,7 +394,8 @@ export default function DashboardPage({ onNavigate }) {
   // Get unique values for dropdown filters
   const getUniqueValues = (data, field) => {
     const values = data.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
-    return [...new Set(values)].sort()
+    const uniqueValues = [...new Set(values)].sort()
+    return ["Not Assigned", ...uniqueValues]
   }
 
   const getFacilityOptions = (data, field) => {
@@ -417,8 +425,21 @@ export default function DashboardPage({ onNavigate }) {
       const res = await getPoFormatOrderList()
       console.log(res.data)
       setPoFormatData(res.data.orders)
+      setPoFormatData((prev) => {
+        const arr = prev.map(item => {
+          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
+          const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+          return {
+            ...item,
+            currentAppointmentDate,
+            finalStatus,
+          }
+        })
+        return arr;
+      })
     } catch (error) {
       console.log(error)
+      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
       setPoFormatData(poData)
     }
   }
@@ -430,21 +451,30 @@ export default function DashboardPage({ onNavigate }) {
       setShipmentStatusData(res.data.shipments)
       setShipmentStatusData((prev) => {
         const arr = prev.map(item => {
+          // add tat and critical dispatch date
           let criticalDispatchDate = item.currentAppointmentDate;
           const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
           const tat = getTAT(item.firstTransporter) ?? 0;
           const cdd = cad ? cad - tat * 24*60*60*1000 : null;
           criticalDispatchDate = formatDate(cdd)
+          // deliveryType
+          const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
+          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
+          const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
           return {
             ...item,
             tat,
+            currentAppointmentDate,
             criticalDispatchDate,
+            deliveryType,
+            finalStatus,
           }
         })
         return arr;
       })
     } catch (error) {
       console.log(error)
+      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
       setShipmentStatusData(shipmentData)
     }
   }
@@ -476,13 +506,26 @@ export default function DashboardPage({ onNavigate }) {
         }
         return item.facility === selectedFacility
       })
+    
+    const filterMatchField = (filterName) => {
+      return poFilters[filterName].length === 0 || 
+        poFilters[filterName].some((selected) => {
+          if (selected === "Not Assigned") {
+            return !item[filterName] || item[filterName] === "" || item[filterName] === "0"
+          }
+          return item[filterName] === selected
+        });
+    }
 
     const matchesFilters =
       (!poFilters.entryDateFrom || (entryDate && entryDate >= poFilters.entryDateFrom)) &&
       (!poFilters.entryDateTo || (entryDate && entryDate <= poFilters.entryDateTo)) &&
       (poFilters.brand.length === 0 || poFilters.brand.includes(item.brand)) &&
-      (poFilters.channel.length === 0 || poFilters.channel.includes(item.channel)) &&
-      (poFilters.location.length === 0 || poFilters.location.includes(item.location)) &&
+      // (poFilters.channel.length === 0 || poFilters.channel.includes(item.channel)) &&
+      // (poFilters.location.length === 0 || poFilters.location.includes(item.location)) &&
+      // filterMatchField("brand") &&
+      filterMatchField("channel") &&
+      filterMatchField("location") &&
       facilityMatch && // Added facility filter
       (!poFilters.poDateFrom || (poDate && poDate >= poFilters.poDateFrom)) &&
       (!poFilters.poDateTo || (poDate && poDate <= poFilters.poDateTo)) &&
@@ -495,9 +538,14 @@ export default function DashboardPage({ onNavigate }) {
         (currentAppointmentDate && currentAppointmentDate >= poFilters.currentAppointmentDateFrom)) &&
       (!poFilters.currentAppointmentDateTo ||
         (currentAppointmentDate && currentAppointmentDate <= poFilters.currentAppointmentDateTo)) &&
-      (poFilters.statusPlanning.length === 0 || poFilters.statusPlanning.includes(item.statusPlanning)) &&
-      (poFilters.statusWarehouse.length === 0 || poFilters.statusWarehouse.includes(item.statusWarehouse)) &&
-      (poFilters.statusLogistics.length === 0 || poFilters.statusLogistics.includes(item.statusLogistics))
+      filterMatchField("statusPlanning") &&
+      filterMatchField("statusWarehouse") &&
+      filterMatchField("statusLogistics") && 
+      filterMatchField("finalStatus")
+      // filterMatchField("statusPlanning") &&
+      // (poFilters.statusPlanning.length === 0 || poFilters.statusPlanning.includes(item.statusPlanning)) &&
+      // (poFilters.statusWarehouse.length === 0 || poFilters.statusWarehouse.includes(item.statusWarehouse)) &&
+      // (poFilters.statusWarehouse.length === 0 || poFilters.statusLogistics.includes(item.statusLogistics))
 
     return matchesSearch && matchesFilters
   })
@@ -536,13 +584,26 @@ export default function DashboardPage({ onNavigate }) {
         }
         return item.facility === selectedFacility
       })
+    
+    const filterMatchField = (filterName) => {
+      return shipmentFilters[filterName].length === 0 || 
+        shipmentFilters[filterName].some((selected) => {
+          if (selected === "Not Assigned") {
+            return !item[filterName] || item[filterName] === "" || item[filterName] === "0"
+          }
+          return item[filterName] === selected
+        });
+    }
 
     const matchesFilters =
       (!shipmentFilters.entryDateFrom || (entryDate && entryDate >= shipmentFilters.entryDateFrom)) &&
       (!shipmentFilters.entryDateTo || (entryDate && entryDate <= shipmentFilters.entryDateTo)) &&
       (shipmentFilters.brand.length === 0 || shipmentFilters.brand.includes(item.brandName)) &&
-      (shipmentFilters.channel.length === 0 || shipmentFilters.channel.includes(item.channel)) &&
-      (shipmentFilters.location.length === 0 || shipmentFilters.location.includes(item.location)) &&
+      // (shipmentFilters.channel.length === 0 || shipmentFilters.channel.includes(item.channel)) &&
+      // (shipmentFilters.location.length === 0 || shipmentFilters.location.includes(item.location)) &&
+      // filterMatchField("brand") &&
+      filterMatchField("channel") &&
+      filterMatchField("location") &&
       facilityMatch && // Added facility filter
       (!shipmentFilters.poDateFrom || (poDate && poDate >= shipmentFilters.poDateFrom)) &&
       (!shipmentFilters.poDateTo || (poDate && poDate <= shipmentFilters.poDateTo)) &&
@@ -550,10 +611,14 @@ export default function DashboardPage({ onNavigate }) {
         (currentAppointmentDate && currentAppointmentDate >= shipmentFilters.currentAppointmentDateFrom)) &&
       (!shipmentFilters.currentAppointmentDateTo ||
         (currentAppointmentDate && currentAppointmentDate <= shipmentFilters.currentAppointmentDateTo)) &&
-      (shipmentFilters.statusPlanning.length === 0 || shipmentFilters.statusPlanning.includes(item.statusPlanning)) &&
-      (shipmentFilters.statusWarehouse.length === 0 ||
-        shipmentFilters.statusWarehouse.includes(item.statusWarehouse)) &&
-      (shipmentFilters.statusLogistics.length === 0 || shipmentFilters.statusLogistics.includes(item.statusLogistics))
+      filterMatchField("statusPlanning") &&
+      filterMatchField("statusWarehouse") &&
+      filterMatchField("statusLogistics") &&
+      filterMatchField("finalStatus")
+      // (shipmentFilters.statusPlanning.length === 0 || shipmentFilters.statusPlanning.includes(item.statusPlanning)) &&
+      // (shipmentFilters.statusWarehouse.length === 0 ||
+        // shipmentFilters.statusWarehouse.includes(item.statusWarehouse)) &&
+      // (shipmentFilters.statusLogistics.length === 0 || shipmentFilters.statusLogistics.includes(item.statusLogistics))
 
     return matchesSearch && matchesFilters
   })
@@ -610,6 +675,7 @@ export default function DashboardPage({ onNavigate }) {
       statusPlanning: [],
       statusWarehouse: [],
       statusLogistics: [],
+      finalStatus: [],
     })
     setPoSearchTerm("")
   }
@@ -629,6 +695,7 @@ export default function DashboardPage({ onNavigate }) {
       statusPlanning: [],
       statusWarehouse: [],
       statusLogistics: [],
+      finalStatus: [],
     })
     setShipmentSearchTerm("")
   }
@@ -871,18 +938,18 @@ export default function DashboardPage({ onNavigate }) {
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {/* Entry Date Range */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date From</label>
+                      <label className="text-sm font-medium">PO Date From</label>
                       <DatePicker
-                        date={poFilters.entryDateFrom}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, entryDateFrom: date }))}
+                        date={poFilters.poDateFrom}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateFrom: date }))}
                         placeholder="From date"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date To</label>
+                      <label className="text-sm font-medium">PO Date To</label>
                       <DatePicker
-                        date={poFilters.entryDateTo}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, entryDateTo: date }))}
+                        date={poFilters.poDateTo}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateTo: date }))}
                         placeholder="To date"
                       />
                     </div>
@@ -959,6 +1026,15 @@ export default function DashboardPage({ onNavigate }) {
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusLogistics: values }))}
                       placeholder="Select status"
                     />
+
+                    {/* Multi-select Final Status */}
+                    <MultiSelectFilter
+                      label="Final Status"
+                      options={getUniqueValues(poFormatData, "finalStatus")}
+                      selectedValues={poFilters.finalStatus}
+                      onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, finalStatus: values }))}
+                      placeholder="Select status"
+                    />
                   </div>
                 </div>
               </CardHeader>
@@ -982,6 +1058,9 @@ export default function DashboardPage({ onNavigate }) {
                                     minWidth: "100px",
                                     maxWidth: "150px",
                                     zIndex: idx < 7 ? 30 : 10,
+                                    whiteSpace: "normal",  
+                                    wordWrap: "break-word",
+                                    overflowWrap: "break-word",
                                 }}
                                 >
                                 {item.label}
@@ -1159,18 +1238,18 @@ export default function DashboardPage({ onNavigate }) {
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {/* Entry Date Range */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date From</label>
+                      <label className="text-sm font-medium">PO Date From</label>
                       <DatePicker
-                        date={shipmentFilters.entryDateFrom}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateFrom: date }))}
+                        date={shipmentFilters.poDateFrom}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateFrom: date }))}
                         placeholder="From date"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Entry Date To</label>
+                      <label className="text-sm font-medium">PO Date To</label>
                       <DatePicker
-                        date={shipmentFilters.entryDateTo}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, entryDateTo: date }))}
+                        date={shipmentFilters.poDateTo}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateTo: date }))}
                         placeholder="To date"
                       />
                     </div>
@@ -1243,6 +1322,17 @@ export default function DashboardPage({ onNavigate }) {
                       }
                       placeholder="Select status"
                     />
+
+                    {/* Multi-select Final Status */}
+                    <MultiSelectFilter
+                      label="Final Status"
+                      options={getUniqueValues(shipmentStatusData, "finalStatus")}
+                      selectedValues={shipmentFilters.finalStatus}
+                      onSelectionChange={(values) =>
+                        setShipmentFilters((prev) => ({ ...prev, finalStatus: values }))
+                      }
+                      placeholder="Select status"
+                    />
                   </div>
                 </div>
               </CardHeader>
@@ -1266,6 +1356,9 @@ export default function DashboardPage({ onNavigate }) {
                                     minWidth: "100px",
                                     maxWidth: "150px",
                                     zIndex: idx < 7 ? 30 : 10,
+                                    whiteSpace: "normal",  
+                                    wordWrap: "break-word",
+                                    overflowWrap: "break-word",
                                 }}
                                 >
                                 {item.label}

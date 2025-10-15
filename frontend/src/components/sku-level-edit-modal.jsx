@@ -15,6 +15,8 @@ import { useUserStore } from "@/store/user-store"
 import { getSkuOrdersByShipment, updateSkusByShipment } from "@/lib/order"
 import { toast } from "sonner"
 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
 // Master reasons for quantity changes
 const QUANTITY_CHANGE_REASONS = [
   "Stock shortage at warehouse",
@@ -162,6 +164,28 @@ export default function SkuLevelEditModal({
     return { qtyFillRate, gmvFillRate }
   }
 
+  const calculateOverallFillRates = () => {
+    if (!originalSkus?.length || !editedSkus?.length) {
+      return { qtyRate: 100, gmvRate: 100 }; // or 0, based on how you define "empty" fill rate
+    }
+
+    let qtyRate = 0;
+    let gmvRate = 0;
+    const length = Math.min(originalSkus.length, editedSkus.length);
+
+    for (let x = 0; x < length; x++) {
+      const singleRates = calculateFillRates(editedSkus[x], originalSkus[x]);
+      qtyRate += singleRates.qtyFillRate;
+      gmvRate += singleRates.gmvFillRate;
+    }
+
+    qtyRate = qtyRate / length;
+    gmvRate = gmvRate / length;
+
+    return { qtyRate, gmvRate };
+  };
+
+
   // Changes detection
   const hasChanges = useMemo(() => {
     if (!shipmentData) return false
@@ -249,7 +273,7 @@ export default function SkuLevelEditModal({
 
   return (
     <div open={isOpen} onOpenChange={handleClose}>
-      <div className="max-w-[96vw] md:max-w-5xl my-5">
+      <div className="max-w-full my-5 mx-auto">
         <div>
           <strong className="flex items-center gap-2">
             <Package className="h-5 w-5" />
@@ -285,14 +309,14 @@ export default function SkuLevelEditModal({
         {/* SKU Cards */}
         <ScrollArea className="pr-3 overflow-auto">
           {/* Top basic info (optional) */}
-          {shipment && (
+          {shipment && !isLoading && (
             <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
               <CardHeader>
-                <CardTitle className="text-sm md:text-base">Shipment Details</CardTitle>
+                <CardTitle className="text-sm md:text-base">Fill Rate Details</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
+                  {/* <div>
                     <Label className="text-xs text-gray-600 dark:text-gray-400">Channel</Label>
                     <div className="font-semibold">{shipment.channel ?? "-"}</div>
                   </div>
@@ -307,6 +331,14 @@ export default function SkuLevelEditModal({
                   <div>
                     <Label className="text-xs text-gray-600 dark:text-gray-400">PO Number</Label>
                     <div className="font-semibold">{shipment.poNumber ?? "-"}</div>
+                  </div> */}
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Overall Qty Fill Rate</Label>
+                    <div className="font-semibold">{calculateOverallFillRates().qtyRate.toFixed(1) ?? 100}%</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Overall GMV Fill Rate</Label>
+                    <div className="font-semibold">{calculateOverallFillRates().gmvRate.toFixed(1) ?? 100}%</div>
                   </div>
                 </div>
               </CardContent>
@@ -322,130 +354,152 @@ export default function SkuLevelEditModal({
                 </CardContent>
               </Card>
             )}
-
-            {!isLoading &&
-              editedSkus.map((sku, index) => {
-                const original = originalSkus[index] ?? {}
-                const { qtyFillRate, gmvFillRate } = calculateFillRates(sku, original)
-                const isChanged = changedSkus.has(index)
-                const originalQty = Number(original.qty ?? 0)
-                
-                return (
-                  <Card key={sku.id ?? `${sku.skuCode}-${index}`} className={`border rounded-lg ${isChanged ? 'border-orange-300 bg-orange-50 dark:border-orange-600 dark:bg-orange-950' : ''}`}>
-                    <CardHeader className="pb-2">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm md:text-base">{sku.skuName ?? "SKU"}</CardTitle>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-[10px] md:text-xs">
-                              Sr No: {sku.srNo ?? "-"}
-                            </Badge>
-                            {isChanged && (
-                              <Badge variant="outline" className="text-[10px] text-orange-600 border-orange-300">
-                                Changed
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-[11px] text-gray-500">
-                          SKU: <span className="font-mono">{sku.skuCode ?? "-"}</span> • Channel:{" "}
-                          <span className="font-mono">{sku.channelSkuCode ?? "-"}</span>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {/* Fill Rates */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="text-center p-2 rounded-md bg-gray-100 dark:bg-gray-800">
-                          <div className="text-xs text-gray-600 dark:text-gray-400">Fill Rate (Qty)</div>
-                          <Badge 
-                            variant={qtyFillRate >= 90 ? "default" : qtyFillRate >= 70 ? "secondary" : "destructive"}
-                            className="font-mono text-xs"
-                          >
-                            {qtyFillRate.toFixed(1)}%
-                          </Badge>
-                        </div>
-                        <div className="text-center p-2 rounded-md bg-gray-100 dark:bg-gray-800">
-                          <div className="text-xs text-gray-600 dark:text-gray-400">Fill Rate (GMV)</div>
-                          <Badge 
-                            variant={gmvFillRate >= 90 ? "default" : gmvFillRate >= 70 ? "secondary" : "destructive"}
-                            className="font-mono text-xs"
-                          >
-                            {gmvFillRate.toFixed(1)}%
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* Original vs Updated */}
-                      <div className="flex flex-col gap-3">
-                        <div className="flex flex-row justify-between rounded-md border p-3 bg-gray-50 dark:bg-gray-900">
-                          <div className="text-xs font-medium mb-2">Original</div>
-                          <div className="flex flex-row justify-center items-center space-x-1">
-                            <div className="text-xs text-gray-600">Qty</div>
-                            <div className="font-semibold tabular-nums">{original.qty ?? 0}</div>
-                          </div>
-                          <div className="flex flex-row justify-center items-center space-x-1">
-                            <div className="mt-2 text-xs text-gray-600">GMV</div>
-                            <div className="font-semibold tabular-nums">
-                              ₹{Number(original.gmv ?? 0).toLocaleString()}
-                            </div>
-                          </div>
-                          <div className="flex flex-row justify-center items-center space-x-1">
-                            <div className="mt-2 text-xs text-gray-600">PO Value</div>
-                            <div className="font-semibold tabular-nums">
-                              ₹{Number(original.poValue ?? 0).toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-row justify-between rounded-md border p-3">
-                          <div className="text-xs font-medium mb-2">Updated</div>
-                          <div>
-                            <div className="text-xs text-gray-600 flex items-center justify-between">
-                              <span>Quantity (Max: {originalQty})</span>
-                              {!isWarehouse && <Badge variant="outline">View Only</Badge>}
-                            </div>
-                            <Input
-                              type="number"
-                              inputMode="numeric"
-                              min={0}
-                              max={originalQty}
-                              step={1}
-                              className="mt-1 text-center font-mono"
-                              value={Number(sku.updatedQty ?? 0)}
-                              onChange={(e) => onQtyChange(index, e.target.value)}
-                              disabled={!isWarehouse || isUpdating}
-                            />
-                          
-                          {Number(sku.updatedQty ?? 0) > originalQty && (
-                            <div className="text-xs text-red-500 mt-1">
-                              Cannot exceed original quantity ({originalQty})
-                            </div>
-                          )}
-                          </div>
-                          
-                          <div>
-                            <div className="mt-2 text-xs text-gray-600">GMV (updatedGmv)</div>
-                            <div className="font-semibold tabular-nums">
-                              ₹{Number(sku.updatedGmv ?? 0).toLocaleString()}
-                            </div>
-                          </div>
-
-                          <div>
-                            <div className="mt-2 text-xs text-gray-600">PO Value (updatedPoValue)</div>
-                            <div className="font-semibold tabular-nums">
-                              ₹{Number(sku.updatedPoValue ?? 0).toLocaleString()}
-                            </div>
-                          </div>
-                          
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
           </div>
-          <Separator />
+          
+          
+          <div className="my-10 max-w-full overflow-x-auto">
+            <div className="max-h-[70vh] overflow-y-auto">
+              <table className="min-w-full border border-gray-200 relative">
+                {/* Table Head */}
+                <TableHeader className="bg-background sticky top-0 z-20">
+                <TableRow className={"text-xs"}>
+                    {["Sr/NO","SKU Code", "SKU Name", "Qty", "GMV", "PO Value", "Upd Qty", "Upd GMV", "Upd PO Val", "Fill Rate(qty)"].map((item, idx) => {
+                    const leftOffset = idx < 0 ? `${idx * 100}px` : "auto";
+                    return (
+                        <TableCell
+                        key={idx}
+                        className="px-4 py-2 border-b border-r border-gray-200 text-left text-wrap bg-background"
+                        style={{
+                            position: idx < 0 ? "sticky" : "static",
+                            left: leftOffset,
+                            minWidth: "20px",
+                            maxWidth: "500px",
+                            zIndex: idx < 0 ? 30 : 10,
+                            whiteSpace: "normal",  
+                            wordWrap: "break-word",
+                            overflowWrap: "break-word",
+                        }}
+                        >
+                        {item}
+                        </TableCell>
+                    );
+                    })}
+                </TableRow>
+                </TableHeader>
+                {/* Table Body */}
+                <TableBody className={"text-xs"}>
+                  {
+                    !isLoading && editedSkus.map((sku, rowIdx) => {
+                      const original = originalSkus[rowIdx] ?? {}
+                      const { qtyFillRate, gmvFillRate } = calculateFillRates(sku, original)
+                      const isChanged = changedSkus.has(rowIdx)
+                      const originalQty = Number(original.qty ?? 0)
+                    
+                      return (
+                        <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        {["Sr/NO", "SKU Code", "SKU Name", "Qty", "GMV", "PO Value", "Upd Qty", "Upd GMV", "Upd PO Val", "Fill Rate(qty)"].map((item, colIdx) => {
+                            const leftOffset = colIdx < 0 ? `${colIdx * 100}px` : "auto";
+                            return (
+                            <TableCell
+                                key={colIdx}
+                                className="px-4 py-2 border-b border-r border-gray-200 bg-background text-wrap overflow-hidden"
+                                style={{
+                                position: colIdx < 0 ? "sticky" : "static",
+                                left: leftOffset,
+                                minWidth: "20px",
+                                maxWidth: "500px",
+                                zIndex: colIdx < 0 ? 10 : 1,
+                                whiteSpace: "normal",  
+                                wordWrap: "break-word",
+                                overflowWrap: "break-word",
+                                }}
+                            >
+                                {
+                                  item === "Sr/NO" && (
+                                    <div className="mx-auto">{sku.srNo || "--"}</div>
+                                  )
+                                }
+                                {
+                                  item === "SKU Code" && (
+                                    <div className="mx-auto">{sku.skuCode || "--"}</div>
+                                  )
+                                }
+                                {
+                                  item === "SKU Name" && (
+                                    <div className="mx-auto">{sku.skuName || "--"}</div>
+                                  )
+                                }
+                                {
+                                  item === "Qty" && (
+                                    <div className="font-semibold tabular-nums">{original.qty ?? 0}</div>
+                                  )
+                                }
+                                {
+                                  item === "GMV" && (
+                                    <div className="font-semibold tabular-nums">
+                                      ₹{Number(original.gmv ?? 0).toLocaleString()}
+                                    </div>
+                                  )
+                                }
+                                {
+                                  item === "PO Value" && (
+                                    <div className="font-semibold tabular-nums">
+                                      ₹{Number(original.poValue ?? 0).toLocaleString()}
+                                    </div>
+                                  )
+                                }
+                                {
+                                  item === "Upd Qty" && (
+                                    <>
+                                    {/* <span>Max: {originalQty}</span> */}
+                                    <Input
+                                      type="number"
+                                      // inputMode="numeric"
+                                      min={0}
+                                      max={originalQty}
+                                      step={1}
+                                      className="mt-1 text-center font-mono min-w-20"
+                                      value={Number(sku.updatedQty ?? 0)}
+                                      onChange={(e) => onQtyChange(rowIdx, e.target.value)}
+                                      disabled={!isWarehouse || isUpdating}
+                                    />
+                                    </>
+                                  )
+                                }
+                                {
+                                  item === "Upd GMV" && (
+                                    <div className="font-semibold tabular-nums">
+                                      ₹{Number(sku.updatedGmv ?? 0).toLocaleString()}
+                                    </div>
+                                  )
+                                }
+                                {
+                                  item === "Upd PO Val" && (
+                                    <div className="font-semibold tabular-nums">
+                                      ₹{Number(sku.updatedPoValue ?? 0).toLocaleString()}
+                                    </div>
+                                  )
+                                }
+                                {
+                                  item === "Fill Rate(qty)" && (
+                                    <Badge 
+                                      variant={qtyFillRate >= 90 ? "default" : qtyFillRate >= 70 ? "secondary" : "destructive"}
+                                      className="font-mono text-xs"
+                                    >
+                                      {qtyFillRate.toFixed(1)}%
+                                    </Badge>
+                                  )
+                                }
+                            </TableCell>
+                            );
+                        })}
+                        </TableRow>
+                      )})
+                  }
+                </TableBody>
+              </table>
+            </div>
+          </div>
 
           {/* Reason Section for Changes */}
           {changedSkus.size > 0 && isWarehouse && (
@@ -502,7 +556,7 @@ export default function SkuLevelEditModal({
             </Card>
           )}
 
-       
+          <Separator />
           <ScrollBar orientation="vertical" />
         </ScrollArea>
 

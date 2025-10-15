@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -17,8 +17,22 @@ import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
 import { updateBulkSkus } from "@/lib/order"
 
+function stripQuotes(value) {
+  let v = value?.trim() ?? ""
+  if (v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1)
+  return v.trim()
+}
 
-export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [], onSave }) {
+function isAllEmpty(values) {
+  return values.every((v) => stripQuotes(v) === "")
+}
+
+export default function BulkSkuUpdateModal({
+  isOpen,
+  onClose,
+  poFormatData = [],
+  onSave,
+}) {
   const { user } = useUserStore()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -48,55 +62,75 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
 
   // Parse CSV content
   const parseCsvContent = (content) => {
-    const lines = content.trim().split("\n")
-    if (lines.length < 2) {
-      throw new Error("CSV file must have at least a header row and one data row")
+    const rawLines = content.split(/\r?\n/)
+    // find header line (ignore leading blank lines)
+    const headerIndex = rawLines.findIndex((l) => l && l.trim() !== "")
+    if (headerIndex === -1) {
+      throw new Error("CSV file must contain a header row")
     }
 
-    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
-    const expectedHeaders = ["uid", "ponumber", "skucode", "updatedqty"]
+    const headerRaw = rawLines[headerIndex].replace(/^\uFEFF/, "") // remove BOM
+    const headers = headerRaw.split(",").map((h) => stripQuotes(h).toLowerCase())
 
-    // Validate headers
+    const expectedHeaders = ["uid", "ponumber", "skucode", "updatedqty"]
     const missingHeaders = expectedHeaders.filter((h) => !headers.includes(h))
     if (missingHeaders.length > 0) {
       throw new Error(`Missing required headers: ${missingHeaders.join(", ")}. Expected: ${expectedHeaders.join(", ")}`)
     }
 
     const data = []
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(",").map((v) => v.trim())
-      if (values.length !== headers.length) {
-        throw new Error(`Row ${i + 1}: Expected ${headers.length} columns, got ${values.length}`)
+    // iterate through the rest of the lines
+    for (let i = headerIndex + 1; i < rawLines.length; i++) {
+      const line = rawLines[i]
+      const rowNumber = i + 1 // 1-based for user-friendly reporting
+      if (!line || line.trim() === "") {
+        // ignore empty row
+        continue
       }
 
+      let values = line.split(",")
+      // ignore rows where all cells are empty
+      if (isAllEmpty(values)) continue
+
+      // normalize length: pad or slice so mapping doesn't throw
+      if (values.length < headers.length) {
+        values = values.concat(Array(headers.length - values.length).fill(""))
+      } else if (values.length > headers.length) {
+        values = values.slice(0, headers.length)
+      }
+
+      // build row object with normalized, de-quoted cells
       const row = {}
       headers.forEach((header, index) => {
-        row[header] = values[index]
+        row[header] = stripQuotes(values[index] ?? "")
       })
 
-      // Validate and convert data types
-      // const shipmentUid = row.shipmentuid
-      const poNumber = row.ponumber
-      const skuCode = row.skucode
-      const updatedQty = Number.parseFloat(row.updatedqty)
+      const uid = row["uid"]
+      const poNumber = row["ponumber"]
+      const skuCode = row["skucode"]
+      const updatedQtyRaw = row["updatedqty"]
 
-      if (!poNumber || !skuCode) {
-        throw new Error(`Row ${i + 1}: poNumber, and skuCode are required`)
+      // if required cells are empty, IGNORE the row (do not error)
+      if (!poNumber || !skuCode || !updatedQtyRaw) {
+        continue
       }
 
-      if (isNaN(updatedQty) || updatedQty < 0 || !Number.isInteger(updatedQty)) {
-        throw new Error(`Row ${i + 1}: updatedQty must be a non-negative integer`)
+      // updatedQty must be a non-negative integer; if not, IGNORE the row
+      const updatedQty = Number.parseFloat(updatedQtyRaw)
+      if (Number.isNaN(updatedQty) || updatedQty < 0 || !Number.isInteger(updatedQty)) {
+        continue
       }
 
       data.push({
-        // shipmentUid,
+        uid,
         poNumber,
         skuCode,
         updatedQty,
-        rowNumber: i + 1,
+        rowNumber,
       })
     }
 
+    // if headers existed but no valid rows after ignoring blanks, allow flow to continue
     return data
   }
 
@@ -117,12 +151,12 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
   }
 
   // Process CSV data and match with existing PO data
-  const processAndValidateData = (csvData) => {
-    const processedData = csvData.map((csvRow) => {
+  const processAndValidateData = (csvRows) => {
+    const processedData = csvRows.map((csvRow) => {
       // Find matching PO record
       const matchingRecord = poFormatData.find(
         (po) =>
-          // po.uid?.toString() === csvRow.shipmentUid.toString() &&
+          po.uid?.toString() === (csvRow?.uid ?? "").toString() &&
           po.poNumber?.toString() === csvRow.poNumber.toString() &&
           po.skuCode?.toString() === csvRow.skuCode.toString(),
       )
@@ -168,7 +202,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
 
   // Handle file upload
   const handleFileUpload = (event) => {
-    const file = event.target.files[0]
+    const file = event.target.files?.[0]
     if (!file) return
 
     if (!file.name.endsWith(".csv")) {
@@ -183,7 +217,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
-        const content = e.target.result
+        const content = String(e.target?.result ?? "")
         const parsed = parseCsvContent(content)
         setCsvData(parsed)
 
@@ -199,11 +233,13 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
           setSuccess(`Successfully parsed ${parsed.length} records from CSV`)
         } else {
           setError(
-            `Validation failed: ${validation.errors.slice(0, 3).join(", ")}${validation.errors.length > 3 ? "..." : ""}`,
+            `Validation failed: ${validation.errors.slice(0, 3).join(", ")}${
+              validation.errors.length > 3 ? "..." : ""
+            }`,
           )
         }
       } catch (err) {
-        setError(`CSV parsing error: ${err.message}`)
+        setError(`CSV parsing error: ${err?.message ?? "Unknown error"}`)
         setCsvData([])
         setParsedData([])
       }
@@ -214,7 +250,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
   // Download CSV template
   const downloadTemplate = () => {
     const template = `uid,poNumber,skuCode,updatedQty
-    1,PO_SAMPLE,MCaf100,1`
+1,PO_SAMPLE,MCaf100,1`
 
     const blob = new Blob([template], { type: "text/csv;charset=utf-8;" })
     const link = document.createElement("a")
@@ -239,10 +275,10 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
       return
     }
 
-    if (isWarehouse && !reason.trim()) {
-      setError("Reason is required for quantity updates")
-      return
-    }
+    // if (isWarehouse && !reason.trim()) {
+    //   setError("Reason is required for quantity updates")
+    //   return
+    // }
 
     const validRecords = parsedData.filter((record) => !record.error)
     if (validRecords.length === 0) {
@@ -265,19 +301,14 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
         updatedBy: user?.username || user?.email,
       }))
 
-      // Here you would call your API to update the SKUs
-      // await updateBulkSkusFromCsv(bulkUpdateData)
-
+      const res = await updateBulkSkus(bulkUpdateData)
       console.log("Bulk SKU Update Data:", bulkUpdateData)
-      const res = await updateBulkSkus(bulkUpdateData);
       console.log(res.data)
 
-      setSuccess(res.data.msg)
+      setSuccess(res.data?.msg ?? `Successfully updated ${validRecords.length} SKU(s) from CSV`)
       toast.success(`Successfully updated ${validRecords.length} SKU(s) from CSV`)
 
-      if (onSave) {
-        onSave(bulkUpdateData)
-      }
+      onSave?.(bulkUpdateData)
 
       setTimeout(() => {
         onClose()
@@ -326,7 +357,7 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] md:max-w-5xl max-h-[95vh] overflow-hidden">
+      <DialogContent className="max-w-[95vw] md:max-w-5xl max-h-[95vh] overflow-x-hidden overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
@@ -389,122 +420,6 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
           </CardContent>
         </Card>
 
-        {/* Validation Results */}
-        {parsedData.length > 0 && (
-          <>
-            <Separator />
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Validation Results</h3>
-                <div className="flex gap-2">
-                  {validRecords.length > 0 && (
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      {validRecords.length} Valid
-                    </Badge>
-                  )}
-                  {errorRecords.length > 0 && <Badge variant="destructive">{errorRecords.length} Errors</Badge>}
-                </div>
-              </div>
-
-              <ScrollArea className="max-h-[40vh] pr-3">
-                <div className="space-y-3">
-                  {/* Valid Records */}
-                  {validRecords.length > 0 && (
-                    <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm text-green-800 dark:text-green-200">
-                          Valid Records ({validRecords.length})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {validRecords.slice(0, 5).map((record, index) => (
-                            <div key={index} className="text-xs bg-white dark:bg-gray-900 p-2 rounded border">
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <div>
-                                  <strong>UID:</strong> {record.shipmentUid}
-                                </div>
-                                <div>
-                                  <strong>PO:</strong> {record.poNumber}
-                                </div>
-                                <div>
-                                  <strong>SKU:</strong> {record.skuCode}
-                                </div>
-                                <div>
-                                  <strong>Qty:</strong> {record.originalQty} → {record.updatedQty}
-                                </div>
-                                <div>
-                                  <strong>GMV:</strong> {record.originalGmv} → {record.calculatedGmv}
-                                </div>
-                                <div>
-                                  <strong>PO Value:</strong> {record.originalPoValue} → {record.calculatedPoValue}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          {validRecords.length > 5 && (
-                            <div className="text-xs text-gray-500">
-                              ... and {validRecords.length - 5} more valid records
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Error Records */}
-                  {errorRecords.length > 0 && (
-                    <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm text-red-800 dark:text-red-200">
-                          Records with Errors ({errorRecords.length})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {errorRecords.map((record, index) => (
-                            <div key={index} className="text-xs bg-white dark:bg-gray-900 p-2 rounded border">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <div>
-                                  <strong>Row {record.rowNumber}:</strong> UID: {record.shipmentUid}, PO:{" "}
-                                  {record.poNumber}, SKU: {record.skuCode}
-                                </div>
-                                <div className="text-red-600 dark:text-red-400">
-                                  <strong>Error:</strong> {record.error}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          </>
-        )}
-
-        {/* Reason field for warehouse users */}
-        {isWarehouse && validRecords.length > 0 && (
-          <>
-            <Separator />
-            <div className="space-y-2">
-              <Label htmlFor="reason" className="text-sm font-medium">
-                Reason for Quantity Updates <span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                id="reason"
-                placeholder="Please provide a reason for updating the quantities..."
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="w-full"
-                rows={3}
-              />
-            </div>
-          </>
-        )}
-
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="text-sm text-gray-500">
@@ -536,6 +451,118 @@ export default function BulkSkuUpdateModal({ isOpen, onClose, poFormatData = [],
             </Button>
           </div>
         </div>
+
+        {/* Validation Results */}
+        {parsedData.length > 0 && (
+          <>
+            <Separator />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Validation Results</h3>
+                <div className="flex gap-2">
+                  {validRecords.length > 0 && (
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      {validRecords.length} Valid
+                    </Badge>
+                  )}
+                  {errorRecords.length > 0 && <Badge variant="destructive">{errorRecords.length} Errors</Badge>}
+                </div>
+              </div>
+
+              <ScrollArea className="max-h-[40vh] pr-3">
+                <div className="space-y-3">
+                  {/* Valid Records */}
+                  {validRecords.length > 0 && (
+                    <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm text-green-800 dark:text-green-200">
+                          Valid Records ({validRecords.length})
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {validRecords.map((record, index) => (
+                            <div key={index} className="text-xs bg-white dark:bg-gray-900 p-2 rounded border">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <div>
+                                  <strong>UID:</strong> {String(record.uid ?? "")}
+                                </div>
+                                <div>
+                                  <strong>PO:</strong> {record.poNumber}
+                                </div>
+                                <div>
+                                  <strong>SKU:</strong> {record.skuCode}
+                                </div>
+                                <div>
+                                  <strong>Qty:</strong> {record.originalQty} → {record.updatedQty}
+                                </div>
+                                <div>
+                                  <strong>GMV:</strong> {record.originalGmv} → {record.calculatedGmv}
+                                </div>
+                                <div>
+                                  <strong>PO Value:</strong> {record.originalPoValue} → {record.calculatedPoValue}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Error Records */}
+                  {errorRecords.length > 0 && (
+                    <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm text-red-800 dark:text-red-200">
+                          Records with Errors ({errorRecords.length})
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {errorRecords.map((record, index) => (
+                            <div key={index} className="text-xs bg-white dark:bg-gray-900 p-2 rounded border">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <div>
+                                  <strong>Row {record.rowNumber}:</strong> UID: {String(record.uid ?? "")}, PO:{" "}
+                                  {record.poNumber}, SKU: {record.skuCode}
+                                </div>
+                                <div className="text-red-600 dark:text-red-400">
+                                  <strong>Error:</strong> {record.error}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+                <ScrollBar orientation="vertical" />
+              </ScrollArea>
+            </div>
+          </>
+        )}
+
+        {/* Reason field for warehouse users */}
+        {isWarehouse && validRecords.length > 0 && (
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="reason" className="text-sm font-medium">
+                Reason for Quantity Updates <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="reason"
+                placeholder="Please provide a reason for updating the quantities..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full"
+                rows={3}
+              />
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   )

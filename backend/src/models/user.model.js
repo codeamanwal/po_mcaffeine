@@ -33,7 +33,10 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true  
     },
-
+    allotedFacilities: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+    },
 }, {
   timestamps: true,
   tableName: 'users'

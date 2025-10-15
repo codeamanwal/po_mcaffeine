@@ -18,6 +18,7 @@ const Log = sequelize.define('Log', {
   shipmentOrderId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    unique: true,
   }
 }, {
   timestamps: true,

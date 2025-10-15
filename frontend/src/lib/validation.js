@@ -1,5 +1,5 @@
 // Import master data from existing files
-import { master_facility_option } from "@/constants/master_sheet"
+import { master_facility_option, master_rto_remark_options } from "@/constants/master_sheet"
 import { master_channel_options } from "@/constants/master_sheet"
 import { master_status_planning_options } from "@/constants/master_sheet"
 import { master_status_warehouse_options } from "@/constants/master_sheet"
@@ -117,7 +117,7 @@ export const validateShipmentData = (shipmentData)=> {
     const rescheduleValidation = validateField(
       "Reschedule Lag Remark",
       shipmentData.rescheduleLag,
-      master_rejection_reasons,
+      master_rto_remark_options,
     )
     errors.push(...rescheduleValidation.errors)
   }
@@ -321,21 +321,32 @@ export const validateBulkSkuData = (csvSkus) => {
 
 // Auto-fill functions
 export const autoFillSkuData = (skuCode) => {
-  const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
+  const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
   if (!masterSku) return null
 
+  let brand = "";
+  const prefix = `${skuCode}`.substring(0,3).toLowerCase();
+  if(prefix === "hyp"){
+      brand = "Hyphen"
+    } else if(prefix === "ama"){
+      brand = "Aman"
+    } else if(prefix === "viv"){
+      brand = "Vivek"
+    } else {
+      brand = masterSku?.brand_name || "MCaffeine"
+    }
   return {
-    skuName: masterSku.sku_name,
-    brandName: masterSku.brand_name,
-    mrp: masterSku.mrp,
+    skuName: masterSku?.sku_name || "",
+    brandName: brand ?? "MCaffeine",
+    mrp: masterSku?.mrp || "",
   }
 }
 
 export const calculateGmv = (qty, skuCode) => {
-  const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
-  if (!masterSku || !masterSku.mrp) return 0
+  const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
+  if (!masterSku || !masterSku?.mrp) return 0
 
-  return qty * masterSku.mrp
+  return qty * masterSku?.mrp
 }
 
 export const generateChannelSkuCode = (channel, skuCode) => {
@@ -350,9 +361,9 @@ export const generateChannelSkuCode = (channel, skuCode) => {
 export const getBrandFromSkus = (skuCodes) => {
   const brands = new Set()
   skuCodes.forEach((skuCode) => {
-    const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
+    const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
     if (masterSku) {
-      brands.add(masterSku.brand_name)
+      brands.add(masterSku?.brand_name ?? "MCaffeine")
     }
   })
 
@@ -370,9 +381,9 @@ export const validateBrandConsistency = (skuCodes) => {
   const brands = new Set()
 
   skuCodes.forEach((skuCode) => {
-    const masterSku = master_sku_code_options.find((m) => m.sku_code === skuCode)
+    const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
     if (masterSku) {
-      brands.add(masterSku.brand_name)
+      brands.add(masterSku?.brand_name ?? "MCaffeine")
     }
   })
 
@@ -412,6 +423,15 @@ export const getSkuSuggestions = (searchTerm, limit = 10) => {
 export const getChannelSuggestions = (searchTerm, limit = 10) => {
   const term = searchTerm.toLowerCase()
   return master_channel_options.filter((channel) => channel.toLowerCase().includes(term)).slice(0, limit)
+}
+
+// Get Delivery type
+export const getDeliveryType = (channel, type) => {
+  if(type) return type;
+  if(!channel) return "";
+  const ch = `${channel}`.toLowerCase()
+  if(ch === "amazon" || ch === "flipkart") return "Pick up";
+  else return "Drop in";
 }
 
 
