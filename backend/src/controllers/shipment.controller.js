@@ -248,7 +248,29 @@ async function getSkusByShipment(req, res) {
       // shioment uid as uid
     const { uid } = req.body;
     console.log(uid);
-    const skus = await SkuOrder.findAll({where: {shipmentOrderId:uid} })
+    const skus = await SkuOrder.findAll(
+      {where: {shipmentOrderId:uid},
+      order: [
+        // [
+        //     sequelize.literal(`
+        //       CASE
+        //         WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+        //         ELSE NULL
+        //       END
+        //     `),
+        //     'ASC NULLS LAST'
+        //   ], // postgresql
+          [ 
+            sequelize.literal(`
+            CASE
+              WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+              ELSE NULL
+            END
+            `),
+            'ASC'
+          ], // mysql
+      ] 
+    })
     if(!skus || skus.length == 0){
       return res.status(404).json({msg:"No sku orders found for given shipment order!"})
     }
@@ -282,33 +304,79 @@ async function getAllSkuOrders(req, res) {
     }
 
     // fetch all SKUs, optionally include parent ShipmentOrder
-    const skuOrders = await SkuOrder.findAll({
-      include: [{
-        model: ShipmentOrder,
-        as: 'shipmentOrder',
-      }],
-      order: [
-        ['shipmentOrderId', 'DESC'],
-        // [
-        //   sequelize.literal(`
-        //     CASE
-        //       WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
-        //       ELSE NULL
-        //     END
-        //   `),
-        //   'ASC NULLS LAST'
-        // ], // postgresql
-        [ 
-          sequelize.literal(`
-          CASE
-            WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
-            ELSE NULL
-          END
-          `),
-          'ASC'
-        ], // mysql
-      ]
-    });
+    if(currRole === "superadmin" || currRole === "admin"){
+      skuOrders = await SkuOrder.findAll({
+        include: [{
+          model: ShipmentOrder,
+          as: 'shipmentOrder',
+        }],
+        order: [
+          ['shipmentOrderId', 'DESC'],
+          // [
+          //   sequelize.literal(`
+          //     CASE
+          //       WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+          //       ELSE NULL
+          //     END
+          //   `),
+          //   'ASC NULLS LAST'
+          // ], // postgresql
+          [ 
+            sequelize.literal(`
+            CASE
+              WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+              ELSE NULL
+            END
+            `),
+            'ASC'
+          ], // mysql
+        ]
+      });
+    }
+    else {
+      const allotedFacilities = req.user?.allotedFacilities;
+      if(!allotedFacilities || allotedFacilities?.length === 0){
+        skuOrders = [];
+      }
+      else{
+        // const allotedFacilities = req.user?.allotedFacilities;
+        skuOrders = await SkuOrder.findAll({
+          include: [
+            {
+              model: ShipmentOrder,
+              as: "shipmentOrder",
+              required: true, // ensures only skuOrders having matching shipmentOrder are fetched
+              where: allotedFacilities.length > 0 ? {
+                facility: {
+                  [Op.in]: allotedFacilities,
+                },
+              } : undefined, // no filter if none are allotted
+            },
+          ],
+          order: [
+            ['shipmentOrderId', 'DESC'],
+            // [
+            //   sequelize.literal(`
+            //     CASE
+            //       WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+            //       ELSE NULL
+            //     END
+            //   `),
+            //   'ASC NULLS LAST'
+            // ], // postgresql
+            [ 
+              sequelize.literal(`
+              CASE
+                WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+                ELSE NULL
+              END
+              `),
+              'ASC'
+            ], // mysql
+          ]
+        });
+      }
+    }
 
     const skuDataList = skuOrders.map(sku => {
       const {shipmentOrder, ...skuData} = sku.dataValues;
@@ -362,6 +430,9 @@ async function updateShipment(req, res) {
     let logs = [];
 
     let { uid, poEditAudit, ...updateData } = req.body;
+    if(!req.body.poNumber){
+      return res.status(400).json({msg: "PO Number can not be empty!"});
+    }
     const shipment = await ShipmentOrder.findOne({ where: { uid } });
 
     if(poEditAudit){
@@ -409,7 +480,7 @@ async function updateShipment(req, res) {
     return res.status(200).json({ msg: "Shipment updated successfully", shipment: updatedShipment });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error });
   }
 }
 
