@@ -3,6 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 export default {
   async up(queryInterface, Sequelize) {
+     const dialect = queryInterface.sequelize.getDialect()
     let jsonType ;
     if (dialect === 'postgres') {
       jsonType = Sequelize.ARRAY(Sequelize.STRING);
