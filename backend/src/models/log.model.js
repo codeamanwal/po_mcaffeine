@@ -1,6 +1,6 @@
 import { ARRAY, DataTypes } from 'sequelize';
-// import { sequelize } from '../db/postgresql.js';
-import { sequelize } from '../db/mysql.js';
+import { sequelize } from '../db/postgresql.js';
+// import { sequelize } from '../db/mysql.js';
 
 import ShipmentOrder from './shipment-order.model.js';
 

@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
-// import { sequelize } from '../db/postgresql.js'; 
-import { sequelize } from '../db/mysql.js';
+import { sequelize } from '../db/postgresql.js'; 
+// import { sequelize } from '../db/mysql.js';
 
 const User = sequelize.define('User', {
     name: {
