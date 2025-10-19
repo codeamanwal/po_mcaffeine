@@ -178,13 +178,6 @@ export const shipmentStatusDataType = [
   { fieldName: "specialRemarksCOPT", label: "Special Remarks (COPT)", id: "specialRemarksCOPT", type: "text" },
   { fieldName: "newShipmentReference", label: "New Shipment Reference", id: "newShipmentReference", type: "text" },
   {
-    fieldName: "statusActive",
-    label: "Status (Active/Inactive)",
-    id: "statusActive",
-    type: "select",
-    options: ["Active", "Inactive"],
-  },
-  {
     fieldName: "statusPlanning",
     label: "Status (Planning)",
     id: "statusPlanning",
@@ -283,4 +276,11 @@ export const shipmentStatusDataType = [
   { fieldName: "rpk", label: "Rates/kg", id: "rpk", type: "number" },
   // delivery type
   { fieldName: "deliveryType", label: "DeliveryType", id: "deliveryType", type: "select", options: ["Pick up", "Drop in", ""], },
+  {
+    fieldName: "statusActive",
+    label: "Status (Active/Inactive)",
+    id: "statusActive",
+    type: "select",
+    options: ["Active", "Inactive"],
+  },
 ];

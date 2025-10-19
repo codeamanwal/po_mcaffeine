@@ -423,7 +423,7 @@ export default function DashboardPage({ onNavigate }) {
   async function getPoFormateData() {
     try {
       const res = await getPoFormatOrderList()
-      console.log(res.data)
+      // console.log(res.data)
       setPoFormatData(res.data.orders)
       setPoFormatData((prev) => {
         const arr = prev.map(item => {
@@ -447,7 +447,7 @@ export default function DashboardPage({ onNavigate }) {
   async function getShipmentData() {
     try {
       const res = await getShipmentStatusList()
-      console.log("Shipment Data: ", res.data.shipments)
+      // console.log("Shipment Data: ", res.data.shipments)
       setShipmentStatusData(res.data.shipments)
       setShipmentStatusData((prev) => {
         const arr = prev.map(item => {
@@ -810,7 +810,7 @@ export default function DashboardPage({ onNavigate }) {
     try {
       let updatedData = localStorage.getItem("orderData")
       updatedData = JSON.parse(updatedData)
-      console.log("Parsed Data: ", updatedData)
+      // console.log("Parsed Data: ", updatedData)
       const res = await updateSinglePoOrder(updatedData)
       console.log(res)
       if (res.status === 200) {
@@ -1346,6 +1346,13 @@ export default function DashboardPage({ onNavigate }) {
                         <TableRow className={"text-xs"}>
                             {shipmentStatusDataType.map((item, idx) => {
                             const leftOffset = idx < 7 ? `${idx * 100}px` : "auto";
+                            const hide = ["statusActive"];
+                            if( hide.includes(item.fieldName)) {
+                              return (
+                                <></>
+                                // <TableCell key></TableCell>
+                              )
+                            }
                             return (
                                 <TableCell
                                 key={idx}
@@ -1397,6 +1404,13 @@ export default function DashboardPage({ onNavigate }) {
                         {filteredShipmentData.map((row, rowIdx) => (
                             <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                             {shipmentStatusDataType.map((item, colIdx) => {
+                                const hide = ["statusActive"];
+                                if( hide.includes(item.fieldName)) {
+                                  return (
+                                    <></>
+                                    // <TableCell></TableCell>
+                                  )
+                                }
                                 const leftOffset = colIdx < 7 ? `${colIdx * 100}px` : "auto";
                                 return (
                                 <TableCell

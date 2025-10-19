@@ -4,6 +4,7 @@
 export default {
   async up(queryInterface, Sequelize) {
     const tableName = 'shipment_orders';
+    const dialect =  queryInterface.sequelize.getDialect();
 
     let jsonType ;
     if (dialect === 'postgres') {

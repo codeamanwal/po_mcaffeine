@@ -48,7 +48,7 @@ export default function ChangePassword({ onBack }) {
   
       const res = api.post(changeUserPasswordUrl, {currentPassword, newPassword});
   
-      console.log(res.data);
+      // console.log(res.data);
   
       if(res.status === 200) {
         setSuccess("Password changed successfully!")

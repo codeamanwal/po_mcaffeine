@@ -239,7 +239,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       setLogsLoading(true)
     //   setShipmentData(shipment)
       const logsData = await fetchShipmentLogs(shipmentData.uid);
-      console.log(logsData);
+      // console.log(logsData);
       setLogs(logsData)
     } catch (err) {
       setError('Failed to fetch shipment data')
@@ -250,7 +250,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   }
   useEffect(() => {
     fetchLogData();
-    console.log("shipmentData: ",shipmentData)
+    // console.log("shipmentData: ",shipmentData)
   },[shipmentData.uid, logsChanged])
 
   const [skuTabActive, setSkuTab] = useState(false)
@@ -298,7 +298,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
       // Convert date strings to Date objects for date fields
       const processedData = { ...shipmentData }
-      console.log(processedData);
+      // console.log(processedData);
 
       getLocations(shipmentData.channel)
 

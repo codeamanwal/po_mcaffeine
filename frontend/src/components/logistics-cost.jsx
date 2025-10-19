@@ -182,7 +182,7 @@ export default function LogisticsCost({ shipmentData }) {
       setError("")
 
       const res = await getSkuOrdersByShipment(shipmentData.uid)
-      console.log("SKU Data Response:", res.data)
+      // console.log("SKU Data Response:", res.data)
 
       const skuData = res.data?.skus || []
       setSkus(skuData)

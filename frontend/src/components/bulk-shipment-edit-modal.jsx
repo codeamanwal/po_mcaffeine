@@ -669,7 +669,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       }
 
       const res = await updateBulkShipment(data)
-      console.log(res.data)
+      // console.log(res.data)
 
       onSave(validUpdates)
       setSuccess(`Successfully updated ${validUpdates.length} shipments`)

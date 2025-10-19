@@ -30,7 +30,7 @@ export default function LoginPage({ onLogin, onForgotPassword, isDarkMode, onTog
 
       const result = await axios.post(loginUrl, {email, password})
 
-      console.log(result.data)
+      // console.log(result.data)
 
       if (result.status === 200) {
         login(result.data.user, result.data.token)

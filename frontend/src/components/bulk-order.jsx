@@ -175,7 +175,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       const text = await file.text()
       const orders = parseCSV(text)
       setParsedOrders(orders)
-      console.log(parsedOrders)
+      // console.log(parsedOrders)
       setShowPreview(true)
 
       const validCount = orders.filter((order) => order.status === "valid").length
@@ -205,7 +205,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       return
     }
 
-    console.log("validOrders: ",validOrders)
+    // console.log("validOrders: ",validOrders)
 
     setIsUploading(true)
     setUploadProgress(0)

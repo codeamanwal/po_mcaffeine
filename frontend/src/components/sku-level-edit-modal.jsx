@@ -52,8 +52,8 @@ export default function SkuLevelEditModal({
 
   // Fetch data when opened
   useEffect(() => {
-    console.log("Inside sku level panel")
-    console.log(shipmentId)
+    // console.log("Inside sku level panel")
+    // console.log(shipmentId)
     let mounted = true
     const run = async () => {
       if (!shipmentId) return
@@ -62,7 +62,7 @@ export default function SkuLevelEditModal({
       setSuccess("")
       try {
         const res = await getSkuOrdersByShipment(shipmentId)
-        console.log(res.data)
+        // console.log(res.data)
         // API shape assumed: { data: { ... , skus: [...] } }
         const data= {
           ...(res?.data ?? {}),
@@ -231,7 +231,7 @@ export default function SkuLevelEditModal({
           updatedPoValue: sku.updatedPoValue ?? 0,
         }})
 
-      console.log(payloadSkus);
+      // console.log(payloadSkus);
       await updateSkusByShipment({
         shipmentId,
         skus: payloadSkus,

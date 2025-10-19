@@ -401,7 +401,7 @@ export const validateBrandConsistency = (skuCodes) => {
 export const getLocationsForChannel = (channel) => {
   // For now, return all locations. This can be customized based on business rules
   const location_options = master_channel_location_mapping[channel]
-  console.log(location_options)
+  // console.log(location_options)
   return location_options
 }
 

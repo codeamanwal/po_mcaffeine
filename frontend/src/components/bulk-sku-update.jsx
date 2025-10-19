@@ -302,7 +302,7 @@ export default function BulkSkuUpdateModal({
       }))
 
       const res = await updateBulkSkus(bulkUpdateData)
-      console.log("Bulk SKU Update Data:", bulkUpdateData)
+      // console.log("Bulk SKU Update Data:", bulkUpdateData)
       console.log(res.data)
 
       setSuccess(res.data?.msg ?? `Successfully updated ${validRecords.length} SKU(s) from CSV`)

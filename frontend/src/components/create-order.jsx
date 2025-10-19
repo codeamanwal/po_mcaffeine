@@ -138,7 +138,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       value: skuCode,
       label: skuCode,
     }));
-    console.log(options);
+    // console.log(options);
     setSkuCodeOptions(options);
     return options;
   }
@@ -369,8 +369,8 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       }
 
       const res = await createShipmentOrder(apiData)
-      console.log("Order created:", apiData)
-      console.log("res:", res.data)
+      // console.log("Order created:", apiData)
+      // console.log("res:", res.data)
       setSuccess("Shipment order created successfully!")
       toast.success(res.data.msg || "Order created successfully");
       // Reset form after success
