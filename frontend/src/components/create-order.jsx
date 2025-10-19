@@ -138,7 +138,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       value: skuCode,
       label: skuCode,
     }));
-    console.log(options);
+    // console.log(options);
     setSkuCodeOptions(options);
     return options;
   }
@@ -369,8 +369,8 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       }
 
       const res = await createShipmentOrder(apiData)
-      console.log("Order created:", apiData)
-      console.log("res:", res.data)
+      // console.log("Order created:", apiData)
+      // console.log("res:", res.data)
       setSuccess("Shipment order created successfully!")
       toast.success(res.data.msg || "Order created successfully");
       // Reset form after success
@@ -421,7 +421,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
   const totalPoValue = skuOrders.reduce((sum, sku) => sum + (Number.parseFloat(sku.poValue) || 0), 0)
 
   return (
-    <div className={`min-h-screen h-full ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen h-full `}>
       <main className="container mx-auto p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">

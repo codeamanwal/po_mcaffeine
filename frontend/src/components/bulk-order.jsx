@@ -175,7 +175,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       const text = await file.text()
       const orders = parseCSV(text)
       setParsedOrders(orders)
-      console.log(parsedOrders)
+      // console.log(parsedOrders)
       setShowPreview(true)
 
       const validCount = orders.filter((order) => order.status === "valid").length
@@ -205,7 +205,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       return
     }
 
-    console.log("validOrders: ",validOrders)
+    // console.log("validOrders: ",validOrders)
 
     setIsUploading(true)
     setUploadProgress(0)
@@ -263,7 +263,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
   const warningOrdersCount = parsedOrders.filter((order) => order.warnings?.length > 0).length
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen `}>
       <main className="container mx-auto p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">

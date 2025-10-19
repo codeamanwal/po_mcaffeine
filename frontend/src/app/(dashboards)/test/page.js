@@ -399,7 +399,7 @@ export default function Test({ onNavigate }) {
   async function getPoFormateData() {
     try {
       const res = await getPoFormatOrderList()
-      console.log(res.data)
+      // console.log(res.data)
       setPoFormatData(res.data.orders)
     } catch (error) {
       console.log(error)
@@ -410,7 +410,7 @@ export default function Test({ onNavigate }) {
   async function getShipmentData() {
     try {
       const res = await getShipmentStatusList()
-      console.log("Shipment Data: ", res.data.shipments)
+      // console.log("Shipment Data: ", res.data.shipments)
       setShipmentStatusData(res.data.shipments)
     } catch (error) {
       console.log(error)
@@ -671,19 +671,19 @@ export default function Test({ onNavigate }) {
   }
 
   function handleViewShipment(data) {
-    console.log(data)
+    // console.log(data)
     setSelectedShipment(data)
     setShipmentViewModal(true)
   }
 
   function handleEditSkuShipment(data) {
-    console.log(data)
+    // console.log(data)
     setSelectedShipment(data)
     setSkuEditModal(true)
   }
 
   function handleEditShipment(data) {
-    console.log(data)
+    // console.log(data)
     setSelectedShipment(data)
     setShipmentEditModal(true)
   }
@@ -746,7 +746,7 @@ export default function Test({ onNavigate }) {
   }, [])
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen `}>
       <NavigationHeader currentPage="dashboard" onNavigate={onNavigate} />
 
       <main className="max-w-[97%] mx-auto py-3">

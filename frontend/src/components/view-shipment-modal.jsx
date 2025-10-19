@@ -23,7 +23,7 @@ const fetchShipmentData = async (shipment) => {
 const fetchShipmentLogs = async (shipmentId) => {
   // await new Promise(resolve => setTimeout(resolve, 800))
   const logs = await getLogsOfShipment(shipmentId)
-  console.log(logs?.data?.logs.messages);
+  // console.log(logs?.data?.logs.messages);
   const logContent = logs?.data?.logs.messages;
   return logContent;
   

@@ -332,7 +332,7 @@ export default function UserManagementPage({
   )
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen `}>
       <NavigationHeader currentPage="user-management" onNavigate={onNavigate} />
 
       <main className="container mx-auto p-6">

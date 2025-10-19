@@ -70,7 +70,7 @@ export default function UserSettingsPage({ onNavigate, isDarkMode, onToggleTheme
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen `}>
       <NavigationHeader
         currentPage="user-settings"
         onNavigate={onNavigate}
