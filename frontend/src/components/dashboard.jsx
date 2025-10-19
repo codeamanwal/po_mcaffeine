@@ -1042,16 +1042,16 @@ export default function DashboardPage({ onNavigate }) {
               <CardContent>
                 <div className="max-w-full overflow-x-auto">
                     <div className="max-h-[70vh] overflow-y-auto">
-                    <table className="min-w-full border border-gray-200 relative">
+                    <table className="min-w-full border dark:border-gray-200 border-black relative">
                         {/* Table Head */}
                         <TableHeader className="bg-background sticky top-0 z-20">
-                        <TableRow className={"text-xs"}>
+                        <TableRow className={"text-xs font-semibold"}>
                             {poFormatDataType.map((item, idx) => {
                             const leftOffset = idx < 7 ? `${idx * 100}px` : "auto";
                             return (
                                 <TableCell
                                 key={idx}
-                                className="px-4 py-2 border-b border-r border-gray-200 text-left text-wrap bg-background"
+                                className="px-4 py-2 border-b border-r dark:border-gray-200 border-black text-left text-wrap bg-background"
                                 style={{
                                     position: idx < 7 ? "sticky" : "static",
                                     left: leftOffset,
@@ -1070,7 +1070,7 @@ export default function DashboardPage({ onNavigate }) {
 
                             {/* Sticky Right Columns */}
                             <TableCell
-                            className="px-4 py-2 border-b border-gray-200 text-left bg-background"
+                            className="px-4 py-2 border-b dark:border-gray-200 border-black text-left bg-background"
                             style={{
                                 position: "sticky",
                                 right: "70px",
@@ -1081,7 +1081,7 @@ export default function DashboardPage({ onNavigate }) {
                             Action
                             </TableCell>
                             <TableCell
-                            className="px-4 py-2 border-b  border-gray-200 text-left bg-background"
+                            className="px-4 py-2 border-b  dark:border-gray-200 border-black text-left bg-background"
                             style={{
                                 position: "sticky",
                                 right: "0px", 
@@ -1103,7 +1103,7 @@ export default function DashboardPage({ onNavigate }) {
                                 return (
                                 <TableCell
                                     key={colIdx}
-                                    className="px-4 py-2 border-b border-r border-gray-200 bg-background text-wrap overflow-hidden"
+                                    className="px-4 py-2 border-b border-r dark:border-gray-200 border-black bg-background text-wrap overflow-hidden"
                                     style={{
                                     position: colIdx < 7 ? "sticky" : "static",
                                     left: leftOffset,
@@ -1119,7 +1119,7 @@ export default function DashboardPage({ onNavigate }) {
 
                             {/* Sticky Right Columns */}
                             <TableCell
-                                className="px-4 py-2 border-b border-gray-200 bg-background"
+                                className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
                                 style={{
                                 position: "sticky",
                                 right: "70px",
@@ -1155,7 +1155,7 @@ export default function DashboardPage({ onNavigate }) {
                                 </DropdownMenu>
                             </TableCell>
                             <TableCell
-                                className="px-4 py-2 border-b border-gray-200 bg-background"
+                                className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
                                 style={{
                                 position: "sticky",
                                 right: "0px",
@@ -1340,10 +1340,10 @@ export default function DashboardPage({ onNavigate }) {
                 <CardContent>
                 <div className="max-w-full overflow-x-auto">
                     <div className="max-h-[70vh] overflow-y-auto">
-                    <table className="min-w-full border border-gray-200 relative">
+                    <table className="min-w-full border dark:border-gray-200 border-black relative">
                         {/* Table Head */}
                         <TableHeader className="bg-background sticky top-0 z-20">
-                        <TableRow className={"text-xs"}>
+                        <TableRow className={"text-xs font-semibold"}>
                             {shipmentStatusDataType.map((item, idx) => {
                             const leftOffset = idx < 7 ? `${idx * 100}px` : "auto";
                             const hide = ["statusActive"];
@@ -1356,7 +1356,7 @@ export default function DashboardPage({ onNavigate }) {
                             return (
                                 <TableCell
                                 key={idx}
-                                className="px-4 py-2 border-b border-r border-gray-200 text-left text-wrap bg-background"
+                                className="px-4 py-2 border-b border-r dark:border-gray-200 border-black text-left text-wrap bg-background"
                                 style={{
                                     position: idx < 7 ? "sticky" : "static",
                                     left: leftOffset,
@@ -1375,7 +1375,7 @@ export default function DashboardPage({ onNavigate }) {
 
                             {/* Sticky Right Columns */}
                             <TableCell
-                            className="px-4 py-2 border-b border-gray-200 text-left bg-background"
+                            className="px-4 py-2 border-b dark:border-gray-200 border-black text-left bg-background"
                             style={{
                                 position: "sticky",
                                 right: "70px",
@@ -1386,7 +1386,7 @@ export default function DashboardPage({ onNavigate }) {
                             Action
                             </TableCell>
                             <TableCell
-                            className="px-4 py-2 border-b  border-gray-200 text-left bg-background"
+                            className="px-4 py-2 border-b  dark:border-gray-200 border-black text-left bg-background"
                             style={{
                                 position: "sticky",
                                 right: "0px", 
@@ -1415,7 +1415,7 @@ export default function DashboardPage({ onNavigate }) {
                                 return (
                                 <TableCell
                                     key={colIdx}
-                                    className="px-4 py-2 border-b border-r border-gray-200 bg-background text-wrap overflow-hidden"
+                                    className="px-4 py-2 border-b border-r dark:border-gray-200 border-black bg-background text-wrap overflow-hidden"
                                     style={{
                                     position: colIdx < 7 ? "sticky" : "static",
                                     left: leftOffset,
@@ -1431,7 +1431,7 @@ export default function DashboardPage({ onNavigate }) {
 
                             {/* Sticky Right Columns */}
                             <TableCell
-                                className="px-4 py-2 border-b border-gray-200 bg-background"
+                                className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
                                 style={{
                                 position: "sticky",
                                 right: "70px",
@@ -1474,7 +1474,7 @@ export default function DashboardPage({ onNavigate }) {
                                 </DropdownMenu>
                             </TableCell>
                             <TableCell
-                                className="px-4 py-2 border-b border-gray-200 bg-background"
+                                className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
                                 style={{
                                 position: "sticky",
                                 right: "0px",
