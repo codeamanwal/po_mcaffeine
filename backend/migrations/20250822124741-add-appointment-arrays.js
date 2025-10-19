@@ -6,6 +6,7 @@ export default {
     const tableName = 'shipment_orders';
     const dialect =  queryInterface.sequelize.getDialect();
 
+     const dialect = queryInterface.sequelize.getDialect()
     let jsonType ;
     if (dialect === 'postgres') {
       jsonType = Sequelize.ARRAY(Sequelize.STRING);
