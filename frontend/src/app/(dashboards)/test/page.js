@@ -746,7 +746,7 @@ export default function Test({ onNavigate }) {
   }, [])
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen `}>
       <NavigationHeader currentPage="dashboard" onNavigate={onNavigate} />
 
       <main className="max-w-[97%] mx-auto py-3">

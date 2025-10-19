@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Moon, Sun, LogOut, Database, Lock, UserPlus, Users, User, Home, Settings } from "lucide-react"
 import { useUserStore } from "@/store/user-store"
 import { useThemeStore } from "@/store/theme-store"
+import { ThemeToggle } from "@/provider/toggle-theme"
 
 
 export default function NavigationHeader({
@@ -106,14 +107,16 @@ export default function NavigationHeader({
           )}
 
           {/* Theme Toggle */}
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
-            onClick={() => {setIsDarkMode(!isDarkMode)}}
+            onClick={() => {isDarkMode === "dark" ? setIsDarkMode("light") : setIsDarkMode("dark")}}
             className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
+          </Button> */}
+
+          <ThemeToggle />
 
           {/* User Menu */}
           <DropdownMenu>

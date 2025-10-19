@@ -860,7 +860,7 @@ export default function DashboardPage({ onNavigate }) {
   }, [])
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <div className="min-h-screen dark:bg-gray-900  bg-gray-50">
       <NavigationHeader currentPage="dashboard" onNavigate={onNavigate} />
 
       <main className="max-w-[97%] mx-auto py-3">

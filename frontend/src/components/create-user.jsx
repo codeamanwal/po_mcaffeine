@@ -93,7 +93,7 @@ export default function CreateUserPage({ onNavigate, isDarkMode, onToggleTheme }
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen `}>
       <NavigationHeader
         currentPage="create-user"
         onNavigate={onNavigate}

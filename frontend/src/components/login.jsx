@@ -48,7 +48,7 @@ export default function LoginPage({ onLogin, onForgotPassword, isDarkMode, onTog
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark" : ""}`}>
+    <div className={`min-h-screen`}>
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Theme Toggle */}
         <div className="absolute top-4 right-4">

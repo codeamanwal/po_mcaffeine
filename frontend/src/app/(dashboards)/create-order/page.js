@@ -17,12 +17,12 @@ export default function CreateOrder( ){
     const [activeTab, setActiveTab] = useState("single-order")
     
     return (
-        <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+        <div className={`min-h-screen `}>
         <NavigationHeader
             currentPage="create-order"
             onNavigate={(page) => {router.push(`/${page}`)}}
         />
-        <Tabs value={activeTab} onValueChange={setActiveTab} className={`w-full ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className={`w-full`}>
             
             <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
                 <TabsTrigger value="single-order" className="flex items-center space-x-2 text-base">
