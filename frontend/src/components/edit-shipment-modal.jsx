@@ -458,7 +458,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
       // Validate new appointment if partially filled
       if(formData.firstAppointmentDateCOPT !== originalData.firstAppointmentDateCOPT){
-        // let newAppDate = format(formData.firstAppointmentDateCOPT, "dd-MM-yyyy");
+        // let newAppDate = format(formData.firstAppointmentDateCOPT, "yyyy-MM-dd");
         formData.currentAppointmentDate = formData.firstAppointmentDateCOPT
       }
 
@@ -500,7 +500,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       // Process regular date fields
       extendedShipmentStatusDataType.forEach((field) => {
         if (field.type === "date" && dataToSave[field.fieldName] instanceof Date) {
-          dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "dd-MM-yyyy")
+          dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "yyyy-MM-dd")
         }
       })
 
@@ -509,18 +509,18 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       let finalAppointmentRemarks = []
 
       if (appointments.length > 0) {
-        finalAppointmentDates = appointments.map((apt) => format(apt.date, "dd-MM-yyyy"))
+        finalAppointmentDates = appointments.map((apt) => format(apt.date, "yyyy-MM-dd"))
         finalAppointmentRemarks = appointments.map((apt) => apt.remark)
       }
 
       if (newAppointmentDate && newAppointmentRemark.trim()) {
-        finalAppointmentDates.push(format(newAppointmentDate, "dd-MM-yyyy"))
+        finalAppointmentDates.push(format(newAppointmentDate, "yyyy-MM-dd"))
         finalAppointmentRemarks.push(newAppointmentRemark.trim())
-        dataToSave.currentAppointmentDate = format(newAppointmentDate, "dd-MM-yyyy")
+        dataToSave.currentAppointmentDate = format(newAppointmentDate, "yyyy-MM-dd")
       } else if (appointments.length > 0) {
         const currentAppointment = getCurrentAppointmentDate()
         if (currentAppointment) {
-          dataToSave.currentAppointmentDate = format(currentAppointment.date, "dd-MM-yyyy")
+          dataToSave.currentAppointmentDate = format(currentAppointment.date, "yyyy-MM-dd")
         }
       }
 

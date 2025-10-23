@@ -368,20 +368,20 @@ export default function Test({ onNavigate }) {
   // Check if user has access to bulk CSV SKU update
   const hasBulkSkuAccess = user?.role === "warehouse" || user?.role === "superadmin"
 
-  // Utility function to parse DD-MM-YYYY date strings
+  // Utility function to parse yyyy-MM-dd date strings
   const parseDate = (dateStr) => {
-    if (!dateStr || dateStr === "01-01-1900" || dateStr === "" || dateStr === "0") return null
+    if (!dateStr || dateStr === "01-01-1900" || dateStr === "1900-01-01" || dateStr === "" || dateStr === "0") return null
     try {
-      return parse(dateStr, "dd-MM-yyyy", new Date())
+      return parse(dateStr, "yyyy-MM-dd", new Date())
     } catch {
       return null
     }
   }
 
-  // Utility function to format date to DD-MM-YYYY
+  // Utility function to format date to yyyy-MM-dd
   const formatDate = (date) => {
     if (!date) return ""
-    return format(date, "dd-MM-yyyy")
+    return format(date, "yyyy-MM-dd")
   }
 
   // Get unique values for dropdown filters

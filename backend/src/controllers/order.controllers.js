@@ -25,17 +25,17 @@ function validateOrder ( order ) {
 }
 
 function formatDateToISO (dateString) {
-    // dd-mm-yyyy to Date
+    // yyyy-MM-dd to Date
     if(!dateString) {
         return null;
     }
     const date = dateString?.split("-");
     if(date.length !== 3) {
-        throw new Error("Invalid date format. Please use dd-mm-yyyy.");
+        throw new Error("Invalid date format. Please use yyyy-mm-dd.");
     }
-    const day = parseInt(date[0], 10);
+    const day = parseInt(date[2], 10);
     const month = parseInt(date[1], 10) - 1; // Months are 0-based in JavaScript
-    const year = parseInt(date[2], 10);
+    const year = parseInt(date[0], 10);
     const parsedDate = new Date(year, month, day);
     return parsedDate.toISOString();
 }

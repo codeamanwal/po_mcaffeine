@@ -146,9 +146,9 @@ export default function CreateShipmentModal({ isOpen, onClose, onSave }) {
       // Format data for API
       const apiData = {
         shipmentOrder: {
-          entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "dd-MM-yyyy") : "",
+          entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "yyyy-MM-dd") : "",
           brand: shipmentOrder.brand,
-          poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "dd-MM-yyyy") : "",
+          poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "yyyy-MM-dd") : "",
           facility: shipmentOrder.facility,
           channel: shipmentOrder.channel,
           location: shipmentOrder.location,

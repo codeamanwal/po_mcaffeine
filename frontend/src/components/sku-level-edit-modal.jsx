@@ -185,6 +185,17 @@ export default function SkuLevelEditModal({
     return { qtyRate, gmvRate };
   };
 
+  const calculateOtherValues = () => {
+    const totalQty = originalSkus.reduce((sum, sku) => sum + (Number(sku.qty) || 0), 0);
+    const totalUpdatedQty = originalSkus.reduce((sum, sku) => sum + (Number(sku.updatedQty) || Number(sku.qty)), 0);
+    const totalGmv = originalSkus.reduce((sum, sku) => sum + (Number(sku.gmv) || 0), 0);
+    const totalUpdatedGmv = originalSkus.reduce((sum, sku) => sum + (Number(sku.updatedGmv) || Number(sku.gmv)), 0);
+    const totalPoValue = originalSkus.reduce((sum, sku) => sum + (Number(sku.poValue) || 0), 0);
+    const totalUpdatedPoValue = originalSkus.reduce((sum, sku) => sum + (Number(sku.updatedPoValue) || Number(sku.poValue)), 0);
+
+    return { totalQty, totalUpdatedQty, totalGmv, totalUpdatedGmv, totalPoValue, totalUpdatedPoValue };
+  }
+
 
   // Changes detection
   const hasChanges = useMemo(() => {
@@ -315,7 +326,7 @@ export default function SkuLevelEditModal({
                 <CardTitle className="text-sm md:text-base">Fill Rate Details</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
                   {/* <div>
                     <Label className="text-xs text-gray-600 dark:text-gray-400">Channel</Label>
                     <div className="font-semibold">{shipment.channel ?? "-"}</div>
@@ -337,8 +348,34 @@ export default function SkuLevelEditModal({
                     <div className="font-semibold">{calculateOverallFillRates().qtyRate.toFixed(1) ?? 100}%</div>
                   </div>
                   <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Total qty</Label>
+                    <div className="font-semibold">{calculateOtherValues().totalQty.toFixed(1) ?? 0}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Total updated qty</Label>
+                    <div className="font-semibold">{calculateOtherValues().totalUpdatedQty.toFixed(1) ?? 0}</div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Total GMV</Label>
+                    <div className="font-semibold">{calculateOtherValues().totalGmv.toFixed(1) ?? 0}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Total updated GMV</Label>
+                    <div className="font-semibold">{calculateOtherValues().totalUpdatedGmv.toFixed(1) ?? 0}</div>
+                  </div>
+                  <div>
                     <Label className="text-xs text-gray-600 dark:text-gray-400">Overall GMV Fill Rate</Label>
                     <div className="font-semibold">{calculateOverallFillRates().gmvRate.toFixed(1) ?? 100}%</div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Total PoValue</Label>
+                    <div className="font-semibold">{calculateOtherValues().totalPoValue.toFixed(1) ?? 0}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400">Total updated PoValue</Label>
+                    <div className="font-semibold">{calculateOtherValues().totalUpdatedPoValue.toFixed(1) ?? 0}</div>
                   </div>
                 </div>
               </CardContent>

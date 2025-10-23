@@ -74,7 +74,7 @@ export default function EditOrderModal({ isOpen, onClose, orderData, onSave }) {
       const dataToSave = { ...formData }
       poFormatDataType.forEach((field) => {
         if (field.type === "date" && dataToSave[field.fieldName] instanceof Date) {
-          dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "dd-mm-yyyy")
+          dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "yyyy-MM-dd")
         }
       })
 
