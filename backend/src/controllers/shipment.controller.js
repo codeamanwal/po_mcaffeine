@@ -1,6 +1,6 @@
 import { Op, where } from "sequelize";
-import { sequelize } from "../db/postgresql.js";
-// import { sequelize } from '../db/mysql.js';
+// import { sequelize } from "../db/postgresql.js";
+import { sequelize } from '../db/mysql.js';
 import {ShipmentOrder} from "../models/index.js";
 import {SkuOrder} from "../models/index.js";
 import Log from "../models/log.model.js";
@@ -40,7 +40,7 @@ async function createLog({shipmentId, createdBy, fieldName, change, remark}){
     if(existingLog){
       // update the existing log
       const log = await existingLog.update({ messages:[newMsg,...existingLog.messages]});
-    console.log("Updated the log: ", log);      
+      console.log("Updated the log: ", log);      
       return log;
     } 
     // create new log
@@ -252,24 +252,24 @@ async function getSkusByShipment(req, res) {
     const skus = await SkuOrder.findAll(
       {where: {shipmentOrderId:uid},
       order: [
-         [
-            sequelize.literal(`
-              CASE
-                WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
-                ELSE NULL
-              END
-            `),
-            'ASC NULLS LAST'
-          ], // postgresql
-        //   [ 
+        //  [
         //     sequelize.literal(`
-        //     CASE
-        //       WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
-        //       ELSE NULL
-        //     END
+        //       CASE
+        //         WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+        //         ELSE NULL
+        //       END
         //     `),
-        //     'ASC'
-        //   ], // mysql
+        //     'ASC NULLS LAST'
+        //   ], // postgresql
+          [ 
+            sequelize.literal(`
+            CASE
+              WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+              ELSE NULL
+            END
+            `),
+            'ASC'
+          ], // mysql
       ] 
     })
     if(!skus || skus.length == 0){
@@ -375,24 +375,24 @@ async function getAllSkuOrders(req, res) {
         }],
         order: [
           ['shipmentOrderId', 'DESC'],
-          [
-            sequelize.literal(`
-              CASE
-                WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
-                ELSE NULL
-              END
-            `),
-            'ASC NULLS LAST'
-          ], // postgresql
-          // [ 
+          // [
           //   sequelize.literal(`
           //     CASE
-          //       WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+          //       WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
           //       ELSE NULL
           //     END
           //   `),
-          //   'ASC'
-          // ], // mysql
+          //   'ASC NULLS LAST'
+          // ], // postgresql
+          [ 
+            sequelize.literal(`
+              CASE
+                WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+                ELSE NULL
+              END
+            `),
+            'ASC'
+          ], // mysql
         ]
       });
     }
@@ -418,24 +418,24 @@ async function getAllSkuOrders(req, res) {
           ],
           order: [
             ['shipmentOrderId', 'DESC'],
-            [
-              sequelize.literal(`
-                CASE
-                  WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
-                  ELSE NULL
-                END
-              `),
-              'ASC NULLS LAST'
-            ], // postgresql
-            // [ 
+            // [
             //   sequelize.literal(`
-            //   CASE
-            //     WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
-            //     ELSE NULL
-            //   END
+            //     CASE
+            //       WHEN "srNo" ~ '^[0-9]+$' THEN CAST("srNo" AS INTEGER)
+            //       ELSE NULL
+            //     END
             //   `),
-            //   'ASC'
-            // ], // mysql
+            //   'ASC NULLS LAST'
+            // ], // postgresql
+            [ 
+              sequelize.literal(`
+              CASE
+                WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+                ELSE NULL
+              END
+              `),
+              'ASC'
+            ], // mysql
           ]
         });
       }
@@ -554,7 +554,7 @@ async function updateShipment(req, res) {
     }
     return res.status(200).json({ msg: "Shipment updated successfully", shipment: updatedShipment });
   } catch (error) {
-    console.error(error);
+    console.log("ERROR:", error);
     return res.status(500).json({ error: error });
   }
 }

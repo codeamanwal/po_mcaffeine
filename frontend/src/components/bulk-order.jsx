@@ -122,7 +122,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
         orders.push(order)
       } else if (order.poDate && !yyyyMMddRegex.test(order.poDate)) {
         // Validate poDate format only if poDate is provided
-        order = { ...order, status: "error", errors: ["PO Date must be in yyyy-MM-dd format"] }
+        order = { ...order, status: "error", errors: [`Row: ${i+1} PO Date must be in yyyy-MM-dd format`] }
         orders.push(order)
       } else{
         orders.push(order)
