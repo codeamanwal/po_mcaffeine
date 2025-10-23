@@ -348,9 +348,9 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       // Format data for API
       const apiData = {
         shipmentOrder: {
-          entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "dd-MM-yyyy") : "",
+          entryDate: shipmentOrder.entryDate ? format(shipmentOrder.entryDate, "yyyy-MM-dd") : "",
           brandName: skuOrders[0].brandName,
-          poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "dd-MM-yyyy") : "",
+          poDate: shipmentOrder.poDate ? format(shipmentOrder.poDate, "yyyy-MM-dd") : "",
           channel: shipmentOrder.channel,
           location: shipmentOrder.location,
           poNumber: shipmentOrder.poNumber,

@@ -138,7 +138,7 @@ export default function ShipmentViewModal({
     }
     
     if (key.includes('Date') || key.includes('date')) {
-      // format as value is in "dd-mm-yyyy" format
+      // format as value is in "yyyy-MM-dd" format
       const [day, month, year] = value.split('-');
       const dateObj = new Date(`${year}-${month}-${day}`); // ISO format
 

@@ -94,7 +94,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       }
       
       let order = {
-        entryDate: `${String(new Date().getDate()).padStart(2, "0")}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${new Date().getFullYear()}`,
+        entryDate: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
         brand: brand ,
         brandName: brand ,
         channel: channel,
@@ -113,10 +113,16 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
         errors: [],
         warnings: [],
       }
+
+      const yyyyMMddRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
       
       // check for checking missing some crucial data
       if(!order.channel || !order.location || !order.poNumber || !order.skuCode || !order.skuName || !order.channelSkuCode || order.qty === 0 || order.gmv === 0 || order.poValue === 0){
-        order = {...order, status:"invalid", errors: ["Missing mandetory fields"]}
+        order = {...order, status:"error", errors: ["Missing mandetory fields"]}
+        orders.push(order)
+      } else if (order.poDate && !yyyyMMddRegex.test(order.poDate)) {
+        // Validate poDate format only if poDate is provided
+        order = { ...order, status: "error", errors: ["PO Date must be in yyyy-MM-dd format"] }
         orders.push(order)
       } else{
         orders.push(order)
@@ -259,8 +265,10 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
   }
 
   const validOrdersCount = parsedOrders.filter((order) => order.status === "valid").length
-  const errorOrdersCount = parsedOrders.filter((order) => order.status === "error").length
+  const errorOrdersCount = parsedOrders.filter((order) => order.status !== "valid").length
   const warningOrdersCount = parsedOrders.filter((order) => order.warnings?.length > 0).length
+  const validOrders = parsedOrders.filter((order) => order.status === "valid")
+  const errorOrders = parsedOrders.filter((order) => order.status === "error")
 
   return (
     <div className={`min-h-screen `}>
@@ -442,6 +450,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
                           <TableHead className="font-semibold">Status</TableHead>
                           <TableHead className="font-semibold">Brand</TableHead>
                           <TableHead className="font-semibold">Channel</TableHead>
+                          <TableHead className="font-semibold">PO Date</TableHead>
                           <TableHead className="font-semibold">Location</TableHead>
                           <TableHead className="font-semibold">PO Number</TableHead>
                           <TableHead className="font-semibold">SKU Name</TableHead>
@@ -454,7 +463,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {parsedOrders.map((order, index) => (
+                        {errorOrders?.map((order, index) => (
                           <TableRow
                             key={index}
                             className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
@@ -485,6 +494,65 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
                             </TableCell>
                             <TableCell className="font-medium">{order.brand}</TableCell>
                             <TableCell>{order.channel}</TableCell>
+                            <TableCell>{order?.poDate}</TableCell>
+                            <TableCell>{order.location}</TableCell>
+                            <TableCell className="font-mono text-sm">{order.poNumber}</TableCell>
+                            <TableCell className="max-w-xs truncate" title={order.skuName}>
+                              {order.skuName}
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">{order.skuCode}</TableCell>
+                            <TableCell className="font-mono text-xs">{order.channelSkuCode}</TableCell>
+                            <TableCell className="text-right">{order.qty}</TableCell>
+                            <TableCell className="text-right">₹{order.gmv.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">₹{order.poValue.toLocaleString()}</TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                {order.errors && order.errors.length > 0 && (
+                                  <div className="text-xs text-red-600 dark:text-red-400">
+                                    <strong>Errors:</strong> {order.errors.join(", ")}
+                                  </div>
+                                )}
+                                {order.warnings && order.warnings.length > 0 && (
+                                  <div className="text-xs text-yellow-600 dark:text-yellow-400">
+                                    <strong>Warnings:</strong> {order.warnings.join(", ")}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {validOrders?.map((order, index) => (
+                          <TableRow
+                            key={index}
+                            className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                              order.status === "error"
+                                ? "bg-red-50 dark:bg-red-950"
+                                : order.warnings?.length > 0
+                                  ? "bg-yellow-50 dark:bg-yellow-950"
+                                  : ""
+                            }`}
+                          >
+                            <TableCell>
+                              <div className="flex flex-col gap-1">
+                                <Badge
+                                  className={
+                                    order.status === "valid"
+                                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                  }
+                                >
+                                  {order.status === "valid" ? "Valid" : "Error"}
+                                </Badge>
+                                {order.warnings?.length > 0 && (
+                                  <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-xs">
+                                    Warning
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-medium">{order.brand}</TableCell>
+                            <TableCell>{order.channel}</TableCell>
+                            <TableCell>{order?.poDate}</TableCell>
                             <TableCell>{order.location}</TableCell>
                             <TableCell className="font-mono text-sm">{order.poNumber}</TableCell>
                             <TableCell className="max-w-xs truncate" title={order.skuName}>
