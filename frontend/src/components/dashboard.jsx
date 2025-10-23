@@ -284,8 +284,8 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
               </div>
             </div>
             <div className="p-2 space-y-2">
-              {options.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
+              {options.map((option, idx) => (
+                <div key={idx} className="flex items-center space-x-2">
                   <Checkbox
                     id={option}
                     checked={selectedValues.includes(option)}
@@ -1119,6 +1119,7 @@ export default function DashboardPage({ onNavigate }) {
 
                             {/* Sticky Right Columns */}
                             <TableCell
+                                key={"view"}
                                 className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
                                 style={{
                                 position: "sticky",
@@ -1155,6 +1156,7 @@ export default function DashboardPage({ onNavigate }) {
                                 </DropdownMenu>
                             </TableCell>
                             <TableCell
+                                key={"status"}
                                 className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
                                 style={{
                                 position: "sticky",

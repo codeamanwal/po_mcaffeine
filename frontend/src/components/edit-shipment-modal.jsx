@@ -31,7 +31,7 @@ import {
   AlertTriangle,
   User, History, Loader2, Pen
 } from "lucide-react"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/store/user-store"
 import { shipmentStatusDataType } from "@/constants/data_type"
@@ -313,7 +313,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 const [year, month, day] = dateValue.split("/")
                 parsedDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
               } else if (dateValue.includes("-")) {
-                const [day, month, year] = dateValue.split("-")
+                const [year, month, day] = dateValue.split("-")
                 parsedDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
               } else {
                 parsedDate = new Date(dateValue)
@@ -344,7 +344,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           if (dateStr && typeof dateStr === "string" && dateStr !== "1900/01/00" && dateStr.trim() !== "") {
             try {
               if (dateStr.includes("-")) {
-                const [day, month, year] = dateStr.split("-")
+                const [year, month, day] = dateStr.split("-")
                 parsedDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
               } else if (dateStr.includes("/")) {
                 const [year, month, day] = dateStr.split("/")
@@ -500,6 +500,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       // Process regular date fields
       extendedShipmentStatusDataType.forEach((field) => {
         if (field.type === "date" && dataToSave[field.fieldName] instanceof Date) {
+          // console.log("Formatting date for field:", field.fieldName, dataToSave[field.fieldName])
           dataToSave[field.fieldName] = format(dataToSave[field.fieldName], "yyyy-MM-dd")
         }
       })
@@ -588,19 +589,19 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
               <div className="space-y-3">
                 {appointments.map((appointment, index) => (
                   <div
-                    key={appointment.id}
+                    key={index}
                     className="flex items-start justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border"
                   >
                     <div className="flex items-center gap-3">
                       <Lock className="h-4 w-4 text-gray-400 mt-0.5" />
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">{format(appointment.date, "dd MMM yyyy")}</span>
+                          <span className="font-semibold text-sm">{format(appointment.date, "EEEE, yyyy MMM dd")}</span>
                           <Badge variant={appointment.isFirst ? "default" : "secondary"} className="text-xs">
                             {appointment.isFirst ? "First" : `#${index + 1}`}
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">{format(appointment.date, "EEEE, dd MMMM yyyy")}</p>
+                        <p className="text-xs text-gray-500 mt-1">{format(appointment.date , "EEEE, yyyy MMM dd")}</p>
                       </div>
                     </div>
                     <div className="text-right max-w-xs">
@@ -637,7 +638,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {newAppointmentDate ? format(newAppointmentDate, "dd MMM yyyy") : "Pick a date"}
+                {newAppointmentDate ? format(newAppointmentDate, "yyyy MMM dd") : "Pick a date"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -749,6 +750,12 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
           shouldDisableDate = true;
         }
 
+        // const [year, month, day] = value ? value.split("-") : ["", "", ""];
+        // if(!year || !month || !day){
+        //   value = null;
+        // }
+        // const isoDate = value ? new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day)) : null;
+
         return (
           <div className="space-y-2">
             <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
@@ -769,6 +776,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
+                  {/* {format(parseISO(appointment.date), "EEEE, yyyy MMM dd")} */}
                   {value ? format(value, "PPP"): "Pick a date"}
                   {isBackendControlled && <Server className="ml-auto h-3 w-3 text-blue-500" />}
                 </Button>
@@ -1064,9 +1072,9 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
               <TabsContent key={tab?.value} value={tab?.value}>
                 <ScrollArea className="max-h-[60vh] pr-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-h-[60vh]">
-                    {getFieldsByRole(tab?.value).map((field) => (
+                    {getFieldsByRole(tab?.value).map((field, idx) => (
                       <div
-                        key={field?.fieldName}
+                        key={idx}
                         className={field.type === "appointment_display" ? "col-span-1 md:col-span-2 lg:col-span-4" : ""}
                       >
                         {renderField(field)}
@@ -1176,8 +1184,8 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                       <SelectValue placeholder="Select a reason for changing PO Number..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {PO_EDIT_REASONS.map((reason) => (
-                        <SelectItem key={reason} value={reason}>
+                      {PO_EDIT_REASONS.map((reason, idx) => (
+                        <SelectItem key={idx} value={reason}>
                           {reason}
                         </SelectItem>
                       ))}
