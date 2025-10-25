@@ -41,6 +41,8 @@ import {
 } from "@/lib/validation"
 import { master_rto_remark_options } from "@/constants/master_sheet"
 
+import { toast } from "sonner"
+
 // Field definitions with role permissions, CSV headers, and validation rules
 const fieldDefinitions = {
   // Admin fields
@@ -610,7 +612,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     const updates = []
     let totalErrors = 0
     let totalWarnings = 0
-
+    // console.log("Selected fields are: ", selectedFields);
     for (let i = 1; i < lines.length; i++) {
       const rawLine = lines[i]
       if (!rawLine || !rawLine.trim()) continue // ignore completely empty lines
@@ -664,6 +666,16 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
           }
         } else {
           update[fieldName] = cell
+        }
+
+        // Date validation
+        const yyyyMMddRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+        if (def.type === "date") {
+          if(!yyyyMMddRegex.test(cell)){
+            update.errors.push(`${def.label} must be a valid date in YYYY-MM-DD format`)
+          } else {
+            update[fieldName] = cell
+          }
         }
 
         // Enum-like validation when provided
@@ -745,6 +757,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       const validUpdates = parsedUpdates.filter((update) => update.status === "valid" || update.status === "warning")
       if (validUpdates.length === 0) {
         setError("No valid updates to upload")
+        toast.error("No valid updates to upload")
         return
       }
 
@@ -785,6 +798,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
       if (data.length === 0) {
         setError("No rows with updatable values after filtering. Ensure cells are not empty.")
+        toast.error("No rows with updatable values after filtering. Ensure cells are not empty.")
         return
       }
 
@@ -802,6 +816,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
       onSave?.(validUpdates)
       setSuccess(`Successfully updated ${data.length} shipments`)
+      toast.success(res.data.msg || `Successfully updated ${data.length} shipments`)
       setIsUploading(false)
       setUploadProgress(0)
 
@@ -813,6 +828,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     } catch (error) {
       console.error("Error: ", error)
       setError(`Error: ${error?.response?.msg || error.message}`)
+      toast.error(`Error: ${error?.response?.msg || error.message}`)
       setIsUploading(false)
       setUploadProgress(0)
     }

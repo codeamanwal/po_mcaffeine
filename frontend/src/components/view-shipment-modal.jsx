@@ -139,11 +139,11 @@ export default function ShipmentViewModal({
     
     if (key.includes('Date') || key.includes('date')) {
       // format as value is in "yyyy-MM-dd" format
-      const [day, month, year] = value.split('-');
+      const [year, month, day] = value.split('-');
       const dateObj = new Date(`${year}-${month}-${day}`); // ISO format
 
       // Format it nicely using toLocaleDateString
-      return dateObj.toLocaleDateString('en-US', {
+      return dateObj.toLocaleDateString('en-IN', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'

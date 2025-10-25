@@ -628,9 +628,9 @@ async function updateBulkShipment(req, res){
       }
       await t.commit();
       if (errs.length > 0) {
-        return res.status(204).json({ errors: errs });
+        return res.status(207).json({ msg:"Some Shipments not updated, because they were not found!", errors: errs });
       }
-      return res.status(200).json({ msg: "Shipments updated successfully" });
+      return res.status(200).json({ msg: "All Shipments updated successfully" });
     }
 
     else if(user.role === "admin"){

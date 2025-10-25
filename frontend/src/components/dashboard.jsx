@@ -1144,14 +1144,21 @@ export default function DashboardPage({ onNavigate }) {
                                     <Eye className="mr-2 h-4 w-4 text-blue-500" />
                                     View Details
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                    onClick={() => handleDeleteOrder(row)}
-                                    className="cursor-pointer text-red-600 focus:text-red-600"
-                                    >
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Delete
-                                    </DropdownMenuItem>
+                                    {
+                                      user && user.role === "superadmin" && (
+                                        <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() => handleDeleteOrder(row)}
+                                          className="cursor-pointer text-red-600 focus:text-red-600"
+                                        >
+                                          <Trash className="mr-2 h-4 w-4" />
+                                          Delete
+                                        </DropdownMenuItem>
+                                        </>
+                                      )
+                                    }
+                                    
                                 </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
@@ -1464,14 +1471,20 @@ export default function DashboardPage({ onNavigate }) {
                                     <Edit className="mr-2 h-4 w-4 text-orange-500" />
                                     Edit Shipment
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                    onClick={() => handleDeleteOrder(row)}
-                                    className="cursor-pointer text-red-600 focus:text-red-600"
-                                    >
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Delete
-                                    </DropdownMenuItem>
+                                    {
+                                      user && user.role === "superadmin" && (
+                                        <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() => handleDeleteOrder(row)}
+                                          className="cursor-pointer text-red-600 focus:text-red-600"
+                                        >
+                                          <Trash className="mr-2 h-4 w-4" />
+                                          Delete
+                                        </DropdownMenuItem>
+                                        </>
+                                      )
+                                    }
                                 </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
