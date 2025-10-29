@@ -489,7 +489,7 @@ export default function DashboardPage({ onNavigate }) {
 
   const getShipmentData = useCallback(async () => {
     try {
-      const shipmenturl = `${base_url}/api/v1/shipment/get-shipment-orders?page=${poPage}`;
+      const shipmenturl = `${base_url}/api/v1/shipment/get-shipment-orders?page=${shipmentPage}`;
       const res = await api.get(shipmenturl);
 
       const noMorePages = shipmentPage >= res.data.totalPages;

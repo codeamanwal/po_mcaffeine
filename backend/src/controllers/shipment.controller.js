@@ -378,6 +378,7 @@ async function getPaginatedShipments(req, res) {
         ],
         limit,
         offset,
+        distinct: true,
       });
 
       shipments = rows;
@@ -414,6 +415,7 @@ async function getPaginatedShipments(req, res) {
         ],
         limit,
         offset,
+        distinct: true,
       });
 
       shipments = rows;
@@ -472,8 +474,8 @@ async function getPaginatedShipments(req, res) {
       msg: "Paginated shipment data fetched successfully",
       page,
       limit,
-      totalCount: shipmentsWithTotals.length ?? 0,
-      totalPages: shipmentsWithTotals.length !== 0 ? Math.ceil(shipmentsWithTotals.length / limit) : 0,
+      totalCount,
+      totalPages,
       shipments: shipmentsWithTotals,
       calculationDone: true,
     });
