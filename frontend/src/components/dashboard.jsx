@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -48,7 +48,16 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { format, parse, isSameDay } from "date-fns"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { format, parse, isSameDay, set } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -58,6 +67,7 @@ import { getFinalStatus } from "@/constants/status_master"
 import { getTAT } from "@/constants/courier-partners"
 import { getDeliveryType } from "@/lib/validation"
 import { toast } from "sonner"
+import api from "@/hooks/axios"
 
 // Sample data based on provided format
 const poData = [
@@ -306,9 +316,22 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
 
 export default function DashboardPage({ onNavigate }) {
   const router = useRouter()
+
+  const base_url = process.env.NEXT_PUBLIC_API_BASE_URL; 
+
   const { isDarkMode, setIsDarkMode } = useThemeStore()
   const { user, logout } = useUserStore()
   const [activeTab, setActiveTab] = useState("po-format")
+
+
+  const [poPage, setPoPage] = useState(1);
+  const [poHasMorePages, setPoHasMorePages] = useState(true);
+  const [totalPoOrders, setTotalPoOrders] = useState(0);
+
+  const [shipmentPage, setShipmentPage] = useState(1);
+  const [shipmentHasMorePages, setShipmentHasMorePages] = useState(true);
+  const [totalShipmentOrders, setTotalShipmentOrders] = useState(0);
+
 
   const [poFormatData, setPoFormatData] = useState([])
   const [shipmentStatusData, setShipmentStatusData] = useState([])
@@ -420,33 +443,60 @@ export default function DashboardPage({ onNavigate }) {
     return date.getTime();
 }
 
-  async function getPoFormateData() {
+  const getPoFormateData = useCallback(async () => {
     try {
-      const res = await getPoFormatOrderList()
-      // console.log(res.data)
-      setPoFormatData(res.data.orders)
-      setPoFormatData((prev) => {
-        const arr = prev.map(item => {
-          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
-          const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
-          return {
-            ...item,
-            currentAppointmentDate,
-            finalStatus,
-          }
-        })
-        return arr;
-      })
-    } catch (error) {
-      console.log(error)
-      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
-      setPoFormatData(poData)
-    }
-  }
+      const pourl = `${base_url}/api/v1/shipment/get-sku-orders?page=${poPage}`;
+      const res = await api.get(pourl);
 
-  async function getShipmentData() {
+      const noMorePages = poPage >= res.data.totalPages;
+      // console.log("No more pages (PO): ", res.data.totalPages);
+      setPoHasMorePages(!noMorePages); // e.g. false means stop further requests
+      setTotalPoOrders(res.data.totalCount || 0);
+
+      const formattedOrders = res.data.orders.map(item => {
+        const currentAppointmentDate =
+          item.currentAppointmentDate ??
+          item.firstAppointmentDateCOPT ??
+          item.firstAppointmentDate ??
+          item.allAppointmentDate?.at(0) ??
+          "";
+        const finalStatus =
+          getFinalStatus(
+            item.statusPlanning ?? "Confirmed",
+            item.statusWarehouse ?? "Confirmed",
+            item.statusLogistics ?? "Confirmed"
+          ) ?? "No mapping available!";
+
+        return {
+          ...item,
+          currentAppointmentDate,
+          finalStatus,
+        };
+      });
+
+      setPoFormatData(formattedOrders);
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!");
+      setPoFormatData(poData);
+    }
+  }, [poPage]); 
+
+  useEffect(() => {
+    getPoFormateData();
+  }, [getPoFormateData]);
+
+
+  const getShipmentData = useCallback(async () => {
     try {
-      const res = await getShipmentStatusList()
+      const shipmenturl = `${base_url}/api/v1/shipment/get-shipment-orders?page=${poPage}`;
+      const res = await api.get(shipmenturl);
+
+      const noMorePages = shipmentPage >= res.data.totalPages;
+      // console.log("No more pages (PO): ", res.data.totalPages);
+      setShipmentHasMorePages(!noMorePages); // e.g. false means stop further requests
+      setTotalShipmentOrders(res.data.totalCount || 0);
+
       // console.log("Shipment Data: ", res.data.shipments)
       setShipmentStatusData(res.data.shipments)
       setShipmentStatusData((prev) => {
@@ -477,7 +527,11 @@ export default function DashboardPage({ onNavigate }) {
       toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
       setShipmentStatusData(shipmentData)
     }
-  }
+  }, [shipmentPage]) 
+
+  useEffect(() => {
+    getShipmentData()
+  }, [shipmentPage])
 
   // Enhanced filter function for PO data - Updated for multi-select
   const filteredPoData = poFormatData.filter((item) => {
@@ -854,10 +908,7 @@ export default function DashboardPage({ onNavigate }) {
     return shipmentStatusDataType.slice(6)
   }
 
-  useEffect(() => {
-    getPoFormateData()
-    getShipmentData()
-  }, [])
+  
 
   return (
     <div className="min-h-screen dark:bg-gray-900  bg-gray-50">
@@ -892,7 +943,7 @@ export default function DashboardPage({ onNavigate }) {
                       variant="secondary"
                       className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-sm px-3 py-1"
                     >
-                      {filteredPoData.length} of {poFormatData.length} Records
+                      {filteredPoData.length} of {totalPoOrders} Records
                     </Badge>
                     <Button
                       onClick={() => exportToCSV(filteredPoData, "po-format-data.csv", poFormatDataType)}
@@ -1036,6 +1087,43 @@ export default function DashboardPage({ onNavigate }) {
                       placeholder="Select status"
                     />
                   </div>
+
+                  {/* pagination  */}
+                  <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          {
+                            poPage > 1 &&
+                              <PaginationPrevious onClick={(e) => { e.preventDefault(); setPoPage(prev => prev - 1)}} href="#" />
+                          }
+                        </PaginationItem>
+                        <PaginationItem>
+                          { poPage > 1 && <PaginationLink onClick={(e) => { e.preventDefault(); setPoPage(prev => prev - 1)}} href="#"> {poPage-1} </PaginationLink>}
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationLink href="#" isActive>
+                            {poPage}
+                          </PaginationLink>
+                        </PaginationItem>
+                        <PaginationItem>
+                          {
+                            poHasMorePages && (
+                              <PaginationLink onClick={(e) => { e.preventDefault(); setPoPage(prev => prev + 1)}} href="#">{poPage+1}</PaginationLink>
+                            )
+                          }
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                        <PaginationItem>
+                            {
+                              poHasMorePages && (
+                                <PaginationNext onClick={(e) => { e.preventDefault(); setPoPage(prev => prev + 1)}} href="#" />
+                              )
+                            }
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
                 </div>
               </CardHeader>
 
@@ -1201,7 +1289,7 @@ export default function DashboardPage({ onNavigate }) {
                       variant="secondary"
                       className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-sm px-3 py-1"
                     >
-                      {filteredShipmentData.length} of {shipmentStatusData.length} Records
+                      {filteredShipmentData.length} of {totalShipmentOrders} Records
                     </Badge>
                     <Button
                       onClick={() =>
@@ -1343,7 +1431,47 @@ export default function DashboardPage({ onNavigate }) {
                       placeholder="Select status"
                     />
                   </div>
+
+                  {/* pagination  */}
+                  <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          {
+                            shipmentPage > 1 && (
+                              <PaginationPrevious onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev - 1)}} href="#" />
+                            )
+                          }
+                        </PaginationItem>
+                        <PaginationItem>
+                          { shipmentPage !== 1 && <PaginationLink onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev - 1)}} href="#"> {shipmentPage-1} </PaginationLink>}
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationLink href="#" isActive>
+                            {shipmentPage}
+                          </PaginationLink>
+                        </PaginationItem>
+                        <PaginationItem>
+                          {
+                            shipmentHasMorePages && (
+                              <PaginationLink onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev + 1)}} href="#">{shipmentPage+1}</PaginationLink>
+                            )
+                          }
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                        <PaginationItem>
+                          {
+                            shipmentHasMorePages && (
+                              <PaginationNext onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev + 1)}} href="#" />
+                            )
+                          }
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
                 </div>
+
+                {/* pagination  */}
               </CardHeader>
 
                 <CardContent>

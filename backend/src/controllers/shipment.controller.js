@@ -352,6 +352,142 @@ async function getAllShipments(req, res) {
   }
 }
 
+async function getPaginatedShipments(req, res) {
+  try {
+    const currUser = req.user;
+    const query = req.query;
+
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 200;
+    const offset = (page - 1) * limit;
+
+    let where = {};
+    let totalCount = 0;
+    let shipments = [];
+
+    // --- SUPERADMIN / ADMIN ---
+    if (currUser.role === "superadmin" || currUser.role === "admin") {
+      const { rows, count } = await ShipmentOrder.findAndCountAll({
+        where,
+        order: [["uid", "DESC"]],
+        include: [
+          {
+            model: SkuOrder,
+            as: "skuOrders",
+          },
+        ],
+        limit,
+        offset,
+      });
+
+      shipments = rows;
+      totalCount = count;
+    }
+
+    // --- WAREHOUSE / LOGISTICS ---
+    else if (currUser.role === "warehouse" || currUser.role === "logistics") {
+      const allotedFacilities = currUser.allotedFacilities;
+
+      if (!allotedFacilities || allotedFacilities.length === 0) {
+        // No facilities assigned → no data, tell frontend to stop pagination
+        res.setHeader("X-No-More-Pages", "true");
+        return res.status(200).json({
+          msg: "No facilities allotted",
+          shipments: [],
+          totalCount: 0,
+          totalPages: 0,
+          page,
+          limit,
+        });
+      }
+
+      const { rows, count } = await ShipmentOrder.findAndCountAll({
+        where: {
+          facility: { [Op.in]: allotedFacilities },
+        },
+        order: [["uid", "DESC"]],
+        include: [
+          {
+            model: SkuOrder,
+            as: "skuOrders",
+          },
+        ],
+        limit,
+        offset,
+      });
+
+      shipments = rows;
+      totalCount = count;
+    }
+
+    // --- OTHER ROLES ---
+    else {
+      res.setHeader("X-No-More-Pages", "true");
+      return res.status(200).json({
+        msg: "No access for this role",
+        shipments: [],
+        totalCount: 0,
+        totalPages: 0,
+        page,
+        limit,
+      });
+    }
+
+    // --- If no shipments found ---
+    if (!shipments || shipments.length === 0) {
+      res.setHeader("X-No-More-Pages", "true");
+      return res.status(200).json({
+        msg: "No shipments found",
+        shipments: [],
+        totalCount: 0,
+        totalPages: 0,
+        page,
+        limit,
+      });
+    }
+
+    // --- Calculate totalUnits for each shipment ---
+    const shipmentsWithTotals = shipments.map((shipment) => {
+      const shipmentData = shipment.toJSON();
+      const totalUnits = shipmentData.skuOrders.reduce((sum, sku) => {
+        const qty = Number(sku.updatedQty ?? sku.qty ?? 0);
+        return sum + qty;
+      }, 0);
+      shipmentData.totalUnits = totalUnits;
+      delete shipmentData.skuOrders;
+      return shipmentData;
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // --- Set header to tell frontend if this is the last page ---
+    if (page >= totalPages) {
+      res.setHeader("X-No-More-Pages", "true");
+    } else {
+      res.setHeader("X-No-More-Pages", "false");
+    }
+
+    // --- Send final response ---
+    return res.status(200).json({
+      msg: "Paginated shipment data fetched successfully",
+      page,
+      limit,
+      totalCount: shipmentsWithTotals.length ?? 0,
+      totalPages: shipmentsWithTotals.length !== 0 ? Math.ceil(shipmentsWithTotals.length / limit) : 0,
+      shipments: shipmentsWithTotals,
+      calculationDone: true,
+    });
+  } catch (error) {
+    console.error("Error fetching paginated shipments:", error);
+    return res.status(500).json({
+      msg: "Something went wrong while fetching paginated shipments",
+      error: error.message,
+      calculationDone: false,
+    });
+  }
+}
+
+
 async function getAllSkuOrders(req, res) {
   try {
     // pull shipmentOrderId from ?shipmentOrderId=... if provided
@@ -453,6 +589,128 @@ async function getAllSkuOrders(req, res) {
   } catch (err) {
     console.error('Error fetching SKU orders:', err);
     return res.status(500).json({ error: 'Failed to retrieve SKU orders.' });
+  }
+}
+
+async function getPaginatedSkus(req, res) {
+  try {
+    const currRole = req.user?.role;
+    const query = req?.query;
+    const shipmentOrderId = query?.shipmentOrderId || null;
+    const page = parseInt(query?.page) || 1;
+    const limit = parseInt(query?.limit) || 200;
+    const offset = (page - 1) * limit;
+
+    const where = {};
+    if (shipmentOrderId) where.shipmentOrderId = shipmentOrderId;
+
+    let skuOrders;
+    let totalCount;
+
+    // --- Fetch logic (same as before) ---
+    if (currRole === "superadmin" || currRole === "admin") {
+      const { rows, count } = await SkuOrder.findAndCountAll({
+        where,
+        include: [{ model: ShipmentOrder, as: "shipmentOrder" }],
+        order: [
+          ["shipmentOrderId", "DESC"],
+          [
+            sequelize.literal(`
+              CASE
+                WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+                ELSE NULL
+              END
+            `),
+            "ASC",
+          ],
+        ],
+        limit,
+        offset,
+      });
+
+      skuOrders = rows;
+      totalCount = count;
+    } else {
+      const allotedFacilities = req.user?.allotedFacilities;
+
+      if (!allotedFacilities || allotedFacilities.length === 0) {
+        res.setHeader("X-No-More-Pages", "true"); 
+        return res.status(200).json({
+          msg: "No facilities allotted",
+          orders: [],
+          page,
+          totalPages: 0,
+          totalCount: 0,
+          calculationDone: true,
+        });
+      }
+
+      const { rows, count } = await SkuOrder.findAndCountAll({
+        where,
+        include: [
+          {
+            model: ShipmentOrder,
+            as: "shipmentOrder",
+            required: true,
+            where: {
+              facility: { [Op.in]: allotedFacilities },
+            },
+          },
+        ],
+        order: [
+          ["shipmentOrderId", "DESC"],
+          [
+            sequelize.literal(`
+              CASE
+                WHEN srNo REGEXP '^[0-9]+$' THEN CAST(srNo AS UNSIGNED)
+                ELSE NULL
+              END
+            `),
+            "ASC",
+          ],
+        ],
+        limit,
+        offset,
+      });
+
+      skuOrders = rows;
+      totalCount = count;
+    }
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // --- Check if this is the last page ---
+    if (page >= totalPages) {
+      res.setHeader("X-No-More-Pages", "true");
+    } else {
+      res.setHeader("X-No-More-Pages", "false");
+    }
+
+    // --- Flatten SKU + ShipmentOrder data ---
+    const skuDataList = skuOrders.map((sku) => {
+      const { shipmentOrder, ...skuData } = sku.dataValues;
+      return {
+        ...shipmentOrder?.dataValues,
+        ...skuData,
+      };
+    });
+
+    // --- Final response ---
+    return res.status(200).json({
+      msg: "Data fetched successfully",
+      page,
+      limit,
+      totalCount,
+      totalPages,
+      orders: skuDataList,
+      calculationDone: true,
+    });
+  } catch (err) {
+    console.error("Error fetching SKU orders:", err);
+    return res.status(500).json({
+      error: "Failed to retrieve SKU orders.",
+      calculationDone: false,
+    });
   }
 }
 
@@ -877,5 +1135,7 @@ export const shipmentControllers = {
     updateBulkSku,
     deleteSku,
     deleteShipment,
+    getPaginatedSkus,
+    getPaginatedShipments,
 };
 

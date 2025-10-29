@@ -9,6 +9,10 @@ router.get("/get-all-shipments", shipmentControllers.getAllShipments)
 router.post("/get-shipment-with-sku-orders", shipmentControllers.getShipmentWithSkuOrders)
 router.get("/get-all-sku-orders", shipmentControllers.getAllSkuOrders)
 
+//paginated sku and shipent order fetch
+router.get("/get-sku-orders", shipmentControllers.getPaginatedSkus);
+router.get("/get-shipment-orders", shipmentControllers.getPaginatedShipments);
+
 router.post("/get-skus-by-shipment", shipmentControllers.getSkusByShipment)
 
 router.get("/get-all-data", shipmentControllers.getAllData)
