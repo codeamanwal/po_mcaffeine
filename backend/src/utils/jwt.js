@@ -5,7 +5,7 @@ export function generateToken(user) {
         if(!user){
             throw new Error("Please provide user details!")
         }
-        return jwt.sign({user}, process.env.JWT_SECRET, {expiresIn: "1d"});
+        return jwt.sign({user}, process.env.JWT_SECRET, {expiresIn: "12d"});
     } catch (error) {
         console.log(error);
         throw error

@@ -1,5 +1,6 @@
 import {Router} from "express"
 import { shipmentControllers } from "../controllers/shipment.controller.js"
+import {getFilterOptions, getShipments, getSkus} from "../controllers/order-filter.controllers.js"
 
 const router = Router()
 
@@ -12,6 +13,12 @@ router.get("/get-all-sku-orders", shipmentControllers.getAllSkuOrders)
 //paginated sku and shipent order fetch
 router.get("/get-sku-orders", shipmentControllers.getPaginatedSkus);
 router.get("/get-shipment-orders", shipmentControllers.getPaginatedShipments);
+
+// paginated filtered order fetching
+router.post("/get-sku", getSkus)
+router.post("/get-shipment", getShipments)
+// filter options
+router.get('/get-filter-options', getFilterOptions)
 
 router.post("/get-skus-by-shipment", shipmentControllers.getSkusByShipment)
 

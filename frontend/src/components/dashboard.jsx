@@ -395,6 +395,8 @@ export default function DashboardPage({ onNavigate }) {
   const [dialogType, setDialogType] = useState(null)
   const [error, setError] = useState(null) // Added setError state
 
+  const [filtersOptions, setFiltersOptions] = useState({})
+
   // Check if user has access to bulk CSV SKU update
   const hasBulkSkuAccess = user?.role === "warehouse" || user?.role === "superadmin"
 
@@ -416,9 +418,12 @@ export default function DashboardPage({ onNavigate }) {
 
   // Get unique values for dropdown filters
   const getUniqueValues = (data, field) => {
-    const values = data.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
-    const uniqueValues = [...new Set(values)].sort()
-    return ["Not Assigned", ...uniqueValues]
+    // const values = data?.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
+    // const uniqueValues = [...new Set(values)].sort()
+    if(data && data.length > 0){
+      return ["Not Assigned", ...data]
+    }
+    return ["Not Assigned"]
   }
 
   const getFacilityOptions = (data, field) => {
@@ -445,8 +450,8 @@ export default function DashboardPage({ onNavigate }) {
 
   const getPoFormateData = useCallback(async () => {
     try {
-      const pourl = `${base_url}/api/v1/shipment/get-sku-orders?page=${poPage}`;
-      const res = await api.get(pourl);
+      const pourl = `${base_url}/api/v1/shipment/get-sku?page=${poPage}&limit=${200}`;
+      const res = await api.post(pourl, {filters: poFilters});
 
       const noMorePages = poPage >= res.data.totalPages;
       // console.log("No more pages (PO): ", res.data.totalPages);
@@ -480,17 +485,17 @@ export default function DashboardPage({ onNavigate }) {
       toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!");
       setPoFormatData(poData);
     }
-  }, [poPage]); 
+  }, [poPage, poFilters]); 
 
   useEffect(() => {
     getPoFormateData();
-  }, [getPoFormateData]);
+  }, [getPoFormateData, poFilters]);
 
 
   const getShipmentData = useCallback(async () => {
     try {
-      const shipmenturl = `${base_url}/api/v1/shipment/get-shipment-orders?page=${shipmentPage}`;
-      const res = await api.get(shipmenturl);
+      const shipmenturl = `${base_url}/api/v1/shipment/get-shipment?page=${shipmentPage}&limit=${200}`;
+      const res = await api.post(shipmenturl, {filters: shipmentFilters});
 
       const noMorePages = shipmentPage >= res.data.totalPages;
       // console.log("No more pages (PO): ", res.data.totalPages);
@@ -527,11 +532,26 @@ export default function DashboardPage({ onNavigate }) {
       toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
       setShipmentStatusData(shipmentData)
     }
-  }, [shipmentPage]) 
+  }, [shipmentPage, shipmentFilters]) 
 
   useEffect(() => {
     getShipmentData()
-  }, [shipmentPage])
+  }, [shipmentPage, shipmentFilters])
+
+  // get filters options
+  const getFilterOptions = useCallback(async () => {
+    try {
+      const filterOptionUrl = `${base_url}/api/v1/shipment/get-filter-options`;
+      const res = await api.get(filterOptionUrl);
+      // console.log(res.data.filterOptions)
+      setFiltersOptions(res.data.filterOptions)
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!");
+    } 
+  }, [])
+
+  useEffect(() => {getFilterOptions()}, [])
 
   // Enhanced filter function for PO data - Updated for multi-select
   const filteredPoData = poFormatData.filter((item) => {
@@ -706,6 +726,75 @@ export default function DashboardPage({ onNavigate }) {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  // download csv with filters as it is all data from api
+  const downloadPoCSV = async () => {
+    try {
+      const pourl = `${base_url}/api/v1/shipment/get-sku`;
+      const res = await api.post(pourl, {filters: poFilters});
+
+
+      const formattedOrders = res.data.orders.map(item => {
+        const currentAppointmentDate =
+          item.currentAppointmentDate ??
+          item.firstAppointmentDateCOPT ??
+          item.firstAppointmentDate ??
+          item.allAppointmentDate?.at(0) ??
+          "";
+        const finalStatus =
+          getFinalStatus(
+            item.statusPlanning ?? "Confirmed",
+            item.statusWarehouse ?? "Confirmed",
+            item.statusLogistics ?? "Confirmed"
+          ) ?? "No mapping available!";
+
+        return {
+          ...item,
+          currentAppointmentDate,
+          finalStatus,
+        };
+      });
+
+      exportToCSV(formattedOrders, "po-format-data.csv", poFormatDataType)
+    } catch (error) {
+      console.log(error)
+      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
+    }
+  }
+
+  const downloadShipmentCSV = async () => {
+    try {
+      const shipmenturl = `${base_url}/api/v1/shipment/get-shipment`;
+      const res = await api.post(shipmenturl, {filters: shipmentFilters});
+
+      const formattedOrders = res.data.orders.map(item => {
+          // add tat and critical dispatch date
+          let criticalDispatchDate = item.currentAppointmentDate;
+          const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
+          const tat = getTAT(item.firstTransporter) ?? 0;
+          const cdd = cad ? cad - tat * 24*60*60*1000 : null;
+          criticalDispatchDate = formatDate(cdd)
+          // deliveryType
+          const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
+          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
+          const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+          return {
+            ...item,
+            tat,
+            currentAppointmentDate,
+            criticalDispatchDate,
+            deliveryType,
+            finalStatus,
+          }
+      })
+      
+      exportToCSV(formattedOrders, "shipment-status-data.csv", shipmentStatusDataType)
+
+    } catch (error) {
+      console.log(error)
+      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
+    }
   }
 
   // Clear filters functions - Updated for multi-select
@@ -943,10 +1032,10 @@ export default function DashboardPage({ onNavigate }) {
                       variant="secondary"
                       className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-sm px-3 py-1"
                     >
-                      {filteredPoData.length} of {totalPoOrders} Records
+                      {poFormatData.length} of {totalPoOrders} Records
                     </Badge>
                     <Button
-                      onClick={() => exportToCSV(filteredPoData, "po-format-data.csv", poFormatDataType)}
+                      onClick={downloadPoCSV}
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -1008,7 +1097,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Brand */}
                     <MultiSelectFilter
                       label="Brand"
-                      options={getUniqueValues(poFormatData, "brand")}
+                      options={getUniqueValues(filtersOptions?.brand, "brand")}
                       selectedValues={poFilters.brand}
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, brand: values }))}
                       placeholder="Select brands"
@@ -1017,7 +1106,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Channel */}
                     <MultiSelectFilter
                       label="Channel"
-                      options={getUniqueValues(poFormatData, "channel")}
+                      options={getUniqueValues(filtersOptions?.channel, "channel")}
                       selectedValues={poFilters.channel}
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, channel: values }))}
                       placeholder="Select channels"
@@ -1026,7 +1115,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Facility filter for PO Format */}
                     <MultiSelectFilter
                       label="Facility"
-                      options={getFacilityOptions(poFormatData, "facility")}
+                      options={getUniqueValues(filtersOptions?.facility, "facility")}
                       selectedValues={poFilters.facility}
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, facility: values }))}
                       placeholder="Select facilities"
@@ -1035,7 +1124,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Location */}
                     <MultiSelectFilter
                       label="Location"
-                      options={getUniqueValues(poFormatData, "location")}
+                      options={getUniqueValues(filtersOptions?.location, "location")}
                       selectedValues={poFilters.location}
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, location: values }))}
                       placeholder="Select locations"
@@ -1054,7 +1143,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Status Planning */}
                     <MultiSelectFilter
                       label="Status Planning"
-                      options={getUniqueValues(poFormatData, "statusPlanning")}
+                      options={getUniqueValues(filtersOptions?.statusPlanning, "statusPlanning")}
                       selectedValues={poFilters.statusPlanning}
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusPlanning: values }))}
                       placeholder="Select status"
@@ -1063,7 +1152,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Status Warehouse */}
                     <MultiSelectFilter
                       label="Status Warehouse"
-                      options={getUniqueValues(poFormatData, "statusWarehouse")}
+                      options={getUniqueValues(filtersOptions?.statusWarehouse, "statusWarehouse")}
                       selectedValues={poFilters.statusWarehouse}
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusWarehouse: values }))}
                       placeholder="Select status"
@@ -1072,7 +1161,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Status Logistics */}
                     <MultiSelectFilter
                       label="Status Logistics"
-                      options={getUniqueValues(poFormatData, "statusLogistics")}
+                      options={getUniqueValues(filtersOptions?.statusLogistics, "statusLogistics")}
                       selectedValues={poFilters.statusLogistics}
                       onSelectionChange={(values) => setPoFilters((prev) => ({ ...prev, statusLogistics: values }))}
                       placeholder="Select status"
@@ -1184,7 +1273,7 @@ export default function DashboardPage({ onNavigate }) {
 
                         {/* Table Body */}
                         <TableBody className={"text-xs"}>
-                        {filteredPoData.map((row, rowIdx) => (
+                        {poFormatData.map((row, rowIdx) => (
                             <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                             {poFormatDataType.map((item, colIdx) => {
                                 const leftOffset = colIdx < 7 ? `${colIdx * 100}px` : "auto";
@@ -1289,12 +1378,10 @@ export default function DashboardPage({ onNavigate }) {
                       variant="secondary"
                       className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-sm px-3 py-1"
                     >
-                      {filteredShipmentData.length} of {totalShipmentOrders} Records
+                      {shipmentStatusData.length} of {totalShipmentOrders} Records
                     </Badge>
                     <Button
-                      onClick={() =>
-                        exportToCSV(filteredShipmentData, "shipment-status-data.csv", shipmentStatusDataType)
-                      }
+                      onClick={downloadShipmentCSV}
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -1354,7 +1441,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Brand */}
                     <MultiSelectFilter
                       label="Brand"
-                      options={getUniqueValues(shipmentStatusData, "brandName")}
+                      options={getUniqueValues(filtersOptions?.brand, "brandName")}
                       selectedValues={shipmentFilters.brand}
                       onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, brand: values }))}
                       placeholder="Select brands"
@@ -1363,7 +1450,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Channel */}
                     <MultiSelectFilter
                       label="Channel"
-                      options={getUniqueValues(shipmentStatusData, "channel")}
+                      options={getUniqueValues(filtersOptions?.channel, "channel")}
                       selectedValues={shipmentFilters.channel}
                       onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, channel: values }))}
                       placeholder="Select channels"
@@ -1372,7 +1459,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Facility filter for Shipment Status */}
                     <MultiSelectFilter
                       label="Facility"
-                      options={getFacilityOptions(shipmentStatusData, "facility")}
+                      options={getUniqueValues(filtersOptions?.facility, "facility")}
                       selectedValues={shipmentFilters.facility}
                       onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, facility: values }))}
                       placeholder="Select facilities"
@@ -1381,7 +1468,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Location */}
                     <MultiSelectFilter
                       label="Location"
-                      options={getUniqueValues(shipmentStatusData, "location")}
+                      options={getUniqueValues(filtersOptions?.location, "location")}
                       selectedValues={shipmentFilters.location}
                       onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, location: values }))}
                       placeholder="Select locations"
@@ -1390,7 +1477,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Status Planning */}
                     <MultiSelectFilter
                       label="Status Planning"
-                      options={getUniqueValues(shipmentStatusData, "statusPlanning")}
+                      options={getUniqueValues(filtersOptions?.statusPlanning, "statusPlanning")}
                       selectedValues={shipmentFilters.statusPlanning}
                       onSelectionChange={(values) =>
                         setShipmentFilters((prev) => ({ ...prev, statusPlanning: values }))
@@ -1401,7 +1488,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Status Warehouse */}
                     <MultiSelectFilter
                       label="Status Warehouse"
-                      options={getUniqueValues(shipmentStatusData, "statusWarehouse")}
+                      options={getUniqueValues(filtersOptions?.statusWarehouse, "statusWarehouse")}
                       selectedValues={shipmentFilters.statusWarehouse}
                       onSelectionChange={(values) =>
                         setShipmentFilters((prev) => ({ ...prev, statusWarehouse: values }))
@@ -1412,7 +1499,7 @@ export default function DashboardPage({ onNavigate }) {
                     {/* Multi-select Status Logistics */}
                     <MultiSelectFilter
                       label="Status Logistics"
-                      options={getUniqueValues(shipmentStatusData, "statusLogistics")}
+                      options={getUniqueValues(filtersOptions?.statusLogistics, "statusLogistics")}
                       selectedValues={shipmentFilters.statusLogistics}
                       onSelectionChange={(values) =>
                         setShipmentFilters((prev) => ({ ...prev, statusLogistics: values }))
@@ -1538,7 +1625,7 @@ export default function DashboardPage({ onNavigate }) {
 
                         {/* Table Body */}
                         <TableBody className={"text-xs"}>
-                        {filteredShipmentData.map((row, rowIdx) => (
+                        {shipmentStatusData.map((row, rowIdx) => (
                             <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                             {shipmentStatusDataType.map((item, colIdx) => {
                                 const hide = ["statusActive"];
@@ -1692,7 +1779,7 @@ export default function DashboardPage({ onNavigate }) {
           onClose={() => {
             setBulkSkuUpdateModal(false)
           }}
-          poFormatData={filteredPoData}
+          poFormatData={poFormatData}
           onSave={() => {
             onSavingUpdate()
           }}
