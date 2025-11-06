@@ -768,7 +768,7 @@ export default function DashboardPage({ onNavigate }) {
       const shipmenturl = `${base_url}/api/v1/shipment/get-shipment`;
       const res = await api.post(shipmenturl, {filters: shipmentFilters});
 
-      const formattedOrders = res.data.orders.map(item => {
+      const formattedOrders = res.data?.shipments?.map(item => {
           // add tat and critical dispatch date
           let criticalDispatchDate = item.currentAppointmentDate;
           const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
