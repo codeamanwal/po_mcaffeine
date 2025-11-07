@@ -41,6 +41,7 @@
 // ];
 
 export const poFormatDataType = [
+  { fieldName: "shipmentOrderId", label: "Shipment UID", id: "shipmentOrderId", type: "text" },
   { fieldName: "entryDate", label: "Entry Date", id: "entryDate", type: "date" },
   { fieldName: "brandName", label: "Brand", id: "brandName", type: "select", options: ["MCaffeine", "Other Brand"] },
   {

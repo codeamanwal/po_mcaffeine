@@ -8,13 +8,16 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Database, AlertCircle, Moon, Sun } from "lucide-react"
 import { useUserStore } from "@/store/user-store"
+import { useThemeStore } from "@/store/theme-store"
 import axios from "axios"
 import { loginUrl } from "@/constants/urls"
+import { SegmentPrefixRSCPathnameNormalizer } from "next/dist/server/normalizers/request/segment-prefix-rsc"
 
 
 export default function LoginPage({ onLogin, onForgotPassword, isDarkMode, onToggleTheme }) {
 
   const { login } = useUserStore()
+  const {theme, setTheme} = useThemeStore()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -55,10 +58,13 @@ export default function LoginPage({ onLogin, onForgotPassword, isDarkMode, onTog
           <Button
             variant="ghost"
             size="icon"
-            onClick={onToggleTheme}
+            onClick={() => {
+              if(theme === 'dark') setTheme('light')
+              else setTheme('dark')
+            }}
             className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
         </div>
 

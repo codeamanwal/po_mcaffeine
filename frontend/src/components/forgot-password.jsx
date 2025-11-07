@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Mail, Smartphone, AlertCircle, CheckCircle, Moon, Sun } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
+import { useThemeStore } from "@/store/theme-store"
 
 
 export default function ForgotPasswordPage({
@@ -27,6 +28,8 @@ export default function ForgotPasswordPage({
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const { sendOTP, resetPassword } = useAuth()
+
+  const {theme, setTheme} = useThemeStore()
 
   const handleSendOTP = async (e) => {
     e.preventDefault()
@@ -96,10 +99,13 @@ export default function ForgotPasswordPage({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onToggleTheme}
+            onClick={() => {
+              if(theme === 'dark') setTheme('light')
+              else setTheme('dark')
+            }}
             className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
         </div>
 
