@@ -4,6 +4,7 @@ import ShipmentOrder from "../models/shipment-order.model.js"
 import { Op } from "sequelize";
 // filter body sku orders
 const filters = {
+    search:"",
     brand:["Mcaffien", "hyphen"],
     channel: ["Bigbasket", "Puple SOR"],
     facility: ["Abc"],
@@ -145,8 +146,11 @@ export async function getSkus(req, res) {
     if(filters?.poDateTo && filters.poDateTo !== ""){
       shipmentWhere.poDate = { [Op.lte]: filters.poDateTo };
     }
-    if(filters?.poNumber && filters.poNumber !== ""){
-      shipmentWhere.poNumber = { [Op.like]: `%${filters.poNumber}%`  };
+    if(filters?.search && filters.search !== ""){
+      shipmentWhere[Op.or] = [
+        { poNumber: { [Op.like]: `%${filters.search}%` } },
+        { uid: { [Op.like]: `%${filters.search}%` } }
+      ];
     }
 
     if (shipmentOrderId) skuWhere.shipmentOrderId = shipmentOrderId;
@@ -380,8 +384,11 @@ export async function getShipments(req, res) {
     if(filters?.poDateTo && filters.poDateTo !== ""){
       shipmentWhere.poDate = { [Op.lte]: filters.poDateTo };
     }
-    if(filters?.poNumber && filters.poNumber !== ""){
-      shipmentWhere.poNumber = { [Op.like]: `%${filters.poNumber}%`  };
+    if(filters?.search && filters.search !== ""){
+      shipmentWhere[Op.or] = [
+        { poNumber: { [Op.like]: `%${filters.search}%` } },
+        { uid: { [Op.like]: `%${filters.search}%` } }
+      ];
     }
 
     let totalCount = 0;
