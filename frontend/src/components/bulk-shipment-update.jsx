@@ -230,6 +230,15 @@ const fieldDefinitions = {
     category: "admin",
     validation: null,
   },
+  deliveryType: {
+    label: "Delivery Type",
+    csvHeader: "Delivery Type",
+    roles: ["superadmin", "admin"],
+    type: "text",
+    category: "admin",
+    validation: null,
+  },
+  
 
   // Warehouse fields
   statusWarehouse: {
