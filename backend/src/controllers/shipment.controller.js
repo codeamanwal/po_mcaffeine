@@ -20,7 +20,7 @@ function checkNullCond(value, prevValue) {
 
 async function createLog({shipmentId, createdBy, fieldName, change, remark}){
   try {
-    console.log(createdBy, shipmentId, change, remark);
+    // console.log(createdBy, shipmentId, change, remark);
     if(!shipmentId || !createdBy || !change || !remark){
       throw "Provide required fields";
     }
@@ -40,12 +40,12 @@ async function createLog({shipmentId, createdBy, fieldName, change, remark}){
     if(existingLog){
       // update the existing log
       const log = await existingLog.update({ messages:[newMsg,...existingLog.messages]});
-      console.log("Updated the log: ", log);      
+      // console.log("Updated the log: ", log);      
       return log;
     } 
     // create new log
     const log = await Log.create({shipmentOrderId:shipmentId, messages:[newMsg], createdBy:createdBy?.id});
-    console.log("Created new log: ", log);
+    // console.log("Created new log: ", log);
     return log;
   } catch (error) {
     throw error
@@ -69,7 +69,7 @@ async function createShipment(req, res) {
   try {
     // unique ponumber check
     const existingShipment = await ShipmentOrder.findAll({where: {poNumber: shipmentOrder.poNumber}});
-    console.log(existingShipment)
+    // console.log(existingShipment)
     if(existingShipment.length > 0){
        await t.rollback();
       return res.status(400).json({msg: "Shipment order already exist with this Po Number!"})
@@ -189,27 +189,36 @@ async function createBulkShipment(req, res) {
         accountsWorking: order.accountsWorking,
         channelInwardingQuantity: order.channelInwardingQuantity,
       }));
-      console.log(`One orders(${poNumber}):`, shipmentOrder, skuOrders);
-      const t = await sequelize.transaction();
-      try {
+      // console.log(`One orders(${poNumber}):`, shipmentOrder, skuOrders);
+      // const t = await sequelize.transaction();
+      // try {
+      //   const parent = await ShipmentOrder.create(shipmentOrder, { transaction: t });
+      //   // attached the shared fields to each sku-order and link to parent UID
+      //   const skusToCreate = skuOrders.map(sku => ({
+      //     ...sku,
+      //     shipmentOrderId: parent.uid
+      //   }));
+      //   const skus = await SkuOrder.bulkCreate(skusToCreate, { transaction: t });
+      //   await t.commit();
+      // } catch (error) {
+      //   await t.rollback();
+      //   errors.push({ poNumber, error: error.message });
+      //   console.error("Error creating bulk shipment:", error);
+      // }
+      await sequelize.transaction(async (t) => {
         const parent = await ShipmentOrder.create(shipmentOrder, { transaction: t });
-        // attached the shared fields to each sku-order and link to parent UID
         const skusToCreate = skuOrders.map(sku => ({
           ...sku,
           shipmentOrderId: parent.uid
         }));
-        const skus = await SkuOrder.bulkCreate(skusToCreate, { transaction: t });
-        await t.commit();
-      } catch (error) {
-        await t.rollback();
-        errors.push({ poNumber, error: error.message });
-        console.error("Error creating bulk shipment:", error);
-      }
+        await SkuOrder.bulkCreate(skusToCreate, { transaction: t });
+      });
+
     }
     
 
     // console.log("Orders grouped by PO Number:", ordersByPoNumber);
-    console.log("Errors:", errors);
+    // console.log("Errors:", errors);
     if (errors.length > 0) {
       return res.status(200).json({ msg: "Some shipments failed to create", errors });
     }
@@ -248,7 +257,7 @@ async function getSkusByShipment(req, res) {
     // console.log("getSkusByShipment triggered")
       // shioment uid as uid
     const { uid } = req.body;
-    console.log(uid);
+    // console.log(uid);
     const skus = await SkuOrder.findAll(
       {where: {shipmentOrderId:uid},
       order: [
@@ -759,7 +768,7 @@ async function updateShipment(req, res) {
     const shipment = await ShipmentOrder.findOne({ where: { uid } });
 
     if(poEditAudit){
-      console.log("poEdit: ", poEditAudit)
+      // console.log("poEdit: ", poEditAudit)
       const po_log = {
         shipmentId: shipment.uid,
         createdBy: req.user,
@@ -803,7 +812,7 @@ async function updateShipment(req, res) {
     
     const updatedShipment = await shipment.update(updateData);
     
-    console.log("isLog: ",isLog);
+    // console.log("isLog: ",isLog);
       // console.log("Previous Shipment:", shipment);
     // console.log("Updated Shipment: ", updatedShipment);
     if(isLog || logs.length > 0){
@@ -825,7 +834,7 @@ async function updateSkusBySipment(req, res){
   try {
     const {shipmentId, skus} = req.body;
     for (const item of skus) {
-      console.log(item)
+      // console.log(item)
       await SkuOrder.update(
         item ,
         { where: { shipmentOrderId: shipmentId, id: item.id }, transaction: t }
@@ -913,7 +922,7 @@ async function updateBulkShipment(req, res){
       }
       await t.commit();
       if (errs.length > 0) {
-        return res.status(204).json({ errors: errs });
+        return res.status(207).json({ errors: errs });
       }
       return res.status(200).json({ msg: "Shipments updated successfully" });
     }
@@ -938,7 +947,7 @@ async function updateBulkShipment(req, res){
       }
       await t.commit();
       if (errs.length > 0) {
-        return res.status(204).json({ errors: errs });
+        return res.status(207).json({ errors: errs });
       }
       return res.status(200).json({ msg: "Shipments updated successfully" });
     }
@@ -950,8 +959,8 @@ async function updateBulkShipment(req, res){
         // check for allowed fields only
         let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
         if (!isBulkShipmentUpdateAllowed(updatedFields, "logistics")) {
-          console.log("updatedFields: ", updatedFields);
-          console.log("flag:", isBulkShipmentUpdateAllowed(updatedFields, "logistics"))
+          // console.log("updatedFields: ", updatedFields);
+          // console.log("flag:", isBulkShipmentUpdateAllowed(updatedFields, "logistics"))
           // await t.rollback();
           return res.status(401).json({ msg: "Unauthorized to update some fields!" });
         }
@@ -980,6 +989,9 @@ async function updateBulkShipment(req, res){
     await t.rollback();
     console.error("Error: ", error);
     return res.status(500).json({msg:"Something went wrong while updating Shipments!", error: error.message})
+  }
+  finally {
+    
   }
 }
 

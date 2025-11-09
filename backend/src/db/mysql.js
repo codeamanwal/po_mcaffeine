@@ -6,13 +6,16 @@ const DB_CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
 
 export const sequelize = new Sequelize(DB_CONNECTION_STRING, {
   dialect: 'mysql',
+  logging: false,
   pool: {
-    max: 2,
+    max: 20,
     min: 0,
     acquire: 30000,
     idle: 10000
   },
-  logging: false
+   dialectOptions: {
+    connectTimeout: 10000 // connection timeout (10s)
+  }
 });
 
 export async function connectToDatabase() {
