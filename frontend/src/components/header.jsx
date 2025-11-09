@@ -123,7 +123,7 @@ export default function NavigationHeader({
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder-user.jpg" alt="User" />
+                 <AvatarImage><User className="h-4 w-4" /></AvatarImage>
                   <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
                     <User className="h-4 w-4" />
                   </AvatarFallback>
