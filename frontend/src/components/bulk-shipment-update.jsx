@@ -238,6 +238,14 @@ const fieldDefinitions = {
     category: "admin",
     validation: null,
   },
+  poNumberInwardCWH: {
+    label: "PO Number (Inward - CWH)",
+    csvHeader: "PO Number (Inward - CWH)",
+    roles: ["superadmin", "admin"],
+    type: "string",
+    category: "admin",
+    validation: null,
+  },
   
 
   // Warehouse fields
