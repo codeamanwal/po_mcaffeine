@@ -284,4 +284,8 @@ export const shipmentStatusDataType = [
     type: "select",
     options: ["Active", "Inactive"],
   },
+  { fieldName: "appointmentShootedDate", label: "Appointment Shooted Date", id: "appointmentShootedDate", type: "date" },
+  { fieldName: "appointmentRequestedDate", label: "Appointment Requested Date", id: "appointmentRequestedDate", type: "date" },
+  { fieldName: "remarksWarehouse", label: "Remarks (Warehouse)", id: "remarksWarehouse", type: "text" },
+
 ];

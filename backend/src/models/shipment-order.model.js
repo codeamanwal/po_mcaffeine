@@ -17,7 +17,7 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
   specialRemarksCOPT: { type: DataTypes.TEXT },
   newShipmentReference: { type: DataTypes.STRING },
   statusActive: { type: DataTypes.STRING, defaultValue: "Active" },
-  statusPlanning: { type: DataTypes.STRING },
+  statusPlanning: { type: DataTypes.STRING, defaultValue: "Confirmed" },
   statusWarehouse: { type: DataTypes.STRING },
   statusLogistics: { type: DataTypes.STRING },
   channelInwardingRemarks: { type: DataTypes.TEXT },
@@ -110,6 +110,9 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
     type: DataTypes.FLOAT,
     allowNull: true,
   },
+  appointmentShootedDate: { type: DataTypes.STRING, allowNull: true},
+  appointmentRequestedDate: { type: DataTypes.STRING, allowNull: true},
+  remarksWarehouse: { type: DataTypes.STRING, allowNull: true},
 
   // apointment dates
   allAppointmentDate: {type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true},

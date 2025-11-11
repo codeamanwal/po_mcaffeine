@@ -134,6 +134,22 @@ const fieldDefinitions = {
     category: "admin",
     validation: null,
   },
+  appointmentShootedDate: {
+    label: "Appointment Shooted Date",
+    csvHeader: "Appointment Shooted Date",
+    roles: ["superadmin", "admin"],
+    type: "date",
+    category: "admin",
+    validation: null,
+  },
+  appointmentRequestedDate: {
+    label: "Appointment Requested Date",
+    csvHeader: "Appointment Requested Date",
+    roles: ["superadmin", "admin"],
+    type: "date",
+    category: "admin",
+    validation: null,
+  },
   orderNo1: {
     label: "Order No 1",
     csvHeader: "Order No 1",
@@ -256,6 +272,14 @@ const fieldDefinitions = {
     type: "text",
     category: "warehouse",
     validation: master_status_warehouse_options,
+  },
+  remarksWarehouse: {
+    label: "Remarks (Warehouse)",
+    csvHeader: "Remarks (Warehouse)",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "text",
+    category: "warehouse",
+    validation: null,
   },
   dispatchRemarksWarehouse: {
     label: "Dispatch Remarks (Warehouse)",

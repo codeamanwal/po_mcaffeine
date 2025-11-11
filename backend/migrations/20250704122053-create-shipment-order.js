@@ -18,7 +18,7 @@ export default {
       specialRemarksCOPT: { type: Sequelize.TEXT },
       newShipmentReference: { type: Sequelize.STRING },
       statusActive: { type: Sequelize.STRING, defaultValue: "Active" },
-      statusPlanning: { type: Sequelize.STRING },
+      statusPlanning: { type: Sequelize.STRING, defaultValue: "Confirmed"},
       statusWarehouse: { type: Sequelize.STRING },
       statusLogistics: { type: Sequelize.STRING },
       channelInwardingRemarks: { type: Sequelize.TEXT },

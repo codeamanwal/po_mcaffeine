@@ -418,8 +418,11 @@ export default function DashboardPage({ onNavigate }) {
 
   // Get unique values for dropdown filters
   const getUniqueValues = (data, field) => {
-    // const values = data?.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
-    // const uniqueValues = [...new Set(values)].sort()
+    if(field === "finalStatus"){
+        const values = data?.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
+        const uniqueValues = [...new Set(values)].sort()
+        return ["Not Assigned" ,...uniqueValues]
+    }
     if(data && data.length > 0){
       return ["Not Assigned", ...data]
     }
