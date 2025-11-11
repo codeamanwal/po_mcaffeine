@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Mail, Smartphone, AlertCircle, CheckCircle, Moon, Sun } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useThemeStore } from "@/store/theme-store"
+import { sendForgotPasswordEmail } from "@/lib/order"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 
 export default function ForgotPasswordPage({
@@ -31,22 +33,26 @@ export default function ForgotPasswordPage({
 
   const {theme, setTheme} = useThemeStore()
 
+  const router = useRouter()
+
   const handleSendOTP = async (e) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
     setSuccess("")
-
-    const result = await sendOTP(email)
-
-    if (result.success) {
-      setSuccess("OTP sent successfully! Check your email/phone.")
-      setStep("otp")
-    } else {
-      setError(result.error || "Failed to send OTP")
+    try {
+      const res = await sendForgotPasswordEmail(email)
+      console.log(res.data);
+      
+      toast.success(res.data.msg ?? "Email sent successfully");
+      router.push("/login");
+    } catch (error) {
+       console.log(error);
     }
-
-    setIsLoading(false)
+    finally {
+      setIsLoading(false)
+    }
+    
   }
 
   const handleVerifyOTP = async (e) => {

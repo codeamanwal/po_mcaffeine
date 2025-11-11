@@ -44,7 +44,7 @@ app.get("/", (req, res) => {
     res.send("Welcome to PO-CMS-Backend");
 });
 
-app.post("/forgot-password", sendForgotPasswordMail);
+app.post("/api/v1/forgot-password", sendForgotPasswordMail);
 
 app.post("/api/v1/auth/login" ,async (req,res) => {
 

@@ -152,3 +152,12 @@ export async function uploadFileToS3(file, s3UploadUrl){
         throw error
     }
 }
+
+export async function sendForgotPasswordEmail (email) {
+    try {
+        const res = await api.post("/api/v1/forgot-password", {email})
+        return res;
+    } catch (error) {
+        throw error
+    }
+}
