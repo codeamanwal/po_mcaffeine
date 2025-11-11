@@ -1,5 +1,6 @@
 import { getAllOrdersUrl, updateSingleOrderUrl, createShipmentOrderUrl, getShipmentOrderListUrl, getAllSkuOrdersUrl, getShipmentWithSkuOrdersUrl } from "@/constants/urls"
 import api from "@/hooks/axios"
+import axios from "axios";
 
 export async function createShipmentOrder(data) {
     try {
@@ -122,6 +123,31 @@ export async function getLogsOfShipment(shipmentId){
     try {
         const res = await api.post("/api/v1/shipment/get-log", {shipmentId: shipmentId});
         return res;
+    } catch (error) {
+        throw error
+    }
+}
+
+export async function getS3UploadUrl(fileName, fileType) {
+    try {
+        const res = await api.get(`/api/v1/shipment/get-upload-url?fileName=${fileName}&fileType=${fileType}`)
+        return res;
+    } catch (error) {
+        throw error
+    }
+}
+
+export async function uploadFileToS3(file, s3UploadUrl){
+    if(!file || !s3UploadUrl){
+        throw new Error("Provide both the file and s3 upload url!")
+    }
+    try {
+        const res = await axios.put(s3UploadUrl, file, {
+            headers: {
+                "Content-Type": file?.type
+            }
+        })
+        return res
     } catch (error) {
         throw error
     }

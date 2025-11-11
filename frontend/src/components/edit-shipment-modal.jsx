@@ -31,11 +31,11 @@ import {
   AlertTriangle,
   User, History, Loader2, Pen
 } from "lucide-react"
-import { format, parseISO } from "date-fns"
+import { format, formatDate, parseISO } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/store/user-store"
 import { shipmentStatusDataType } from "@/constants/data_type"
-import { updateShipment } from "@/lib/order"
+import { getS3UploadUrl, updateShipment, uploadFileToS3 } from "@/lib/order"
 import { getLogsOfShipment } from '@/lib/order'
 import { toast } from "sonner"
 import SearchableSelect from "./ui/searchable-select"
@@ -435,6 +435,30 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       ...prev,
       [fieldName]: value,
     }))
+  }
+
+  const handleFileUpload = async (fieldName, file) => {
+    try {
+        console.log("Uploading file!")
+        console.log("file:", file)
+        const fileName = `${formData["uid"]}-${fieldName}-${Math.floor(Math.random()*100)}`
+        const fileType = file.type
+        // get upload url
+        const s3UploadUrlObject = await getS3UploadUrl(fileName, fileType);
+        const s3UploadUrl = s3UploadUrlObject.data.uploadUrl
+        // now upload to s3
+        const res = await uploadFileToS3(file, s3UploadUrl)
+        console.log(res);
+        // now set the url to this field
+        const previewUrl = `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_S3_REGION_NAME}.amazonaws.com/${fileName}`
+        console.log("previewUrl: ", previewUrl)
+        setFormData(prev => ({...prev, [fieldName]: previewUrl}))
+        console.log(formData);
+    } catch (error) {
+        console.log(error)
+    }finally {
+      console.log("Exiting file upload function!!");
+    }
   }
 
   const getCurrentAppointmentDate = () => {
@@ -863,21 +887,41 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
       case "file":
         return (
-           <div className="space-y-2">
-          <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
-              {field.label}
-          </Label>
-          <Input
-            id={field.id}
-            type="file"
-            value={""}
-            onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
-            className={cn(
-              "h-10",
-              needsPoReason && !poEditReason && "border-red-300 bg-red-50",
-              hasValidationError && "border-red-300 bg-red-50",
-            )}
-          />
+          <div className="space-y-2">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
+                {field.label}
+            </Label>
+            {/* <span className="flex flex-row justify-center items-center"> */}
+              {
+                formData[field.fieldName] ? (
+                  <span  id={field.id} className="flex flex-row justify-center items-center">
+                    <img 
+                      onClick={(e) => { console.log(formData[field.fieldName]); window.open(`${formData[field.fieldName]}`)}} 
+                      className="hover:cursor-pointer max-h-10" 
+                      src={formData[field.fieldName]} 
+                      alt="preview" 
+                    />
+                    <Plus 
+                      onClick={() => {handleInputChange(field.fieldName, null)}}
+                      className="hover:cursor-pointer w-10 h-10 px-2" 
+                    />
+                  </span>
+                ) : (
+                  <Input
+                    id={field.id}
+                    type="file"
+                    value={""}
+                    onChange={(e) => handleFileUpload(field.fieldName, e.target.files[0])}
+                    className={cn(
+                      "h-10",
+                      needsPoReason && !poEditReason && "border-red-300 bg-red-50",
+                      hasValidationError && "border-red-300 bg-red-50",
+                    )}
+                  />
+                )
+              }
+            {/* </span> */}
+
           </div>
         )
 

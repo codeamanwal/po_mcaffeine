@@ -1,6 +1,7 @@
 import {Router} from "express"
 import { shipmentControllers } from "../controllers/shipment.controller.js"
 import {getFilterOptions, getShipments, getSkus} from "../controllers/order-filter.controllers.js"
+import { getS3UploadUrl } from "../controllers/file.controllers.js"
 
 const router = Router()
 
@@ -33,6 +34,7 @@ router.post("/update-bulk-skus", shipmentControllers.updateBulkSku);
 router.post("/delete-sku", shipmentControllers.deleteSku);
 router.post("/delete-shipment", shipmentControllers.deleteShipment);
 
+// log routes -->
 router.post('/get-log', async (req, res) => {
     try {
         const {shipmentId} = req.body;
@@ -44,5 +46,8 @@ router.post('/get-log', async (req, res) => {
         return res.status(500).json({msg:"Something went wrong while fetching logs!", error});
     }
 })
+
+// file routes -->
+router.get('/get-upload-url', getS3UploadUrl)
 
 export const shipmentRouter = router
