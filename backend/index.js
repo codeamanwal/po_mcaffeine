@@ -13,6 +13,7 @@ import { orderRouter } from "./src/routes/order.routes.js";
 import { getPublicUser } from "./src/utils/user.js";
 import { userRouter } from "./src/routes/user.routes.js";
 import { shipmentRouter } from "./src/routes/shipment.routes.js";
+import { sendForgotPasswordMail } from "./src/controllers/mail.controllers.js";
 
 const app = express();
 
@@ -42,6 +43,8 @@ app.use("/api/v1/shipment", AuthMiddleware, shipmentRouter);
 app.get("/", (req, res) => {
     res.send("Welcome to PO-CMS-Backend");
 });
+
+app.post("/forgot-password", sendForgotPasswordMail);
 
 app.post("/api/v1/auth/login" ,async (req,res) => {
 
