@@ -20,6 +20,8 @@ const adminAllowedFieldsBulkShipment = [
   "customerCode", 
   "poEntryCount", 
   "updatedGmv", 
+  "appointmentShootedDate",
+  "appointmentRequestedDate",
 ]
 
 const warehouseAllowedFieldsBulkShipment = [
@@ -41,6 +43,7 @@ const warehouseAllowedFieldsBulkShipment = [
   "thirdTransporter",
   "thirdDocketNo",
   "proofOfDispatch",
+  "remarksWarehouse",
 ]
 
 const logisticsAllowedFieldsBulkShipment = [
