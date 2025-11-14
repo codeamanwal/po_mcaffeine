@@ -27,7 +27,7 @@ export const uploadMasterSheetData = async ( sheetType, data ) => {
 
     return await response.json()
   } catch (error) {
-    console.error(`[v0] Error uploading ${sheetType}:`, error)
+    console.error(`Error uploading ${sheetType}:`, error)
     throw error
   }
 }
@@ -49,7 +49,7 @@ export const getMasterSheetData = async (sheetType) => {
     const result = await response.json()
     return result.data || []
   } catch (error) {
-    console.error(`[v0] Error fetching ${sheetType}:`, error)
+    console.error(`Error fetching ${sheetType}:`, error)
     throw error
   }
 }
@@ -72,7 +72,7 @@ export const deleteMasterSheetEntry = async (sheetType, entryId) => {
 
     return await response.json()
   } catch (error) {
-    console.error(`[v0] Error deleting ${sheetType} entry:`, error)
+    console.error(`Error deleting ${sheetType} entry:`, error)
     throw error
   }
 }

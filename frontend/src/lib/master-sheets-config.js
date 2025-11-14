@@ -1,12 +1,14 @@
 // Master sheet configurations with expected columns and API endpoints
 
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
+
 export const MASTER_SHEETS_CONFIG = {
 
     // facility master
     facility: {
         name: "Facility Master",
         expectedColumns: ["Facility", "Pickup Location"],
-        endpoint: "/api/master/facility",
+        endpoint: `${baseUrl}/api/v1/master/facility`,
         fileKey: "facilityData",
     },
 
@@ -22,7 +24,7 @@ export const MASTER_SHEETS_CONFIG = {
             "Docket Charges",
             "Courier Type",
         ],
-        endpoint: "/api/master/courier-partner",
+        endpoint: `${baseUrl}/api/v1/master/courier-partner`,
         fileKey: "courierPartnerData",
     },
 
@@ -30,7 +32,7 @@ export const MASTER_SHEETS_CONFIG = {
     status: {
         name: "Status Master",
         expectedColumns: ["Status (Planning)", "Status (Warehouse)", "Status (Logistics)", "Status (Final Status)"],
-        endpoint: "/api/master/status",
+        endpoint: `${baseUrl}/api/v1/master/status`,
         fileKey: "statusData",
     },
 
@@ -38,7 +40,7 @@ export const MASTER_SHEETS_CONFIG = {
     courierRates: {
         name: "Courier Rates Master",
         expectedColumns: ["Courier Partner", "Pickup Location", "Drop Location", "Rates Per KG", "TAT"],
-        endpoint: "/api/master/courier-rates",
+        endpoint: `${baseUrl}/api/v1/master/courier-rates`,
         fileKey: "courierRatesData",
     },
 
@@ -53,7 +55,7 @@ export const MASTER_SHEETS_CONFIG = {
             "Appt Channel",
             "Appt Channel Type",
         ],
-        endpoint: "/api/master/channel",
+        endpoint: `${baseUrl}/api/v1/master/channel`,
         fileKey: "channelData",
     },
 
@@ -61,7 +63,7 @@ export const MASTER_SHEETS_CONFIG = {
     appointmentRemarks: {
         name: "Appointment Remarks Master",
         expectedColumns: ["Appointment Change Remarks", "Appointment Change Category"],
-        endpoint: "/api/master/appointment-remarks",
+        endpoint: `${baseUrl}/api/v1/master/appointment-remarks`,
         fileKey: "appointmentRemarksData",
     },
 
@@ -69,7 +71,7 @@ export const MASTER_SHEETS_CONFIG = {
     sku: {
         name: "SKU Master",
         expectedColumns: ["Channel", "SKU Code", "SKU Name", "Channel SKU Code", "Brand", "MRP"],
-        endpoint: "/api/master/sku",
+        endpoint: `${baseUrl}/api/v1/master/sku`,
         fileKey: "skuData",
     },
 }

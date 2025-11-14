@@ -5,10 +5,12 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle2, Upload, X } from "lucide-react"
+import { AlertCircle, CheckCircle2, Upload, X, Download } from "lucide-react"
 import { parseExcelFile, validateRowsForEmptyCells } from "@/lib/excel-parser"
-import { uploadMasterSheetData } from "@/lib/master-sheets-api"
+import { getMasterSheetData, uploadMasterSheetData } from "@/lib/master-sheets-api"
+import { generateExcelTemplate } from "@/lib/excel-template-generator"
 import { MASTER_SHEETS_CONFIG } from "@/lib/master-sheets-config"
+import { generateExcelWithData } from "@/lib/excel-template-generator"
 
 
 export function MasterSheetUpload({ sheetType }) {
@@ -18,9 +20,36 @@ export function MasterSheetUpload({ sheetType }) {
   const [success, setSuccess] = useState(false)
   const [validPreview, setValidPreview] = useState([])
   const [invalidPreview, setInvalidPreview] = useState([])
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const config = MASTER_SHEETS_CONFIG[sheetType]
   const requiredColumns = config.expectedColumns
+
+  const handleDownloadTemplate = async () => {
+    setIsDownloading(true)
+    try {
+      await generateExcelTemplate(sheetType, config.name, requiredColumns)
+    } catch (err) {
+      console.error("Template download error:", err)
+      setError("Failed to download template")
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  const handleDownloadSheetData = async () => {
+    setIsDownloading(true);
+    try {
+      const res = await getMasterSheetData(sheetType);
+      console.log(res);
+      await generateExcelWithData(config.name, requiredColumns, res.data)
+    } catch (error) {
+      console.error("Master Sheet download error:", error)
+      setError("Failed to download master sheet")
+    } finally {
+      setIsDownloading(false);
+    }
+  }
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0]
@@ -74,7 +103,7 @@ export function MasterSheetUpload({ sheetType }) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred"
       setError(errorMessage)
-      console.error("[v0] Upload error:", err)
+      console.error("Upload error:", err)
     } finally {
       setIsLoading(false)
     }
@@ -84,7 +113,31 @@ export function MasterSheetUpload({ sheetType }) {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>{config.name}</CardTitle>
-        <CardDescription>Upload an Excel file with the required columns: {requiredColumns.join(", ")}</CardDescription>
+        <CardDescription>Upload an Excel file with the required columns: <span className="text-foreground font-semibold">{requiredColumns.join(", ")}</span></CardDescription>
+        <div className="my-2 w-full">
+          {/* template download */}
+          <Button
+              onClick={handleDownloadTemplate}
+              disabled={isDownloading}
+              variant="outline"
+              size="sm"
+              className="rounded-sm mx-3 gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
+          >
+              <Download className="w-4 h-4" />
+              {isDownloading ? "Downloading..." : "Download Template"}
+          </Button>
+          {/* master sheet data download  */}
+          <Button
+              onClick={handleDownloadSheetData}
+              disabled={isDownloading}
+              variant="outline"
+              size="sm"
+              className="rounded-sm mx-3 gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
+          >
+              <Download className="w-4 h-4" />
+              {isDownloading ? "Downloading..." : "Download Master Sheet"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* File Upload */}
