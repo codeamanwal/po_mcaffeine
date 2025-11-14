@@ -110,7 +110,7 @@ function getSampleData(sheetType, columns) {
                 'Channel Location': 'AMD2',
                 'Drop Location': 'Ahmedabad',
                 'Appt Channel': 'Yes',
-                'Appt Channel': 'B2C'
+                'Appt Channel Type': 'B2C'
             }
         ],
         appointmentRemarks: [
@@ -124,7 +124,7 @@ function getSampleData(sheetType, columns) {
                 'Channel': 'A2B GIFTING SOLUTIONS',
                 'SKU Code': 'MGKIT3_C',
                 'SKU Name': 'mCaffeine Coffee Mood Skin Care Gift',
-                'channel SKU Code': '8906129570269',
+                'Channel SKU Code': '8906129570269',
                 'Brand': 'mCaffeine',
                 'MRP': '2020'
             }
