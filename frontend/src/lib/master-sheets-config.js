@@ -14,11 +14,11 @@ export const MASTER_SHEETS_CONFIG = {
     courierPartner: {
         name: "Courier Partner Master",
         expectedColumns: [
-            "Courier Partner-Mode",
+            "Courier Partner - Mode",
             "Courier Partner",
             "Courier Mode",
-            "Appointment Charge (Appointment Channel)",
-            "Appointment Charge ( Appointment Channel)",
+            "Appointment Charge (Appointment Channel Yes)",
+            "Appointment Charge (Appointment Channel No)",
             "Docket Charges",
             "Courier Type",
         ],
@@ -51,7 +51,7 @@ export const MASTER_SHEETS_CONFIG = {
             "Channel Location",
             "Drop Location",
             "Appt Channel",
-            "",
+            "Appt Channel Type",
         ],
         endpoint: "/api/master/channel",
         fileKey: "channelData",

@@ -16,7 +16,8 @@ export function MasterSheetUpload({ sheetType }) {
   const [uploadStats, setUploadStats] = useState(null)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
-  const [preview, setPreview] = useState([])
+  const [validPreview, setValidPreview] = useState([])
+  const [invalidPreview, setInvalidPreview] = useState([])
 
   const config = MASTER_SHEETS_CONFIG[sheetType]
   const requiredColumns = config.expectedColumns
@@ -46,7 +47,10 @@ export function MasterSheetUpload({ sheetType }) {
       }
 
       setUploadStats(stats)
-      setPreview(validRows.slice(0, 5)) // Show first 5 rows as preview
+      // setPreview([...invalidRows, ...validRows]) // Show first 5 rows as preview
+      setValidPreview([...validRows])
+      setInvalidPreview([...invalidRows])
+
 
       if (validRows.length === 0) {
         setError("No valid data found in the file. Please check your sheet.")
@@ -56,8 +60,8 @@ export function MasterSheetUpload({ sheetType }) {
 
       // Upload to backend
       console.log(sheetType, validRows);
-    //   const response = await uploadMasterSheetData(sheetType, validRows)
-      const response = {status: 200};
+      const response = await uploadMasterSheetData(sheetType, validRows)
+      // const response = {status: 200};
 
       if (response.status === 200) {
         setSuccess(true)
@@ -127,7 +131,7 @@ export function MasterSheetUpload({ sheetType }) {
 
         {/* Upload Statistics */}
         {uploadStats && (
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+          <div className="bg-background p-4 rounded-lg space-y-2">
             <h4 className="font-semibold text-sm">Upload Summary</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
@@ -150,12 +154,12 @@ export function MasterSheetUpload({ sheetType }) {
           </div>
         )}
 
-        {/* Preview */}
-        {preview.length > 0 && (
+        {/* Invalid Preview */}
+        {invalidPreview.length > 0 && (
           <div className="overflow-x-auto">
-            <h4 className="font-semibold text-sm mb-2">Preview (First 5 rows)</h4>
+            <h4 className="font-semibold text-sm mb-2">Invalid Row Preview</h4>
             <table className="w-full text-xs border border-gray-200 rounded-lg">
-              <thead className="bg-gray-100">
+              <thead className="bg-red-400">
                 <tr>
                   {requiredColumns.map((col) => (
                     <th key={col} className="px-3 py-2 text-left border border-gray-200">
@@ -165,8 +169,37 @@ export function MasterSheetUpload({ sheetType }) {
                 </tr>
               </thead>
               <tbody>
-                {preview.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50">
+                {invalidPreview.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-red-400">
+                    {requiredColumns.map((col) => (
+                      <td key={`${idx}-${col}`} className="px-3 py-2 border border-gray-200">
+                        {row[col] !== null ? String(row[col]) : "-"}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Valid Preview */}
+        {validPreview.length > 0 && (
+          <div className="overflow-x-auto">
+            <h4 className="font-semibold text-sm mb-2">Valid Row Preview</h4>
+            <table className="w-full text-xs border border-gray-200 rounded-lg">
+              <thead className="bg-green-300">
+                <tr>
+                  {requiredColumns.map((col) => (
+                    <th key={col} className="px-3 py-2 text-left border border-gray-200">
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {validPreview.map((row, idx) => (
+                  <tr key={idx} className="dark:hover:text-black hover:bg-green-200">
                     {requiredColumns.map((col) => (
                       <td key={`${idx}-${col}`} className="px-3 py-2 border border-gray-200">
                         {row[col] !== null ? String(row[col]) : "-"}
