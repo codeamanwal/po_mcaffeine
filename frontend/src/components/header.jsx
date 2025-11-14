@@ -40,6 +40,7 @@ export default function NavigationHeader({
           { id: "user-management", label: "User Management", icon: Users },
           { id: "create-user", label: "Create User", icon: UserPlus },
           { id: "create-order", label: "Create Order", icon: Database },
+          { id: "master-sheet", label: "Master Sheet", icon: Database },
         ]
       : []),
     { id: "user-settings", label: "Settings", icon: Settings },
