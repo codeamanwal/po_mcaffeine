@@ -7,7 +7,9 @@ const adminAllowedFieldsBulkShipment = [
   "channelInwardingRemarks", 
   "dispatchDateTentative", 
   "workingDatePlanner", 
-  "firstAppointmentDateCOPT", 
+  "firstAppointmentDateCOPT",
+  "appointmentShootedDate",
+  "appointmentRequestedDate",
   "orderNo1", 
   "orderNo2", 
   "orderNo3", 
@@ -20,12 +22,13 @@ const adminAllowedFieldsBulkShipment = [
   "customerCode", 
   "poEntryCount", 
   "updatedGmv", 
-  "appointmentShootedDate",
-  "appointmentRequestedDate",
+  "deliveryType", 
+  "poNumberInwardCWH",
 ]
 
-const warehouseAllowedFieldsBulkShipment = [
+const warehouseAllowedFieldsBulkShipment = [  
   "statusWarehouse",
+  "remarksWarehouse",
   "dispatchRemarksWarehouse",
   "rtsDate",
   "dispatchDate",
@@ -43,7 +46,6 @@ const warehouseAllowedFieldsBulkShipment = [
   "thirdTransporter",
   "thirdDocketNo",
   "proofOfDispatch",
-  "remarksWarehouse",
 ]
 
 const logisticsAllowedFieldsBulkShipment = [
