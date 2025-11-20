@@ -419,6 +419,14 @@ const fieldDefinitions = {
     category: "logistics",
     validation: null,
   },
+  deliveryDate: {
+    label: "Delivery Date",
+    csvHeader: "Delivery Date",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "date",
+    category: "logistics",
+    validation: null,
+  },
   rescheduleLag: {
     label: "Reschedule Lag (Remarks)",
     csvHeader: "Reschedule Lag (Remarks)",
@@ -483,6 +491,22 @@ const fieldDefinitions = {
     category: "logistics",
     validation: null,
   },
+  rpk: {
+    label: "Rates/Kg",
+    csvHeader: "Rates/kg",
+    roles: ["superadmin", "admin", "logistics"],
+    type: "number",
+    category: "logistics",
+    validation: null,
+  },
+  // tat: {
+  //   label: "TAT",
+  //   csvHeader: "TAT",
+  //   roles: ["superadmin", "admin", "logistics"],
+  //   type: "number",
+  //   category: "logistics",
+  //   validation: null,
+  // },
 }
 
 export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
