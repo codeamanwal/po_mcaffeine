@@ -289,6 +289,14 @@ const fieldDefinitions = {
     category: "warehouse",
     validation: null,
   },
+  workingDatePlanner: {
+    label: "Working Date",
+    csvHeader: "Working Date",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "date",
+    category: "warehouse",
+    validation: null,
+  },
   rtsDate: {
     label: "RTS Date",
     csvHeader: "RTS Date",
