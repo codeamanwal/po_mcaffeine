@@ -180,7 +180,8 @@ export async function getSkus(req, res) {
 
       skuOrders = rows;
       totalCount = count;
-    } else {
+    } 
+    else {
       const allotedFacilities = req.user?.allotedFacilities;
 
       if (!allotedFacilities || allotedFacilities.length === 0) {
@@ -194,6 +195,30 @@ export async function getSkus(req, res) {
           calculationDone: true,
         });
       }
+
+      let facilityFilter = allotedFacilities; // default = ALL allowed facilities
+
+      if (filters?.facility && filters.facility.length > 0) {
+        // Intersect
+        facilityFilter = filters.facility.filter(f =>
+          allotedFacilities.includes(f)
+        );
+
+        // If intersection is empty -> user filtered by facilities they don't have access to
+        if (facilityFilter.length === 0) {
+          res.setHeader("X-No-More-Pages", "true");
+          return res.status(200).json({
+            msg: "No shipments found for your allotted facilities",
+            shipments: [],
+            totalCount: 0,
+            totalPages: 0,
+            page,
+            limit,
+          });
+        }
+      }
+
+      shipmentWhere.facility = { [Op.in]: facilityFilter };
 
       const { rows, count } = await SkuOrder.findAndCountAll({
         where: skuWhere,
