@@ -42,7 +42,7 @@ export function MasterSheetUpload({ sheetType }) {
     try {
       const res = await getMasterSheetData(sheetType);
       console.log(res);
-      await generateExcelWithData(config.name, requiredColumns, res.data)
+      await generateExcelWithData(config.name, requiredColumns, res.data.data)
     } catch (error) {
       console.error("Master Sheet download error:", error)
       setError("Failed to download master sheet")
@@ -92,13 +92,13 @@ export function MasterSheetUpload({ sheetType }) {
       const response = await uploadMasterSheetData(sheetType, validRows)
       // const response = {status: 200};
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         setSuccess(true)
         setError(null)
         // Reset file input
         if (e.target) e.target.value = ""
       } else {
-        setError(response.error || "Upload failed")
+        setError(response.data?.msg || "Upload failed")
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred"
@@ -117,25 +117,25 @@ export function MasterSheetUpload({ sheetType }) {
         <div className="my-2 w-full">
           {/* template download */}
           <Button
-              onClick={handleDownloadTemplate}
-              disabled={isDownloading}
-              variant="outline"
-              size="sm"
-              className="rounded-sm mx-3 gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
+            onClick={handleDownloadTemplate}
+            disabled={isDownloading}
+            variant="outline"
+            size="sm"
+            className="rounded-sm mx-3 gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
           >
-              <Download className="w-4 h-4" />
-              {isDownloading ? "Downloading..." : "Download Template"}
+            <Download className="w-4 h-4" />
+            {isDownloading ? "Downloading..." : "Download Template"}
           </Button>
           {/* master sheet data download  */}
           <Button
-              onClick={handleDownloadSheetData}
-              disabled={isDownloading}
-              variant="outline"
-              size="sm"
-              className="rounded-sm mx-3 gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
+            onClick={handleDownloadSheetData}
+            disabled={isDownloading}
+            variant="outline"
+            size="sm"
+            className="rounded-sm mx-3 gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
           >
-              <Download className="w-4 h-4" />
-              {isDownloading ? "Downloading..." : "Download Master Sheet"}
+            <Download className="w-4 h-4" />
+            {isDownloading ? "Downloading..." : "Download Master Sheet"}
           </Button>
         </div>
       </CardHeader>

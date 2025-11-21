@@ -1,6 +1,7 @@
 import { MASTER_SHEETS_CONFIG } from "./master-sheets-config"
+import api from "@/hooks/axios"
 
-export const uploadMasterSheetData = async ( sheetType, data ) => {
+export const uploadMasterSheetData = async (sheetType, data) => {
   const config = MASTER_SHEETS_CONFIG[sheetType]
 
   if (!config) {
@@ -8,24 +9,12 @@ export const uploadMasterSheetData = async ( sheetType, data ) => {
   }
 
   try {
-    const response = await fetch(config.endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sheetType,
-        data,
-        timestamp: new Date().toISOString(),
-      }),
+    const res = await api.post(`${config.endpoint}/upload`, {
+      sheetType,
+      data,
+      timestamp: new Date().toISOString(),
     })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || `Upload failed with status ${response.status}`)
-    }
-
-    return await response.json()
+    return res
   } catch (error) {
     console.error(`Error uploading ${sheetType}:`, error)
     throw error
@@ -40,21 +29,15 @@ export const getMasterSheetData = async (sheetType) => {
   }
 
   try {
-    const response = await fetch(`${config.endpoint}?type=${sheetType}`)
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${sheetType} data`)
-    }
-
-    const result = await response.json()
-    return result.data || []
+    const res = await api.get(config.endpoint)
+    return res
   } catch (error) {
     console.error(`Error fetching ${sheetType}:`, error)
     throw error
   }
 }
 
-export const deleteMasterSheetEntry = async (sheetType, entryId) => {
+export const deleteMasterSheetEntry = async (sheetType) => {
   const config = MASTER_SHEETS_CONFIG[sheetType]
 
   if (!config) {
@@ -62,17 +45,10 @@ export const deleteMasterSheetEntry = async (sheetType, entryId) => {
   }
 
   try {
-    const response = await fetch(`${config.endpoint}/${entryId}`, {
-      method: "DELETE",
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete entry`)
-    }
-
-    return await response.json()
+    const res = await api.post(`${config.endpoint}/delete`)
+    return res
   } catch (error) {
-    console.error(`Error deleting ${sheetType} entry:`, error)
+    console.error(`Error deleting ${sheetType}:`, error)
     throw error
   }
 }

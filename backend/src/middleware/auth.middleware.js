@@ -1,8 +1,8 @@
 import { verifyToken } from "../utils/jwt.js";
 
-export async function AuthMiddleware (req, res, next) {
+export async function AuthMiddleware(req, res, next) {
     try {
-        const token = req.headers.authorization.split(" ")[1];
+        const token = req.headers?.authorization?.split(" ")[1];
         const decodedToken = verifyToken(token);
         req.user = decodedToken.user;
         // console.log(req.user);
@@ -18,10 +18,10 @@ export async function AuthMiddleware (req, res, next) {
     }
 }
 
-export async function SuperAdminMiddleware (req, res, next) {
+export async function SuperAdminMiddleware(req, res, next) {
     try {
         const user = req.user;
-        if(user.role === "superadmin") {
+        if (user.role === "superadmin") {
             next();
         } else {
             return res.json({
@@ -39,10 +39,10 @@ export async function SuperAdminMiddleware (req, res, next) {
     }
 }
 
-export async function AdminMiddleware (req, res, next) {
+export async function AdminMiddleware(req, res, next) {
     try {
         const user = req.user;
-        if(user.role === "admin" || user.role === "superadmin") {
+        if (user.role === "admin" || user.role === "superadmin") {
             next();
         } else {
             return res.json({
@@ -60,10 +60,10 @@ export async function AdminMiddleware (req, res, next) {
     }
 }
 
-export async function WarehouseMiddleware (req, res, next) {
+export async function WarehouseMiddleware(req, res, next) {
     try {
         const user = req.user;
-        if(user.role === "warehouse") {
+        if (user.role === "warehouse") {
             next();
         } else {
             return res.json({
@@ -81,10 +81,10 @@ export async function WarehouseMiddleware (req, res, next) {
     }
 }
 
-export async function LogisticMiddleware (req, res, next) {
+export async function LogisticMiddleware(req, res, next) {
     try {
         const user = req.user;
-        if(user.role === "logistic") {
+        if (user.role === "logistic") {
             next();
         } else {
             return res.json({
@@ -102,10 +102,10 @@ export async function LogisticMiddleware (req, res, next) {
     }
 }
 
-export async function SuperAndAdminMiddleware (req, res, next) {
+export async function SuperAndAdminMiddleware(req, res, next) {
     try {
         const user = req.user;
-        if(user.role === "superadmin" || user.role === "admin") {
+        if (user.role === "superadmin" || user.role === "admin") {
             next();
         } else {
             return res.json({

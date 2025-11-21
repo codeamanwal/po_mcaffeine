@@ -13,29 +13,31 @@ import { orderRouter } from "./src/routes/order.routes.js";
 import { getPublicUser } from "./src/utils/user.js";
 import { userRouter } from "./src/routes/user.routes.js";
 import { shipmentRouter } from "./src/routes/shipment.routes.js";
+import { masterRouter } from "./src/routes/master.routes.js";
 import { sendForgotPasswordMail } from "./src/controllers/mail.controllers.js";
 
 const app = express();
 
 app.use(cors({
-  origin: '*', 
-  credentials: true, 
+    origin: '*',
+    credentials: true,
 }));
 
-app.use(express.json({limit: "50mb"})); 
-app.use(express.urlencoded({limit: "50mb", extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-const port  = process.env.PORT || 8000;
+const port = process.env.PORT || 8000;
 
 
 app.use("/api/v1/admin", adminRouter);
-app.use("/api/v1/warehouse", AuthMiddleware ,warehouseRouter);
-app.use("/api/v1/logistic",AuthMiddleware, logisticRouter);
+app.use("/api/v1/warehouse", AuthMiddleware, warehouseRouter);
+app.use("/api/v1/logistic", AuthMiddleware, logisticRouter);
 
 app.use("/api/v1/order", AuthMiddleware, orderRouter);
 app.use("/api/v1/user", AuthMiddleware, userRouter);
 
 app.use("/api/v1/shipment", AuthMiddleware, shipmentRouter);
+app.use("/api/v1/master", AuthMiddleware, masterRouter);
 
 
 
@@ -46,16 +48,16 @@ app.get("/", (req, res) => {
 
 app.post("/api/v1/forgot-password", sendForgotPasswordMail);
 
-app.post("/api/v1/auth/login" ,async (req,res) => {
+app.post("/api/v1/auth/login", async (req, res) => {
 
     try {
-       const {email, password} = req.body
-        if(email === "", password === "") {
-            return res.status(400).json({msg:"Please enter email and password", success: false, status: 400})
+        const { email, password } = req.body
+        if (email === "", password === "") {
+            return res.status(400).json({ msg: "Please enter email and password", success: false, status: 400 })
         }
 
-        const user = await User.findOne({where: {email: email}})
-        if(user && user.password === password) {
+        const user = await User.findOne({ where: { email: email } })
+        if (user && user.password === password) {
 
             /**************************************************/
             // const {pasword, ...publicUser} = user.toJSON();
@@ -74,14 +76,14 @@ app.post("/api/v1/auth/login" ,async (req,res) => {
                 path: '/',
             });
             res.header("Authorization", `Bearer ${token}`)
-            return res.status(200).json({msg:"Login successful", user:publicUser, token:token, success: true, status: 200})
+            return res.status(200).json({ msg: "Login successful", user: publicUser, token: token, success: true, status: 200 })
         }
-        return res.status(404).json({msg:"Invalid email or password", success: false, status: 400}) 
+        return res.status(404).json({ msg: "Invalid email or password", success: false, status: 400 })
     } catch (error) {
         console.log(error)
-        return res.status(500).json({msg:"Something went wrong", success: false, status: 500})
+        return res.status(500).json({ msg: "Something went wrong", success: false, status: 500 })
     }
-    
+
 })
 
 
