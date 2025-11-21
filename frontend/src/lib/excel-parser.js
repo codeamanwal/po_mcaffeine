@@ -15,8 +15,8 @@ export const parseExcelFile = async (file, expectedColumns) => {
         const headers = Object.keys(jsonData[0] || {})
 
         // Validate headers exist (case-insensitive)
-        const expectedHeadersLower = expectedColumns.map((h) => h.toLowerCase())
-        const actualHeadersLower = headers.map((h) => h.toLowerCase())
+        const expectedHeadersLower = expectedColumns.map((h) => h.label?.replace(" ", "")?.toLowerCase())
+        const actualHeadersLower = headers.map((h) => h?.replace(" ", "")?.toLowerCase())
 
         const missingHeaders = expectedHeadersLower.filter((h) => !actualHeadersLower.includes(h))
 
@@ -39,12 +39,18 @@ export const parseExcelFile = async (file, expectedColumns) => {
 
             // Remove completely empty cells, keep others
             const cleanedRow = {}
-            for (const key of headers) {
-              const value = row[key]
+            for (const kv of expectedColumns) {
+              // console.log(kv)
+              const valueType = kv.type
+              const value = row[kv.label]
               if (value === null || value === undefined || value === "") {
-                cleanedRow[key] = null
+                cleanedRow[kv.key] = null
               } else {
-                cleanedRow[key] = value
+                if (valueType === "number") {  
+                  cleanedRow[kv.key] = Number(value) ?? null;
+                } else {
+                  cleanedRow[kv.key] = value
+                }
               }
             }
             return cleanedRow

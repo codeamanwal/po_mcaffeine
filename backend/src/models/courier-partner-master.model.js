@@ -27,7 +27,7 @@ const CourierPartnerMaster = sequelize.define('CourierPartnerMaster', {
         allowNull: true
     },
     courierType: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.STRING,
         allowNull: true
     }
 }, {

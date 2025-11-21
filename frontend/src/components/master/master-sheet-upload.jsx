@@ -23,12 +23,14 @@ export function MasterSheetUpload({ sheetType }) {
   const [isDownloading, setIsDownloading] = useState(false)
 
   const config = MASTER_SHEETS_CONFIG[sheetType]
-  const requiredColumns = config.expectedColumns
+  const requiredColumns = config.expectedColumns;
+  const requiredColumnsLabel = config.expectedColumns.map((col) => col.label)
+  const requiredColumnsKey = config.expectedColumns.map((col) => col.key)
 
   const handleDownloadTemplate = async () => {
     setIsDownloading(true)
     try {
-      await generateExcelTemplate(sheetType, config.name, requiredColumns)
+      await generateExcelTemplate(sheetType, config.name, requiredColumnsLabel)
     } catch (err) {
       console.error("Template download error:", err)
       setError("Failed to download template")
@@ -42,7 +44,7 @@ export function MasterSheetUpload({ sheetType }) {
     try {
       const res = await getMasterSheetData(sheetType);
       console.log(res);
-      await generateExcelWithData(config.name, requiredColumns, res.data.data)
+      await generateExcelWithData(config.name, requiredColumnsLabel, res.data.data)
     } catch (error) {
       console.error("Master Sheet download error:", error)
       setError("Failed to download master sheet")
@@ -60,12 +62,16 @@ export function MasterSheetUpload({ sheetType }) {
     setIsLoading(true)
 
     try {
+      console.log("labels: ", requiredColumnsLabel)
+      console.log("keys: ", requiredColumnsKey)
       // Parse Excel file
       const { rows, emptyRowsCount } = await parseExcelFile(file, requiredColumns)
+      console.log("rows: ", rows)
 
       // Validate rows for empty cells in required columns
-      const { validRows, invalidRows, invalidRowsCount } = validateRowsForEmptyCells(rows, requiredColumns)
-
+      const { validRows, invalidRows, invalidRowsCount } = validateRowsForEmptyCells(rows, requiredColumnsKey)
+      console.log("invalidRows: ", invalidRows)
+      console.log("validRows: ", validRows)
       const totalRows = rows.length
       const stats = {
         totalRows,
@@ -113,7 +119,7 @@ export function MasterSheetUpload({ sheetType }) {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>{config.name}</CardTitle>
-        <CardDescription>Upload an Excel file with the required columns: <span className="text-foreground font-semibold">{requiredColumns.join(", ")}</span></CardDescription>
+        <CardDescription>Upload an Excel file with the required columns: <span className="text-foreground font-semibold">{requiredColumnsLabel.join(", ")}</span></CardDescription>
         <div className="my-2 w-full">
           {/* template download */}
           <Button
@@ -214,7 +220,7 @@ export function MasterSheetUpload({ sheetType }) {
             <table className="w-full text-xs border border-gray-200 rounded-lg">
               <thead className="bg-red-400">
                 <tr>
-                  {requiredColumns.map((col) => (
+                  {requiredColumnsLabel.map((col) => (
                     <th key={col} className="px-3 py-2 text-left border border-gray-200">
                       {col}
                     </th>
@@ -224,7 +230,7 @@ export function MasterSheetUpload({ sheetType }) {
               <tbody>
                 {invalidPreview.map((row, idx) => (
                   <tr key={idx} className="hover:bg-red-400">
-                    {requiredColumns.map((col) => (
+                    {requiredColumnsLabel.map((col) => (
                       <td key={`${idx}-${col}`} className="px-3 py-2 border border-gray-200">
                         {row[col] !== null ? String(row[col]) : "-"}
                       </td>
@@ -243,7 +249,7 @@ export function MasterSheetUpload({ sheetType }) {
             <table className="w-full text-xs border border-gray-200 rounded-lg">
               <thead className="bg-green-300">
                 <tr>
-                  {requiredColumns.map((col) => (
+                  {requiredColumnsLabel.map((col) => (
                     <th key={col} className="px-3 py-2 text-left border border-gray-200">
                       {col}
                     </th>
@@ -253,7 +259,7 @@ export function MasterSheetUpload({ sheetType }) {
               <tbody>
                 {validPreview.map((row, idx) => (
                   <tr key={idx} className="dark:hover:text-black hover:bg-green-200">
-                    {requiredColumns.map((col) => (
+                    {requiredColumnsKey.map((col) => (
                       <td key={`${idx}-${col}`} className="px-3 py-2 border border-gray-200">
                         {row[col] !== null ? String(row[col]) : "-"}
                       </td>

@@ -61,7 +61,7 @@ export default {
                 allowNull: true
             },
             courierType: {
-                type: Sequelize.FLOAT,
+                type: Sequelize.STRING,
                 allowNull: true
             },
             createdAt: {

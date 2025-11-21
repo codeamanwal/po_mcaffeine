@@ -7,7 +7,10 @@ export const MASTER_SHEETS_CONFIG = {
     // facility master
     facility: {
         name: "Facility Master",
-        expectedColumns: ["Facility", "Pickup Location"],
+        expectedColumns:
+            [{ label: "Facility", key: "facility" },
+            { label: "Pickup Location", key: "pickupLocation" }
+            ],
         endpoint: `${baseUrl}/api/v1/master/facility`,
         fileKey: "facilityData",
     },
@@ -15,15 +18,15 @@ export const MASTER_SHEETS_CONFIG = {
     // courier partner master
     courierPartner: {
         name: "Courier Partner Master",
-        expectedColumns: [
-            "Courier Partner - Mode",
-            "Courier Partner",
-            "Courier Mode",
-            "Appointment Charge (Appointment Channel Yes)",
-            "Appointment Charge (Appointment Channel No)",
-            "Docket Charges",
-            "Courier Type",
-        ],
+        expectedColumns:
+            [{ label: "Courier Partner - Mode", key: "courierPartnerMode", type: "string" },
+            { label: "Courier Partner", key: "courierPartner", type: "string" },
+            { label: "Courier Mode", key: "courierMode", type: "string" },
+            { label: "Appointment Charge (Appointment Channel Yes)", key: "appointmentChargeAppointmentChannelYes", type: "number" },
+            { label: "Appointment Charge (Appointment Channel No)", key: "appointmentChargeAppointmentChannelNo", type: "number" },
+            { label: "Docket Charges", key: "docketCharges", type: "number" },
+            { label: "Courier Type", key: "courierType", type: "string" },
+            ],
         endpoint: `${baseUrl}/api/v1/master/courier-partner`,
         fileKey: "courierPartnerData",
     },
@@ -31,7 +34,12 @@ export const MASTER_SHEETS_CONFIG = {
     // status master
     status: {
         name: "Status Master",
-        expectedColumns: ["Status (Planning)", "Status (Warehouse)", "Status (Logistics)", "Status (Final Status)"],
+        expectedColumns:
+            [{ label: "Status (Planning)", key: "statusPlanning", type: "string" },
+            { label: "Status (Warehouse)", key: "statusWarehouse", type: "string" },
+            { label: "Status (Logistics)", key: "statusLogistics", type: "string" },
+            { label: "Status (Final Status)", key: "statusFinalStatus", type: "string" },
+            ],
         endpoint: `${baseUrl}/api/v1/master/status`,
         fileKey: "statusData",
     },
@@ -39,7 +47,13 @@ export const MASTER_SHEETS_CONFIG = {
     // courier tat rates
     courierRates: {
         name: "Courier Rates Master",
-        expectedColumns: ["Courier Partner", "Pickup Location", "Drop Location", "Rates Per KG", "TAT"],
+        expectedColumns:
+            [{ label: "Courier Partner", key: "courierPartner", type: "string" },
+            { label: "Pickup Location", key: "pickupLocation", type: "string" },
+            { label: "Drop Location", key: "dropLocation", type: "string" },
+            { label: "Rates Per KG", key: "ratesPerKG", type: "number" },
+            { label: "TAT", key: "tat", type: "number" },
+            ],
         endpoint: `${baseUrl}/api/v1/master/courier-rates`,
         fileKey: "courierRatesData",
     },
@@ -47,14 +61,14 @@ export const MASTER_SHEETS_CONFIG = {
     // channel location master
     channel: {
         name: "Channel Location Master",
-        expectedColumns: [
-            "Channel Category",
-            "Channel",
-            "Channel Location",
-            "Drop Location",
-            "Appt Channel",
-            "Appt Channel Type",
-        ],
+        expectedColumns:
+            [{ label: "Channel Category", key: "channelCategory", type: "string" },
+            { label: "Channel", key: "channel", type: "string" },
+            { label: "Channel Location", key: "channelLocation", type: "string" },
+            { label: "Drop Location", key: "dropLocation", type: "string" },
+            { label: "Appt Channel", key: "apptChannel", type: "string" },
+            { label: "Appt Channel Type", key: "apptChannelType", type: "string" },
+            ],
         endpoint: `${baseUrl}/api/v1/master/channel`,
         fileKey: "channelData",
     },
@@ -62,7 +76,10 @@ export const MASTER_SHEETS_CONFIG = {
     // appointment remark master
     appointmentRemarks: {
         name: "Appointment Remarks Master",
-        expectedColumns: ["Appointment Change Remarks", "Appointment Change Category"],
+        expectedColumns:
+            [{ label: "Appointment Change Remarks", key: "appointmentChangeRemarks", type: "string" },
+            { label: "Appointment Change Category", key: "appointmentChangeCategory", type: "string" },
+            ],
         endpoint: `${baseUrl}/api/v1/master/appointment-remarks`,
         fileKey: "appointmentRemarksData",
     },
@@ -70,7 +87,14 @@ export const MASTER_SHEETS_CONFIG = {
     // sku master
     sku: {
         name: "SKU Master",
-        expectedColumns: ["Channel", "SKU Code", "SKU Name", "Channel SKU Code", "Brand", "MRP"],
+        expectedColumns:
+            [{ label: "Channel", key: "channel", type: "string" },
+            { label: "SKU Code", key: "skuCode", type: "string" },
+            { label: "SKU Name", key: "skuName", type: "string" },
+            { label: "Channel SKU Code", key: "channelSkuCode", type: "string" },
+            { label: "Brand", key: "brand", type: "string" },
+            { label: "MRP", key: "mrp", type: "number" },
+            ],
         endpoint: `${baseUrl}/api/v1/master/sku`,
         fileKey: "skuData",
     },

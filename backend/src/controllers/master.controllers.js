@@ -22,7 +22,7 @@ const getModelByType = (type) => {
 async function uploadMasterSheet(req, res) {
     try {
         const { type } = req.params;
-        const data = req.body;
+        const { data } = req.body;
 
         if (!data || !Array.isArray(data)) {
             return res.status(400).json({ msg: "Invalid data format. Expected an array.", success: false, status: 400 });
