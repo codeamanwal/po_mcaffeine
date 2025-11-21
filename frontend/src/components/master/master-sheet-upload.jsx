@@ -67,7 +67,7 @@ export function MasterSheetUpload({ sheetType }) {
       // Parse Excel file
       const { rows, emptyRowsCount } = await parseExcelFile(file, requiredColumns)
       // console.log("rows: ", rows)
-
+      await handleDownloadSheetData()
       // Validate rows for empty cells in required columns
       const { validRows, invalidRows, invalidRowsCount } = validateRowsForEmptyCells(rows, requiredColumnsKey)
       // console.log("invalidRows: ", invalidRows)
@@ -216,7 +216,7 @@ export function MasterSheetUpload({ sheetType }) {
         {/* Invalid Preview */}
         {invalidPreview.length > 0 && (
           <div className="overflow-x-auto">
-            <h4 className="font-semibold text-sm mb-2">Invalid Row Preview</h4>
+            <h4 className="font-semibold text-sm mb-2">Invalid Row Preview - - {invalidPreview?.length}</h4>
             <table className="w-full text-xs border border-gray-200 rounded-lg">
               <thead className="bg-red-400">
                 <tr>
@@ -228,9 +228,9 @@ export function MasterSheetUpload({ sheetType }) {
                 </tr>
               </thead>
               <tbody>
-                {invalidPreview.map((row, idx) => (
+                {invalidPreview?.map((row, idx) => (
                   <tr key={idx} className="hover:bg-red-400">
-                    {requiredColumnsLabel.map((col) => (
+                    {requiredColumnsKey.map((col) => (
                       <td key={`${idx}-${col}`} className="px-3 py-2 border border-gray-200">
                         {row[col] !== null ? String(row[col]) : "-"}
                       </td>
@@ -245,7 +245,7 @@ export function MasterSheetUpload({ sheetType }) {
         {/* Valid Preview */}
         {validPreview.length > 0 && (
           <div className="overflow-x-auto">
-            <h4 className="font-semibold text-sm mb-2">Valid Row Preview</h4>
+            <h4 className="font-semibold text-sm mb-2">Valid Row Preview - {validPreview?.length}</h4>
             <table className="w-full text-xs border border-gray-200 rounded-lg">
               <thead className="bg-green-300">
                 <tr>
@@ -257,7 +257,7 @@ export function MasterSheetUpload({ sheetType }) {
                 </tr>
               </thead>
               <tbody>
-                {validPreview.map((row, idx) => (
+                {validPreview?.slice(0, 50)?.map((row, idx) => (
                   <tr key={idx} className="dark:hover:text-black hover:bg-green-200">
                     {requiredColumnsKey.map((col) => (
                       <td key={`${idx}-${col}`} className="px-3 py-2 border border-gray-200">

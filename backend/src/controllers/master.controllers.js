@@ -35,7 +35,11 @@ async function uploadMasterSheet(req, res) {
 
         // Full replace: Truncate and then Bulk Create
         await Model.destroy({ truncate: true });
-        const createdData = await Model.bulkCreate(data);
+
+        // Filter out duplicate rows from the input data
+        const uniqueData = [...new Map(data.map(item => [JSON.stringify(item), item])).values()];
+
+        const createdData = await Model.bulkCreate(uniqueData);
 
         return res.status(201).json({ msg: "Master sheet uploaded successfully", count: createdData.length, success: true, status: 201 });
 
@@ -83,8 +87,6 @@ async function getMasterSheet(req, res) {
     }
 }
 
-
-
 async function searchMasterSheet(req, res) {
     try {
         const { type } = req.params;
@@ -116,5 +118,5 @@ export const masterControllers = {
     uploadMasterSheet,
     deleteMasterSheet,
     getMasterSheet,
-    searchMasterSheet
+    searchMasterSheet,
 };
