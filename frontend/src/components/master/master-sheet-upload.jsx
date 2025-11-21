@@ -44,7 +44,7 @@ export function MasterSheetUpload({ sheetType }) {
     try {
       const res = await getMasterSheetData(sheetType);
       console.log(res);
-      await generateExcelWithData(config.name, requiredColumnsLabel, res.data.data)
+      await generateExcelWithData(config.name, requiredColumns, res.data.data)
     } catch (error) {
       console.error("Master Sheet download error:", error)
       setError("Failed to download master sheet")

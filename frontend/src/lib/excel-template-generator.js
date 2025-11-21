@@ -36,9 +36,18 @@ export async function generateExcelTemplate(sheetType, sheetName, columns) {
     XLSX.writeFile(workbook, filename)
 }
 
-export async function generateExcelWithData(sheetName, columns, data){
+export async function generateExcelWithData(sheetName, columns, data) {
+    // Transform data to use labels as keys
+    const formattedData = data.map(item => {
+        const newItem = {}
+        columns.forEach(col => {
+            newItem[col.label] = item[col.key]
+        })
+        return newItem
+    })
+
     // Create workbook and worksheet
-    const worksheet = XLSX.utils.json_to_sheet(data)
+    const worksheet = XLSX.utils.json_to_sheet(formattedData)
 
     // Set column widths
     const colWidths = columns.map(() => ({ wch: 20 }))
@@ -69,7 +78,7 @@ export async function generateExcelWithData(sheetName, columns, data){
 }
 
 function getSampleData(sheetType, columns) {
-    
+
     const samples = {
         facility: [
             { Facility: 'HYP_SRGWHT', 'Pickup Location': 'Guwahati' },
