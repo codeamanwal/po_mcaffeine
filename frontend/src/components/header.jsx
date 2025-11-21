@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Moon, Sun, LogOut, Database, Lock, UserPlus, Users, User, Home, Settings } from "lucide-react"
+import { Moon, Sun, LogOut, Database, Lock, UserPlus, Users, User, Home, Settings, File } from "lucide-react"
 import { useUserStore } from "@/store/user-store"
 import { useThemeStore } from "@/store/theme-store"
 import { ThemeToggle } from "@/provider/toggle-theme"
@@ -35,12 +35,14 @@ export default function NavigationHeader({
 
   const navigationItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
+    ...(user?.role === "superadmin" ? [
+          { id: "master-sheet", label: "Master Sheet", icon: File },
+    ] : []), 
     ...(user?.role === "superadmin" || user?.role === "admin"
       ? [
           { id: "user-management", label: "User Management", icon: Users },
           { id: "create-user", label: "Create User", icon: UserPlus },
           { id: "create-order", label: "Create Order", icon: Database },
-          { id: "master-sheet", label: "Master Sheet", icon: Database },
         ]
       : []),
     { id: "user-settings", label: "Settings", icon: Settings },

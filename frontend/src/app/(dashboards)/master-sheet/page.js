@@ -4,7 +4,7 @@ import { MasterSheetsDashboard } from "@/components/master/master-sheet-dasboard
 import { useRouter } from "next/navigation";
 import { useThemeStore } from "@/store/theme-store"
 
-export default function UserManagement( ){
+export default function MasterSheetsPage( ){
     const router = useRouter();
     const {isDarkMode, setIsDarkMode} = useThemeStore()
     
