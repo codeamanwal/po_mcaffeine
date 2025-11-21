@@ -60,18 +60,18 @@ export function MasterSheetUpload({ sheetType }) {
     setError(null)
     setSuccess(false)
     setIsLoading(true)
-
+    
     try {
-      console.log("labels: ", requiredColumnsLabel)
-      console.log("keys: ", requiredColumnsKey)
+      // console.log("labels: ", requiredColumnsLabel)
+      // console.log("keys: ", requiredColumnsKey)
       // Parse Excel file
       const { rows, emptyRowsCount } = await parseExcelFile(file, requiredColumns)
-      console.log("rows: ", rows)
+      // console.log("rows: ", rows)
 
       // Validate rows for empty cells in required columns
       const { validRows, invalidRows, invalidRowsCount } = validateRowsForEmptyCells(rows, requiredColumnsKey)
-      console.log("invalidRows: ", invalidRows)
-      console.log("validRows: ", validRows)
+      // console.log("invalidRows: ", invalidRows)
+      // console.log("validRows: ", validRows)
       const totalRows = rows.length
       const stats = {
         totalRows,
@@ -94,7 +94,7 @@ export function MasterSheetUpload({ sheetType }) {
       }
 
       // Upload to backend
-      console.log(sheetType, validRows);
+      // console.log(sheetType, validRows);
       const response = await uploadMasterSheetData(sheetType, validRows)
       // const response = {status: 200};
 
