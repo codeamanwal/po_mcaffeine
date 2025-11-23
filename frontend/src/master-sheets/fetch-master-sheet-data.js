@@ -78,4 +78,43 @@ export async function getSkuBySkuCodeAndChannel (skuCode,channelName) {
     }
 }
 
-/********************** Function used for Create order Page *******************************/
+/********************** Function used for Edit shipment modal *******************************/
+
+export async function getMasterFacilityOptions () {
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/facility/search?attributes=facility`)
+        const apiData = res.data
+        const data = res.data.data
+        const facilityOptions = [... new Set(data.map(item => item.facility))]
+        return facilityOptions
+    } catch (error) {
+        console.error("ERROR GETTING MASTER FACILITY OPTIONS",error)
+        return []
+    }
+}
+
+export async function getMasterStatusPlanningOptions () {
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/status/search?attributes=status`)
+        const apiData = res.data
+        const data = res.data.data
+        const statusPlanningOptions = [... new Set(data.map(item => item.status))]
+        return statusPlanningOptions
+    } catch (error) {
+        console.error("ERROR GETTING MASTER STATUS PLANNING OPTIONS",error)
+        return []
+    }
+}
+
+export async function getMasterFinalStatus (statusPlanning, statusWarehouse, statusLogistics) {
+    try{
+        const res = await api.get(`${baseUrl}/api/v1/master/status/search?statusPlanning=${statusPlanning}&statusWarehouse=${statusWarehouse}&statusLogistics=${statusLogistics}`)
+        const apiData = res.data
+        const data = res.data.data
+        const finalStatus = [... new Set(data.map(item => item.finalStatus))]
+        return finalStatus
+    } catch (error) {
+        console.error("ERROR GETTING MASTER FINAL STATUS",error)
+        return []
+    }
+}
