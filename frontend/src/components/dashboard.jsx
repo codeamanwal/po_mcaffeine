@@ -350,9 +350,9 @@ export default function DashboardPage({ onNavigate }) {
     facility: [], // Added facility filter
     poDateFrom: null,
     poDateTo: null,
-    skuCode: "",
     workingDateFrom: null,
     workingDateTo: null,
+    skuCode: "",
     dispatchDateFrom: null,
     dispatchDateTo: null,
     currentAppointmentDateFrom: null,
@@ -373,6 +373,8 @@ export default function DashboardPage({ onNavigate }) {
     facility: [], // Added facility filter
     poDateFrom: null,
     poDateTo: null,
+    workingDateFrom: null,
+    workingDateTo: null,
     currentAppointmentDateFrom: null,
     currentAppointmentDateTo: null,
     statusPlanning: [],
@@ -864,6 +866,8 @@ export default function DashboardPage({ onNavigate }) {
       facility: [], // Added facility
       poDateFrom: null,
       poDateTo: null,
+      workingDateFrom: null,
+      workingDateTo: null,
       currentAppointmentDateFrom: null,
       currentAppointmentDateTo: null,
       statusPlanning: [],
@@ -1121,6 +1125,24 @@ export default function DashboardPage({ onNavigate }) {
                       <DatePicker
                         date={poFilters.poDateTo}
                         onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateTo: date }))}
+                        placeholder="To date"
+                      />
+                    </div>
+
+                    {/* Working Date Range */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Working Date From</label>
+                      <DatePicker
+                        date={poFilters.workingDateFrom}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, workingDateFrom: date }))}
+                        placeholder="From date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Working Date To</label>
+                      <DatePicker
+                        date={poFilters.workingDateTo}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, workingDateTo: date }))}
                         placeholder="To date"
                       />
                     </div>
@@ -1465,6 +1487,24 @@ export default function DashboardPage({ onNavigate }) {
                       <DatePicker
                         date={shipmentFilters.poDateTo}
                         onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateTo: date }))}
+                        placeholder="To date"
+                      />
+                    </div>
+
+                    {/* Working Date Range */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Working Date From</label>
+                      <DatePicker
+                        date={shipmentFilters.workingDateFrom}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, workingDateFrom: date }))}
+                        placeholder="From date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Working Date To</label>
+                      <DatePicker
+                        date={shipmentFilters.workingDateTo}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, workingDateTo: date }))}
                         placeholder="To date"
                       />
                     </div>

@@ -15,6 +15,8 @@ const filters = {
   // date filters
   poDateFrom: "",
   poDateTO: "",
+  workingDateFrom: "",
+  workingDateTO: "",
   // search filters
   skuCode: "",
   poNumber: ""
@@ -145,6 +147,12 @@ export async function getSkus(req, res) {
     }
     if (filters?.poDateTo && filters.poDateTo !== "") {
       shipmentWhere.poDate = { [Op.lte]: filters.poDateTo };
+    }
+    if (filters?.workingDateFrom && filters.workingDateFrom !== "") {
+      shipmentWhere.workingDatePlanner = { [Op.gte]: filters.workingDateFrom };
+    }
+    if (filters?.workingDateTo && filters.workingDateTo !== "") {
+      shipmentWhere.workingDatePlanner = { [Op.lte]: filters.workingDateTo };
     }
     if (filters?.search && filters.search !== "") {
       shipmentWhere[Op.or] = [
@@ -408,6 +416,12 @@ export async function getShipments(req, res) {
     }
     if (filters?.poDateTo && filters.poDateTo !== "") {
       shipmentWhere.poDate = { [Op.lte]: filters.poDateTo };
+    }
+    if (filters?.workingDateFrom && filters.workingDateFrom !== "") {
+      shipmentWhere.workingDatePlanner = { [Op.gte]: filters.workingDateFrom };
+    }
+    if (filters?.workingDateTo && filters.workingDateTo !== "") {
+      shipmentWhere.workingDatePlanner = { [Op.lte]: filters.workingDateTo };
     }
     if (filters?.search && filters.search !== "") {
       shipmentWhere[Op.or] = [
