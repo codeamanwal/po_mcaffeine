@@ -118,3 +118,17 @@ export async function getMasterFinalStatus (statusPlanning, statusWarehouse, sta
         return []
     }
 }
+
+export async function getMasterCourierPartnerOptions () {
+    try{
+        const res = await api.get(`${baseUrl}/api/v1/master/courier-partner/search?attributes=courierPartnerMode`)
+        const apiData = res.data
+        const data = res.data.data
+        const options = [... new Set(data.map(item => item.courierPartnerMode))]
+        return options
+    } catch (error) {
+        console.error("ERROR GETTING COURIER PARTNER OPTIONS",error)
+        return []
+    }
+}
+
