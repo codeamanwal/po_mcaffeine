@@ -45,6 +45,7 @@ import SkuLevelEditModal from "./sku-level-edit-modal"
 import LogisticsCost from "./logistics-cost"
 import { getTAT } from "@/constants/courier-partners"
 import { getFinalStatus } from "@/constants/status_master"
+import { getMasterCourierPartnerOptions, getMasterFacilityOptions } from "@/master-sheets/fetch-master-sheet-data"
 
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
@@ -284,6 +285,9 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const [poEditComments, setPoEditComments] = useState("")
 
   const [locationOtions, setLocationOptions] = useState([])
+  const [facilityOptions, setFacilityOptions ] = useState([])
+  const [partnerOptions, setPartnerOptions ] = useState([])
+
   const getLocations = (channel) => {
     if(!channel) return [];
       const locations = getLocationsForChannel(channel);
@@ -388,8 +392,41 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     }
   }, [shipmentData])
 
+  // useEffect(() => {
+  //   const getFacility = async () => {
+  //     try {
+  //         const res = await getMasterFacilityOptions()
+  //         console.log(res)
+  //     } catch (error) {
+  //       console.error(error)
+  //     }
+  //   }
+  //   getFacility()
+  // }, [shipmentData.uid])
+
   useEffect(() => {
+    const getFacility = async () => {
+      try {
+          const res = await getMasterFacilityOptions()
+          // console.log(res)
+          setFacilityOptions(res)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    const getCourierPartner = async () => {
+      try {
+        const res = await getMasterCourierPartnerOptions()
+        console.log(res)
+        setPartnerOptions(res)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    getFacility()
+    getCourierPartner()
     getLocations(formData.channel)
+    // console.log("Location fetched!!!")
   }, [formData])
 
   // Set default tab based on user role
@@ -776,6 +813,55 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       } else {
         // console.log("Invalid currentAppointmentDate:", cad);
       }
+    }
+
+    if(field.fieldName === 'facility'){
+      // console.log("fetched options")
+      // field.options = facilityOptions
+      // console.log("redering fields:",facilityOptions)
+      return (
+          <div className="space-y-2">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
+              {field.label}
+              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
+            </Label>
+            <Select disabled={["location" ,"channel"].includes(field.fieldName)} value={value} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
+              <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
+                <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {facilityOptions?.map((option,idx) => (
+                  <SelectItem key={idx} value={option || " "}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )
+    }
+
+    if(field.fieldName === 'firstTransporter' || field.fieldName === 'secondTransporter' || field.fieldName === 'thirdTransporter') {
+      return (
+          <div className="space-y-2">
+            <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
+              {field.label}
+              {hasValidationError && <AlertTriangle className="h-3 w-3 text-red-500" />}
+            </Label>
+            <Select disabled={["location" ,"channel"].includes(field.fieldName)} value={value} onValueChange={(newValue) => handleInputChange(field.fieldName, newValue)}>
+              <SelectTrigger className={cn("h-10", hasValidationError && "border-red-300 bg-red-50")}>
+                <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {partnerOptions?.map((option,idx) => (
+                  <SelectItem key={idx} value={option || " "}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )
     }
 
 

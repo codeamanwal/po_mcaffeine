@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -28,74 +27,9 @@ import {
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { createShipmentOrder } from "@/lib/order"
-
 import SearchableSelect from "./ui/searchable-select"
-
-// import master sheet
-import { master_sku_code_options } from "@/constants/sku_code_options"
-import { master_channel_options } from "@/constants/master_sheet"
-import { channelSkuMapping } from "@/constants/channel-sku-map"
-import { getLocationsForChannel } from "@/lib/validation"
 import { toast } from "sonner"
-
-// Channel SKU mapping
-// const channelSkuMapping = {
-//   Amazon: {
-//     MCaf121: "AMZ-mCaf121",
-//     MCaf122: "AMZ-mCaf122",
-//     MCaf123: "AMZ-mCaf123",
-//     MCaf124: "AMZ-mCaf124",
-//     MCaf125: "AMZ-mCaf125",
-//   },
-//   Flipkart: {
-//     MCaf121: "FK-mCaf121",
-//     MCaf122: "FK-mCaf122",
-//     MCaf123: "FK-mCaf123",
-//     MCaf124: "FK-mCaf124",
-//     MCaf125: "FK-mCaf125",
-//   },
-//   Nykaa: {
-//     MCaf121: "NYK-mCaf121",
-//     MCaf122: "NYK-mCaf122",
-//     MCaf123: "NYK-mCaf123",
-//     MCaf124: "NYK-mCaf124",
-//     MCaf125: "NYK-mCaf125",
-//   },
-//   Zepto: {
-//     MCaf121: "ZPT-mCaf121",
-//     MCaf122: "ZPT-mCaf122",
-//     MCaf123: "ZPT-mCaf123",
-//     MCaf124: "ZPT-mCaf124",
-//     MCaf125: "ZPT-mCaf125",
-//   },
-//   BigBasket: {
-//     MCaf121: "BB-mCaf121",
-//     MCaf122: "BB-mCaf122",
-//     MCaf123: "BB-mCaf123",
-//     MCaf124: "BB-mCaf124",
-//     MCaf125: "BB-mCaf125",
-//   },
-//   "Swiggy Instamart": {
-//     MCaf121: "SWG-mCaf121",
-//     MCaf122: "SWG-mCaf122",
-//     MCaf123: "SWG-mCaf123",
-//     MCaf124: "SWG-mCaf124",
-//     MCaf125: "SWG-mCaf125",
-//   },
-//   Blinkit: {
-//     MCaf121: "BLK-mCaf121",
-//     MCaf122: "BLK-mCaf122",
-//     MCaf123: "BLK-mCaf123",
-//     MCaf124: "BLK-mCaf124",
-//     MCaf125: "BLK-mCaf125",
-//   },
-// }
-
-const brands = ["mCaffine", "MCaffeine", "Other Brand"]
-const facilities = ["Delhi WH1", "Mumbai WH1", "Mumbai WH2", "Bangalore WH1", "Hyderabad WH1", "Chennai WH1"]
-const channels = ["Amazon", "Flipkart", "Zepto", "Nykaa", "BigBasket", "Swiggy Instamart", "Blinkit"]
-const locations = ["New Delhi", "Mumbai", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune"]
-
+import { getAllowedLocationsFromChannel, getAllowedSkusFromChannel, getMasterChannelOptions, getSkuBySkuCodeAndChannel } from "@/master-sheets/fetch-master-sheet-data"
 
 export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme }) {
   const [shipmentOrder, setShipmentOrder] = useState({
@@ -128,28 +62,38 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
   const [brandMismatchError, setBrandMismatchError] = useState("")
 
   // Prepare options for searchable selects
-  const channelOptions = useMemo(() => master_channel_options.map((channel) => ({ value: channel, label: channel })), [])
-  
-  const getSkuOptionsForChannel = (channel) => {
-    if(!channel) return [];
-    const skuCodes = Object.keys(channelSkuMapping[channel] || {});
-
-    const options =  skuCodes.map(skuCode => ({
-      value: skuCode,
-      label: skuCode,
-    }));
-    // console.log(options);
-    setSkuCodeOptions(options);
-    return options;
-  }
-
-  const getLocations = (channel) => {
-    const locations = getLocationsForChannel(channel);
-    setLocationOptions(locations);
-  }
-
+  const [channelOptions, setChannelOptions] = useState([])
+  const [locationOptions, setLocationOptions] = useState([])
   const [skuCodeOptions, setSkuCodeOptions] = useState([])
-  const [locationOtions, setLocationOptions] = useState([])
+
+  // fetches channel options from master sheet
+  useEffect(() => {
+    const fetchChannelOptions = async () => {
+      const options = await getMasterChannelOptions()
+      console.log("channel options: ", options)
+      setChannelOptions(options?.map(opt => ({ value: opt, label: opt })))
+    }
+    fetchChannelOptions()
+  }, [])
+
+  // fetches location and sku option from master sheet
+  useEffect(() => {
+    const fetchLocationOptions = async () => {
+      const options = await getAllowedLocationsFromChannel(shipmentOrder.channel)
+      console.log("location options: ", options)
+      setLocationOptions(options?.map(opt => ({ value: opt, label: opt })))
+    }
+
+    const fetchSkuOptions = async () => {
+      const options = await getAllowedSkusFromChannel(shipmentOrder.channel)
+      console.log("sku options: ", options)
+      setSkuCodeOptions(options?.map(opt => ({ value: opt, label: opt })))
+    }
+
+    fetchLocationOptions()
+    fetchSkuOptions()
+  }, [shipmentOrder.channel])
+
 
   // Auto-fill brand based on selected SKUs
   useEffect(() => {
@@ -183,69 +127,94 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
       [field]: value,
     }))
 
-    // Update all SKU channel codes when channel changes
+    // Reset SKU orders when channel changes
     if (field === "channel") {
-      setSkuOrders((prev) =>
-        prev.map((sku) => ({
-          ...sku,
-          channelSkuCode:
-            sku.skuCode && channelSkuMapping[value]?.[sku.skuCode] ? channelSkuMapping[value][sku.skuCode] : "",
-        })),
-      )
+      setSkuOrders([
+        {
+          id: "1",
+          srNo: "1",
+          skuName: "",
+          skuCode: "",
+          channelSkuCode: "",
+          qty: "",
+          gmv: "",
+          poValue: "",
+          brandName: "",
+          mrp: "",
+        },
+      ])
     }
   }
 
-  const handleSkuChange = (id, field, value) => {
+  const handleSkuChange = async (id, field, value) => {
+    // First update the field that changed immediately for UI responsiveness
     setSkuOrders((prev) =>
       prev.map((sku) => {
         if (sku.id !== id) return sku
-
-        const updatedSku = { ...sku, [field]: value }
-
-        // Auto-fill when SKU code changes
-        if (field === "skuCode") {
-          const masterSku = master_sku_code_options?.find((item) => item.sku_code === value)
-          const prefix = `${value}`.substring(0,3);
-          if(prefix === "HYP"){
-              updatedSku.brandName = "Hyphen"
-          } else if(prefix === "AMA"){
-            updatedSku.brandName = "Aman"
-          } else if(prefix === "VIV"){
-            updatedSku.brandName = "Vivek"
-          } else {
-            updatedSku.brandName = masterSku?.brand_name || "MCaffeine"
-          }
-          if (masterSku) {
-            updatedSku.skuName = masterSku?.sku_name
-            // updatedSku.brandName = masterSku.brand_name
-            updatedSku.mrp = masterSku?.mrp
-            
-
-            // Auto-fill channel SKU code if channel is selected
-            if (shipmentOrder.channel && channelSkuMapping[shipmentOrder.channel]?.[value]) {
-              updatedSku.channelSkuCode = channelSkuMapping[shipmentOrder.channel][value]
-            }
-
-            // Auto-calculate GMV if quantity exists
-            if (updatedSku.qty) {
-              updatedSku.gmv = (Number(updatedSku.qty) * masterSku.mrp).toString()
-            }
-          } else {
-            // Clear auto-filled fields if SKU not found
-            updatedSku.skuName = ""
-            updatedSku.mrp = ""
-            updatedSku.channelSkuCode = ""
-          }
-        }
-
-        // Auto-calculate GMV when quantity changes
-        if (field === "qty" && updatedSku.mrp) {
-          updatedSku.gmv = (Number(value) * Number(updatedSku.mrp)).toString()
-        }
-
-        return updatedSku
-      }),
+        return { ...sku, [field]: value }
+      })
     )
+
+    // If skuCode changed, fetch details and update other fields
+    if (field === "skuCode") {
+      try {
+        const skuDetails = await getSkuBySkuCodeAndChannel(value, shipmentOrder?.channel || "")
+
+        setSkuOrders((prev) =>
+          prev.map((sku) => {
+            if (sku.id !== id) return sku
+
+            const updatedSku = { ...sku }
+
+            // Handle Brand Name Logic
+            const prefix = `${value}`.substring(0, 3);
+            if (prefix === "HYP") {
+              updatedSku.brandName = "Hyphen"
+            } else if (prefix === "AMA") {
+              updatedSku.brandName = "Aman"
+            } else if (prefix === "VIV") {
+              updatedSku.brandName = "Vivek"
+            } else {
+              updatedSku.brandName = skuDetails?.brand_name || "MCaffeine"
+            }
+
+            if (skuDetails) {
+              updatedSku.skuName = skuDetails?.skuName
+              updatedSku.mrp = skuDetails?.mrp
+              updatedSku.channelSkuCode = skuDetails?.channelSkuCode
+
+              // Auto-calculate GMV if quantity exists
+              if (updatedSku.qty) {
+                updatedSku.gmv = (Number(updatedSku.qty) * Number(updatedSku.mrp)).toString()
+              }
+            } else {
+              // Clear auto-filled fields if SKU not found
+              updatedSku.skuName = ""
+              updatedSku.mrp = ""
+              updatedSku.channelSkuCode = ""
+            }
+            return updatedSku
+          })
+        )
+      } catch (error) {
+        console.error("Error fetching SKU details:", error)
+        toast.error("Failed to fetch SKU details")
+      }
+    }
+
+    // Handle Quantity Change for GMV calculation
+    if (field === "qty") {
+      setSkuOrders((prev) =>
+        prev.map((sku) => {
+          if (sku.id !== id) return sku
+          const updatedSku = { ...sku }
+          if (updatedSku.mrp) {
+            updatedSku.gmv = (Number(value) * Number(updatedSku.mrp)).toString()
+          }
+          return updatedSku
+        })
+      )
+    }
   }
 
   const addSkuOrder = () => {
@@ -311,8 +280,8 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
         return `SKU ${i + 1}: PO Value must be a positive number`
       }
       // poValue should always be less than gmv
-      if(sku.poValue > sku.gmv) {
-        return `SKU ${i+1}: PO Value should be less than GMV`
+      if (sku.poValue > sku.gmv) {
+        return `SKU ${i + 1}: PO Value should be less than GMV`
       }
     }
 
@@ -380,11 +349,11 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
     } catch (err) {
       toast.error(err.response.data.msg || err.message);
       console.log(err.response || err);
-    }finally {
+    } finally {
       setIsLoading(false)
     }
 
-    
+
   }
 
   const resetForm = () => {
@@ -552,7 +521,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                       <Label className="text-sm font-medium">Channel *</Label>
                       <SearchableSelect
                         value={shipmentOrder.channel}
-                        onValueChange={(value) => {handleShipmentChange("channel", value); getSkuOptionsForChannel(value || ""); getLocations(value || "")}}
+                        onValueChange={(value) => { handleShipmentChange("channel", value) }}
                         options={channelOptions}
                         placeholder="Select channel"
                         searchPlaceholder="Search channels..."
@@ -561,21 +530,13 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
 
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Location *</Label>
-                      <Select
+                      <SearchableSelect
                         value={shipmentOrder.location}
-                        onValueChange={(value) => handleShipmentChange("location", value)}
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locationOtions.map((location, idx) => (
-                            <SelectItem key={idx} value={location.location}>
-                              {`${location.location} - ${location.drop_location}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onValueChange={(value) => { handleShipmentChange("location", value) }}
+                        options={locationOptions}
+                        placeholder="Select location"
+                        searchPlaceholder="Search locations..."
+                      />
                     </div>
 
                     <div className="space-y-2 md:col-span-1">
@@ -606,7 +567,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {skuOrders.map((sku, index) => (
+                  {skuOrders?.map((sku, index) => (
                     <div key={sku.id} className="border rounded-lg p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium text-gray-900 dark:text-white">SKU Order #{sku.srNo}</h4>

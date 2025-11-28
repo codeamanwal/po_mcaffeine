@@ -10,7 +10,8 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
 import { Upload, FileText, AlertCircle, CheckCircle, Download, ArrowLeft, X, Eye, Database } from "lucide-react"
 import { createBulkShipment } from "@/lib/order"
-import { validateBulkOrderData, autoFillSkuData, calculateGmv, generateChannelSkuCode } from "@/lib/validation"
+import { validateBulkOrderData, autoFillSkuData } from "@/lib/validation"
+import { getSkuBySkuCodeAndChannel } from "@/master-sheets/fetch-master-sheet-data"
 
 const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
   const [file, setFile] = useState(null)
@@ -58,7 +59,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
     }
   }
 
-  const parseCSV = (csvText) => {
+  const parseCSV = async (csvText) => {
     const lines = csvText.split("\n").filter((line) => line.trim())
     const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
@@ -80,31 +81,33 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       const channel = values[headers.indexOf("Channel")] || ""
 
       // Auto-fill SKU data
-      const skuData = autoFillSkuData(skuCode)
+
+      const skuData = await getSkuBySkuCodeAndChannel(skuCode, channel)
+
       let brand = "";
-      const prefix = `${skuCode}`.substring(0,3).toLowerCase();
-      if(prefix === "hyp"){
+      const prefix = `${skuCode}`.substring(0, 3).toLowerCase();
+      if (prefix === "hyp") {
         brand = "Hyphen"
-      } else if(prefix === "ama"){
+      } else if (prefix === "ama") {
         brand = "Aman"
-      } else if(prefix === "viv"){
+      } else if (prefix === "viv") {
         brand = "Vivek"
       } else {
         brand = "MCaffeine"
       }
-      
+
       let order = {
         entryDate: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
-        brand: brand ,
-        brandName: brand ,
+        brand: brand,
+        brandName: brand,
         channel: channel,
         location: values[headers.indexOf("Location")] || "",
         poDate: values[headers.indexOf("PO Date")] || "",
         poNumber: values[headers.indexOf("PO Number")] || "",
         srNo: values[headers.indexOf("Sr/ No")] || "",
-        skuName: values[headers.indexOf("SKU Name")] || "",
-        skuCode: values[headers.indexOf("SKU Code")] || "",
-        channelSkuCode:  values[headers.indexOf("Channel SKU Code")] || "",
+        skuName: skuData?.skuName || values[headers.indexOf("SKU Name")] || "",
+        skuCode: skuData?.skuCode || values[headers.indexOf("SKU Code")] || "",
+        channelSkuCode: skuData?.channelSkuCode || values[headers.indexOf("Channel SKU Code")] || "",
         qty: qty,
         gmv: Number.parseFloat(values[headers.indexOf("GMV")]) ?? 0,
         poValue: Number.parseFloat(values[headers.indexOf("PO Value")]) ?? 0,
@@ -115,16 +118,16 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       }
 
       const yyyyMMddRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-      
+
       // check for checking missing some crucial data
-      if(!order.channel || !order.location || !order.poNumber || !order.skuCode || !order.skuName || !order.channelSkuCode || order.qty === 0 || order.gmv === 0 || order.poValue === 0){
-        order = {...order, status:"error", errors: ["Missing mandetory fields"]}
+      if (!order.channel || !order.location || !order.poNumber || !order.skuCode || !order.skuName || !order.channelSkuCode || order.qty === 0 || order.gmv === 0 || order.poValue === 0) {
+        order = { ...order, status: "error", errors: ["Missing mandetory fields"] }
         orders.push(order)
       } else if (order.poDate && !yyyyMMddRegex.test(order.poDate)) {
         // Validate poDate format only if poDate is provided
-        order = { ...order, status: "error", errors: [`Row: ${i+1} PO Date must be in yyyy-MM-dd format`] }
+        order = { ...order, status: "error", errors: [`Row: ${i + 1} PO Date must be in yyyy-MM-dd format`] }
         orders.push(order)
-      } else{
+      } else {
         orders.push(order)
       }
     }
@@ -179,7 +182,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
 
     try {
       const text = await file.text()
-      const orders = parseCSV(text)
+      const orders = await parseCSV(text)
       setParsedOrders(orders)
       // console.log(parsedOrders)
       setShowPreview(true)
@@ -466,13 +469,12 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
                         {errorOrders?.map((order, index) => (
                           <TableRow
                             key={index}
-                            className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                              order.status === "error"
+                            className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${order.status === "error"
                                 ? "bg-red-50 dark:bg-red-950"
                                 : order.warnings?.length > 0
                                   ? "bg-yellow-50 dark:bg-yellow-950"
                                   : ""
-                            }`}
+                              }`}
                           >
                             <TableCell>
                               <div className="flex flex-col gap-1">
@@ -524,13 +526,12 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
                         {validOrders?.map((order, index) => (
                           <TableRow
                             key={index}
-                            className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                              order.status === "error"
+                            className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${order.status === "error"
                                 ? "bg-red-50 dark:bg-red-950"
                                 : order.warnings?.length > 0
                                   ? "bg-yellow-50 dark:bg-yellow-950"
                                   : ""
-                            }`}
+                              }`}
                           >
                             <TableCell>
                               <div className="flex flex-col gap-1">
