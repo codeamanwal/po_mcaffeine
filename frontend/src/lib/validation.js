@@ -135,14 +135,14 @@ export const validateBulkOrderData = (orders) => {
   const warnings = []
 
   // Group orders by PO Number for brand consistency check
-  const ordersByPO = orders.reduce((acc, order, index) => {
-    const poNumber = order.poNumber
-    if (!acc[poNumber]) {
-      acc[poNumber] = []
-    }
-    acc[poNumber].push({ ...order, originalIndex: index })
-    return acc
-  }, {})
+  // const ordersByPO = orders.reduce((acc, order, index) => {
+  //   const poNumber = order.poNumber
+  //   if (!acc[poNumber]) {
+  //     acc[poNumber] = []
+  //   }
+  //   acc[poNumber].push({ ...order, originalIndex: index })
+  //   return acc
+  // }, {})
 
   // Check brand consistency within each PO
   // Object.entries(ordersByPO).forEach(([poNumber, poOrders]) => {
