@@ -70,7 +70,7 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
   useEffect(() => {
     const fetchChannelOptions = async () => {
       const options = await getMasterChannelOptions()
-      console.log("channel options: ", options)
+      // console.log("channel options: ", options)
       setChannelOptions(options?.map(opt => ({ value: opt, label: opt })))
     }
     fetchChannelOptions()
@@ -80,13 +80,13 @@ export default function CreateOrderPage({ onNavigate, isDarkMode, onToggleTheme 
   useEffect(() => {
     const fetchLocationOptions = async () => {
       const options = await getAllowedLocationsFromChannel(shipmentOrder.channel)
-      console.log("location options: ", options)
+      // console.log("location options: ", options)
       setLocationOptions(options?.map(opt => ({ value: opt, label: opt })))
     }
 
     const fetchSkuOptions = async () => {
       const options = await getAllowedSkusFromChannel(shipmentOrder.channel)
-      console.log("sku options: ", options)
+      // console.log("sku options: ", options)
       setSkuCodeOptions(options?.map(opt => ({ value: opt, label: opt })))
     }
 
