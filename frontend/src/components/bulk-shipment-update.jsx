@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   CheckSquare,
   Square,
+  Loader,
 } from "lucide-react"
 import { useUserStore } from "@/store/user-store"
 import { Label } from "./ui/label"
@@ -42,6 +43,8 @@ import {
 import { master_rto_remark_options } from "@/constants/master_sheet"
 
 import { toast } from "sonner"
+import { getMasterCourierPartnerOptions, getMasterFacilityOptions } from "@/master-sheets/fetch-master-sheet-data"
+import { isValid } from "date-fns"
 
 // Field definitions with role permissions, CSV headers, and validation rules
 const fieldDefinitions = {
@@ -523,6 +526,41 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
   const fileInputRef = useRef(null)
   const { user } = useUserStore()
 
+  const [facilityOptions, setFacilityOptions] = useState([])
+  const [partnerOptions, setPartnerOptions] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const getFacilityOptions = async () => {
+    try {
+      setIsLoading(true)
+      const res = await getMasterFacilityOptions()
+      console.log(res)
+      setFacilityOptions(res)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getPartnerOptions = async () => {
+    try {
+      setIsLoading(true)
+      const res = await getMasterCourierPartnerOptions()
+      console.log(res)
+      setPartnerOptions(res)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    getFacilityOptions()
+    getPartnerOptions()
+  }, [])
+
   const getAvailableFields = () => {
     if (!user?.role) return []
     return Object.entries(fieldDefinitions).filter(([_, field]) => field.roles.includes(user.role))
@@ -621,23 +659,45 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     }
   }
 
-  const validateFieldValue = (fieldName, value) => {
-    const field = (fieldDefinitions )[fieldName]
-    if (!field || !field.validation || !value || value.trim() === "") {
-      return { isValid: true, errors: []  }
-    }
-
-    const allowedValues = field.validation
-    if (!allowedValues.includes(value)) {
-      return {
-        isValid: false,
-        errors: [
-          `${field.label} "${value}" is not valid. Must be one of: ${allowedValues.slice(0, 3).join(", ")}${allowedValues.length > 3 ? "..." : ""}`,
-        ],
+  const validateFieldValue = (shipmentData) => {
+    let data = {...shipmentData, isValid: true, errors: []};
+    console.log("fields:", Object.keys(shipmentData))
+    const fields = Object.keys(shipmentData)
+    const uselessFileds = ["errors", "warnings", "isValid", "rowNumber", "uid", "poNumber"]
+    for(let fieldName of fields){
+      console.log(fieldName)
+      const value = shipmentData[fieldName]
+      const fieldDefinition = (fieldDefinitions )[fieldName]
+      if (!fieldDefinition || !fieldDefinition.validation || !value || value.trim() === "") {
+        data.isValid = true;
       }
+
+      let allowedValues;
+      if(fieldName === "facility"){
+        allowedValues = facilityOptions
+      }else if(fieldName === "firstTransporter" || fieldName === "secondTransporter" || fieldName === "thirdTransporter"){
+        allowedValues = partnerOptions
+      }else if(uselessFileds.includes(fieldName)){
+        // console.log("No allowed values!")
+        continue
+      }
+      else{
+        allowedValues = fieldDefinition?.validation
+      }
+
+      // console.log("allowed values:", allowedValues)
+
+      if(!allowedValues){
+        continue
+      }
+
+      if (!allowedValues.includes(value)) {
+        data.isValid = false;
+        data.errors.push(`${fieldDefinition.label} "${value}" is not valid. Must be one of: ${allowedValues?.join(", ")}`)
+      } 
     }
 
-    return { isValid: true, errors: []  }
+    return data
   }
 
   // Updated: ignore empty cells, only accept role-allowed selected fields, skip rows with no updatable values
@@ -752,16 +812,16 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
         }
 
         // Enum-like validation when provided
-        if (def.validation) {
-          const allowedValues = def.validation
-          if (!allowedValues.includes(cell)) {
-            update.errors.push(
-              `${def.label} "${cell}" is not valid. Must be one of: ${allowedValues
-                .slice(0, 3)
-                .join(", ")}${allowedValues.length > 3 ? "..." : ""}`,
-            )
-          }
-        }
+        // if (def.validation) {
+        //   const allowedValues = def.validation
+        //   if (!allowedValues.includes(cell)) {
+        //     update.errors.push(
+        //       `${def.label} "${cell}" is not valid. Must be one of: ${allowedValues
+        //         .slice(0, 3)
+        //         .join(", ")}${allowedValues.length > 3 ? "..." : ""}`,
+        //     )
+        //   }
+        // }
       }
 
       // If no updatable values (only UID/PO present), skip this row entirely
@@ -771,7 +831,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
       // Shipment-level validation
       try {
-        const shipmentValidation = validateShipmentData(update)
+        const shipmentValidation = validateFieldValue(update)
         if (!shipmentValidation.isValid) {
           update.errors.push(...shipmentValidation.errors)
         }
@@ -959,6 +1019,15 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
         <CheckCircle className="h-3 w-3 mr-1" />
         Valid
       </Badge>
+    )
+  }
+
+  if(isLoading === true){
+    return (
+      <>
+      <Loader className="h-5 w-5" />
+      Loading...
+      </>
     )
   }
 

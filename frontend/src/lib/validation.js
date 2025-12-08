@@ -54,10 +54,10 @@ export const validateShipmentData = (shipmentData)=> {
   const warnings = []
 
   // Validate facility
-  if (shipmentData.facility) {
-    const facilityValidation = validateField("Facility", shipmentData.facility, master_facility_option)
-    errors.push(...facilityValidation.errors)
-  }
+  // if (shipmentData.facility) {
+  //   const facilityValidation = validateField("Facility", shipmentData.facility, master_facility_option)
+  //   errors.push(...facilityValidation.errors)
+  // }
 
   // Validate channel
   // if (shipmentData.channel) {
@@ -104,13 +104,13 @@ export const validateShipmentData = (shipmentData)=> {
   }
 
   // Validate transporter fields
-  const transporterFields = ["firstTransporter", "secondTransporter", "thirdTransporter"]
-  transporterFields.forEach((field) => {
-    if (shipmentData[field]) {
-      const transporterValidation = validateField(field, shipmentData[field], master_courier_partner_options)
-      errors.push(...transporterValidation.errors)
-    }
-  })
+  // const transporterFields = ["firstTransporter", "secondTransporter", "thirdTransporter"]
+  // transporterFields.forEach((field) => {
+  //   if (shipmentData[field]) {
+  //     const transporterValidation = validateField(field, shipmentData[field], master_courier_partner_options)
+  //     errors.push(...transporterValidation.errors)
+  //   }
+  // })
 
   // Validate reschedule lag remark
   if (shipmentData.rescheduleLag) {
