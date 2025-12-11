@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress"
 import { Upload, FileText, AlertCircle, CheckCircle, Download, ArrowLeft, X, Eye, Database } from "lucide-react"
 import { createBulkShipment } from "@/lib/order"
 import { validateBulkOrderData, autoFillSkuData } from "@/lib/validation"
-import { getSkuBySkuCodeAndChannel } from "@/master-sheets/fetch-master-sheet-data"
+import { getAllowedLocationsFromChannel, getAllowedSkusFromChannel, getMasterChannelOptions, getSkuBySkuCodeAndChannel } from "@/master-sheets/fetch-master-sheet-data"
 
 const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
   const [file, setFile] = useState(null)
@@ -23,6 +23,37 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
   const [success, setSuccess] = useState("")
   const [showPreview, setShowPreview] = useState(false)
   const fileInputRef = useRef(null)
+
+  // const [channelOptions, setChannelOptions] = useState([])
+  // const [locationOptions, setLocationOptions] = useState([])
+  // const [skuCodeOptions, setSkuCodeOptions] = useState([])
+
+  // useEffect(() => {
+  //   const fetchChannelOptions = async () => {
+  //     const options = await getMasterChannelOptions()
+  //     // console.log("channel options: ", options)
+  //     setChannelOptions(options?.map(opt => ({ value: opt, label: opt })))
+  //   }
+  //   fetchChannelOptions()
+  // }, [])
+
+  // // fetches location and sku option from master sheet
+  // useEffect(() => {
+  //   const fetchLocationOptions = async () => {
+  //     const options = await getAllowedLocationsFromChannel(shipmentOrder.channel)
+  //     // console.log("location options: ", options)
+  //     setLocationOptions(options?.map(opt => ({ value: opt, label: opt })))
+  //   }
+
+  //   const fetchSkuOptions = async () => {
+  //     const options = await getAllowedSkusFromChannel(shipmentOrder.channel)
+  //     // console.log("sku options: ", options)
+  //     setSkuCodeOptions(options?.map(opt => ({ value: opt, label: opt })))
+  //   }
+
+  //   fetchLocationOptions()
+  //   fetchSkuOptions()
+  // }, [shipmentOrder.channel])
 
   const handleFileSelect = (event) => {
     const selectedFile = event.target.files?.[0]
