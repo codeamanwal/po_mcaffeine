@@ -74,8 +74,9 @@ async function createShipment(req, res) {
        await t.rollback();
       return res.status(400).json({msg: "Shipment order already exist with this Po Number!"})
     }
+    const totalUnits = skuOrders.reduce((total, sku) => total + sku.qty, 0)
     // creating shipment order as a parent 
-    const parent = await ShipmentOrder.create(shipmentOrder, { transaction: t });
+    const parent = await ShipmentOrder.create({...shipmentOrder, totalUnits}, { transaction: t });
 
     // attached the shared fields to each sku-order and link to parent UID
     const skusToCreate = skuOrders.map(sku => ({
@@ -114,6 +115,7 @@ async function createBulkShipment(req, res) {
 
     for(const poNumber in ordersByPoNumber) {
       const orders = ordersByPoNumber[poNumber];
+      const totalUnits = orders.reduce((total, order) => total + order.qty, 0)
       const shipmentOrder = {
         entryDate: orders[0]?.entryDate,
         poDate: orders[0]?.poDate,
@@ -121,7 +123,7 @@ async function createBulkShipment(req, res) {
         channel: orders[0]?.channel,
         location: orders[0]?.location,
         poNumber: orders[0]?.poNumber,
-        totalUnits: orders[0]?.totalUnits,
+        totalUnits: totalUnits ?? orders[0]?.totalUnits,
         brandName: orders[0]?.brandName || orders[0].brand,
         remarksPlanning: orders[0]?.remarksPlanning,
         specialRemarksCOPT: orders[0]?.specialRemarksCOPT,
@@ -1133,6 +1135,37 @@ async function deleteShipment(req, res) {
   }
 }
 
+async function updateTotalUnits(req, res) {
+  try {
+    const {uid} = req.query
+    
+    const shipment = await ShipmentOrder.findByPk(uid)
+    if(!shipment){
+      return res.status(404).json({
+        msg: "Shipment not found!",
+        success: false
+      })
+    }
+    
+    const skus = await SkuOrder.findAll({where: {shipmentOrderId: uid}})
+    const totalUnits = skus.reduce((total, sku) => total + (sku.updatedQty ?? sku.qty), 0)
+    await ShipmentOrder.update({totalUnits: totalUnits}, {where: {uid: uid}})
+    
+    return res.status(200).json({
+      msg: "Total unit updated successfully!",
+      success: true,
+      totalUnits: totalUnits
+    })
+    
+  } catch (error) {
+    return res.status(500).json({
+      msg: "Failed to update total unit!",
+      success: false,
+      error: error
+    });
+  }
+}
+
 
 export const shipmentControllers = {
     createShipment,
@@ -1151,5 +1184,6 @@ export const shipmentControllers = {
     deleteShipment,
     getPaginatedSkus,
     getPaginatedShipments,
+    updateTotalUnits,
 };
 

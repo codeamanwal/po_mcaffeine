@@ -5,6 +5,9 @@ import { getS3UploadUrl } from "../controllers/file.controllers.js"
 
 const router = Router()
 
+// update total unit
+router.post("/update-total-units", shipmentControllers.updateTotalUnits)
+
 router.post("/create-shipment-order", shipmentControllers.createShipment)
 router.post("/create-bulk-shipments", shipmentControllers.createBulkShipment)
 router.get("/get-all-shipments", shipmentControllers.getAllShipments)
