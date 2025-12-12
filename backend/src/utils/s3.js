@@ -15,8 +15,10 @@ export async function generateS3UploadUrl(fileName, fileType) {
     }
     try {
         const uploadUrl = await s3.getSignedUrlPromise('putObject', params);
+        console.log("uploadUrl is:", uploadUrl)
         return uploadUrl;
     } catch (error) {
+        console.log("ERROR: ", error)
         throw error
     }
 }

@@ -118,9 +118,9 @@ async function searchMasterSheet(req, res) {
             }
         });
 
-        console.log("attributes", attributes);
-        console.log("query", query);
-        console.log("Model: ", Model.name); // Log Model name instead of the whole model object for cleaner logs
+        // console.log("attributes", attributes);
+        // console.log("query", query);
+        // console.log("Model: ", Model.name); // Log Model name instead of the whole model object for cleaner logs
 
         const data = await Model.findAll({ attributes: attributes, where: query });
 
