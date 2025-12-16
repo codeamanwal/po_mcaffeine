@@ -868,9 +868,9 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     switch (field.type) {
       case "date":
         let shouldDisableDate = isBackendControlled ||  field.fieldName === "criticalDispatchDate" ? true : false;
-        if(field.fieldName === "firstAppointmentDateCOPT" && originalData["firstAppointmentDateCOPT"]){
-          shouldDisableDate = true;
-        }
+        // if(field.fieldName === "firstAppointmentDateCOPT" && originalData["firstAppointmentDateCOPT"]){
+        //   shouldDisableDate = true;
+        // }
 
         // const [year, month, day] = value ? value.split("-") : ["", "", ""];
         // if(!year || !month || !day){
