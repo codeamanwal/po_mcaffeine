@@ -29,6 +29,7 @@ import { format } from "date-fns"
 import { useUserStore } from "@/store/user-store"
 import { master_facility_option } from "@/lib/validation"
 import { updateUser } from "@/lib/user"
+import { getMasterFacilityOptions } from "@/master-sheets/fetch-master-sheet-data"
 
 
 export default function UserManagementPage({
@@ -142,7 +143,16 @@ export default function UserManagementPage({
       else return [];
   }
 
-  const facilityOptions = Array.isArray(master_facility_option) ? master_facility_option : []
+  // const facilityOptions = Array.isArray(master_facility_option) ? master_facility_option : []
+  const [facilityOptions, setFacilityOptions]  = useState([]);
+  useEffect(() => {
+    async function fetchFacilityOptions() {
+     const res = await getMasterFacilityOptions();
+     console.log(res) 
+     setFacilityOptions(res)
+    }
+    fetchFacilityOptions()
+  }, [])
 
   // Edit dialog handlers
   const openEditDialog = (u) => {
