@@ -534,7 +534,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     try {
       setIsLoading(true)
       const res = await getMasterFacilityOptions()
-      console.log(res)
+      // console.log(res)
       setFacilityOptions(res)
     } catch (error) {
       console.error(error)
@@ -547,7 +547,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     try {
       setIsLoading(true)
       const res = await getMasterCourierPartnerOptions()
-      console.log(res)
+      // console.log(res)
       setPartnerOptions(res)
     } catch (error) {
       console.error(error)

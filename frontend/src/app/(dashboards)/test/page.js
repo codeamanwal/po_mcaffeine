@@ -402,7 +402,7 @@ export default function Test({ onNavigate }) {
       // console.log(res.data)
       setPoFormatData(res.data.orders)
     } catch (error) {
-      console.log(error)
+      console.error(error)
       setPoFormatData(poData)
     }
   }
@@ -413,7 +413,7 @@ export default function Test({ onNavigate }) {
       // console.log("Shipment Data: ", res.data.shipments)
       setShipmentStatusData(res.data.shipments)
     } catch (error) {
-      console.log(error)
+      console.error(error)
       setShipmentStatusData(shipmentData)
     }
   }
@@ -644,17 +644,17 @@ export default function Test({ onNavigate }) {
       // Implement delete logic here (e.g., API call)
       // alert(`Delete user: ${selectedUser.name}`);
       // Optionally remove user from state after successful delete
-      console.log("type:", orderType, "id:", selectedId)
+      // console.log("type:", orderType, "id:", selectedId)
       try {
         if (orderType == "sku") {
           const res = await deleteSku(selectedId)
-          console.log(res.data)
+          // console.log(res.data)
         } else if (orderType == "shipment") {
           const res = await deleteShipment(selectedId)
-          console.log(res.data)
+          // console.log(res.data)
         }
       } catch (error) {
-        console.log(error)
+        console.error(error)
         setError(error?.response?.data?.msg || "Failed to delete user")
       } finally {
         setDialogType(null)
@@ -705,7 +705,7 @@ export default function Test({ onNavigate }) {
         getPoFormateData()
       }
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
   }
 

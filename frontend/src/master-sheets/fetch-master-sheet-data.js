@@ -85,7 +85,7 @@ export async function getMasterFacilityOptions () {
         const res = await api.get(`${baseUrl}/api/v1/master/facility/search?attributes=facility`)
         const apiData = res.data
         const data = res.data.data
-        const facilityOptions = [... new Set(data.map(item => item.facility))]
+        const facilityOptions = [... new Set(data?.map(item => item?.facility))]
         return facilityOptions
     } catch (error) {
         console.error("ERROR GETTING MASTER FACILITY OPTIONS",error)

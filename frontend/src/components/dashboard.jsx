@@ -791,7 +791,7 @@ export default function DashboardPage({ onNavigate }) {
 
       exportToCSV(formattedOrders, "po-format-data.csv", poFormatDataType)
     } catch (error) {
-      console.log(error)
+      console.error(error)
       toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
     }
   }
@@ -825,7 +825,7 @@ export default function DashboardPage({ onNavigate }) {
       exportToCSV(formattedOrders, "shipment-status-data.csv", shipmentStatusDataType)
 
     } catch (error) {
-      console.log(error)
+      console.error(error)
       toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
     }
   }
@@ -909,7 +909,7 @@ export default function DashboardPage({ onNavigate }) {
   )
 
   function handleEditOrder(data) {
-    console.log(data)
+    // console.log(data)
     setSelectedOrder(data)
     setEditModal(true)
   }
@@ -935,17 +935,17 @@ export default function DashboardPage({ onNavigate }) {
       // Implement delete logic here (e.g., API call)
       // alert(`Delete user: ${selectedUser.name}`);
       // Optionally remove user from state after successful delete
-      console.log("type:", orderType, "id:", selectedId)
+      // console.log("type:", orderType, "id:", selectedId)
       try {
         if (orderType == "sku") {
           const res = await deleteSku(selectedId)
-          console.log(res.data)
+          // console.log(res.data)
         } else if (orderType == "shipment") {
           const res = await deleteShipment(selectedId)
-          console.log(res.data)
+          // console.log(res.data)
         }
       } catch (error) {
-        console.log(error)
+        console.error(error)
         setError(error?.response?.data?.msg || "Failed to delete user")
       } finally {
         onSavingUpdate()
@@ -963,19 +963,19 @@ export default function DashboardPage({ onNavigate }) {
   }
 
   function handleViewShipment(data) {
-    console.log(data)
+    // console.log(data)
     setSelectedShipment(data)
     setShipmentViewModal(true)
   }
 
   function handleEditSkuShipment(data) {
-    console.log(data)
+    // console.log(data)
     setSelectedShipment(data)
     setSkuEditModal(true)
   }
 
   function handleEditShipment(data) {
-    console.log(data)
+    // console.log(data)
     setSelectedShipment(data)
     setShipmentEditModal(true)
   }
@@ -990,14 +990,14 @@ export default function DashboardPage({ onNavigate }) {
       updatedData = JSON.parse(updatedData)
       // console.log("Parsed Data: ", updatedData)
       const res = await updateSinglePoOrder(updatedData)
-      console.log(res)
+      // console.log(res)
       if (res.status === 200) {
         console.log("Order updated successfully")
         setEditModal(false)
         getPoFormateData()
       }
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
   }
 

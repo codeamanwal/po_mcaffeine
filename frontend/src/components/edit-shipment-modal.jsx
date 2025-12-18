@@ -408,7 +408,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     const getFacility = async () => {
       try {
           const res = await getMasterFacilityOptions()
-          // console.log(res)
+          // console.log("data: ",res)
           setFacilityOptions(res)
       } catch (error) {
         console.error(error)
