@@ -167,7 +167,7 @@ export async function getPickupLocationFromFacilityMaster(facility){
         const res = await api.get(`${baseUrl}/api/v1/master/facility/search?facility=${facility}`)
         const data = res.data.data
         // console.log(data)
-        const pickupLoc = data?.at(0).pickupLocation ?? null
+        const pickupLoc = data?.at(0)?.pickupLocation ?? null
         return pickupLoc
     } catch (error) {
         throw error
