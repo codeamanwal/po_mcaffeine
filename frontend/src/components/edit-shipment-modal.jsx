@@ -417,7 +417,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     const getCourierPartner = async () => {
       try {
         const res = await getMasterCourierPartnerOptions()
-        console.log(res)
+        // console.log(res)
         setPartnerOptions(res)
       } catch (error) {
         console.error(error)
@@ -477,7 +477,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const handleFileUpload = async (fieldName, file) => {
     try {
         console.log("Uploading file!")
-        console.log("file:", file)
+        // console.log("file:", file)
         const fileName = `${formData["uid"]}-${fieldName}-${Math.floor(Math.random()*100)}`
         const fileType = file.type
         // get upload url
@@ -485,12 +485,12 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         const s3UploadUrl = s3UploadUrlObject.data.uploadUrl
         // now upload to s3
         const res = await uploadFileToS3(file, s3UploadUrl)
-        console.log(res);
+        // console.log(res);
         // now set the url to this field
         const previewUrl = `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_S3_REGION_NAME}.amazonaws.com/${fileName}`
-        console.log("previewUrl: ", previewUrl)
+        // console.log("previewUrl: ", previewUrl)
         setFormData(prev => ({...prev, [fieldName]: previewUrl}))
-        console.log(formData);
+        // console.log(formData);
     } catch (error) {
         console.log(error)
     }finally {

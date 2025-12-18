@@ -222,7 +222,7 @@ export async function getMasterCourierType(partnerName){
         const res = await api.get(`${baseUrl}/api/v1/master/courier-partner/search?courierPartnerMode=${partnerName}`)
         const apiData = res.data
         const data = res.data.data
-        console.log("partners: ", data)
+        // console.log("partners: ", data)
         let type = data?.at(0)?.courierType ?? null
         // console.log(`for partner ${partnerName} the courier type is ${type}`)
         return type
@@ -240,7 +240,7 @@ export async function getMasterRPKAndTAT(partner, pickupLoc, dropLoc){
         const res = await api.get(`${baseUrl}/api/v1/master/courier-rates/search?courierPartner=${partner}&pickupLocation=${pickupLoc}&dropLocation=${dropLoc}`)
         const apiData = res.data
         const data = res.data.data
-        console.log("rates data: ", data)
+        // console.log("rates data: ", data)
         // let type = data[0]?.type ?? null
         // console.log(`for partner ${partner}, pickup location ${pickupLoc} & drop location ${dropLoc} the rates & tat are ${data[0]}`)
         return data?.at(0) ?? {}
@@ -257,7 +257,7 @@ export async function getMasterApptChannel(channel){
         const res = await api.get(`${baseUrl}/api/v1/master/channel/search?channelCategory=${channel}&channel=${channel}`)
         const apiData = res.data
         const data = res.data.data
-        console.log("appt channel type data: ", data)
+        // console.log("appt channel type data: ", data)
         // let type = data[0]?.type ?? null
         
         return data.at(0)?.apptChannel ?? null
@@ -275,7 +275,7 @@ export async function getMasterAppointmentCharges (partnerName,appointmentChanne
         const res = await api.get(`${baseUrl}/api/v1/master/courier-partner/search?courierPartnerMode=${partnerName}`)
         const apiData = res.data
         const data = res.data.data
-        console.log("appt charges data: ", data)
+        // console.log("appt charges data: ", data)
         // let type = data[0]?.type ?? null
         const partnerData = data?.at(0);
         let apptCharge = 0;
