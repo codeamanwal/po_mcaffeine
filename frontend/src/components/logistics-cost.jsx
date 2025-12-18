@@ -4,60 +4,11 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Calculator, Truck, MapPin, Calendar, Hash, Weight, DollarSign, FileText, Clock, Package } from "lucide-react"
+import { Calculator, Truck, MapPin, Calendar, Hash, Weight, DollarSign, FileText, Clock, Package, InfoIcon } from "lucide-react"
 import { format } from "date-fns"
-import { getAppointmentCharges, getCourierType, getDocketCharges } from "@/constants/courier-partners"
 import { getSkuOrdersByShipment } from "@/lib/order"
-import { master_channel_location_mapping } from "@/constants/master_sheet"
-import { getRates } from "@/constants/rates-per-kg"
+import { getMasterDocketCharges, getPickupLocationFromFacilityMaster, getMasterCourierType, getMasterRPKAndTAT, getMasterApptChannel, getMasterAppointmentCharges } from "@/master-sheets/fetch-master-sheet-data"
 
-const FACILITY_PICKUP_MAPPING = {
-  HYP_SRGWHT: "Guwahati",
-  HYP_SRBGLR: "Bangalore",
-  HYP_SRHYD: "Hyderabad",
-  HYP_SRKOL: "Kolkata",
-  mCaff_Ahmedabad: "Ahmedabad",
-  mCaff_Kolkata2: "Kolkata",
-  mCaff_Guwahati: "Guwahati",
-  mCaff_Hyderabad2: "Hyderabad",
-  mCaff_Bangalore2: "Bangalore",
-  mCaff_Gurgaon2: "Gurgaon",
-  mCaff_Mumbai2: "Mumbai",
-  HYP_SRGGN: "Gurgaon",
-  HYP_AHMD: "Ahmedabad",
-  HYP_B2B_MUM2: "Mumbai",
-  MUM_Warehouse2: "Mumbai",
-}
-
-const RATE_PER_KG_MAPPING = {
-  "Channel A": 45.5,
-  "Channel B": 52.0,
-  "Channel C": 38.75,
-  Default: 42.0,
-}
-
-const COURIER_DOCKET_CHARGES = {
-  "Courier A": 25.0,
-  "Courier B": 30.0,
-  "Courier C": 20.0,
-  Default: 25.0,
-}
-
-const APPOINTMENT_CHARGES_MAPPING = {
-  "Channel A": {
-    "Courier A": 50.0,
-    "Courier B": 45.0,
-    Default: 40.0,
-  },
-  "Channel B": {
-    "Courier A": 60.0,
-    "Courier B": 55.0,
-    Default: 50.0,
-  },
-  Default: {
-    Default: 45.0,
-  },
-}
 
 export default function LogisticsCost({ shipmentData }) {
   const [isFetching, setFetching] = useState(true)
@@ -67,14 +18,37 @@ export default function LogisticsCost({ shipmentData }) {
   const [costs, setCosts] = useState({})
   const [error, setError] = useState("")
 
-  const calculateCosts = (shipmentData, skuData) => {
+  async function getAllDocketCharges() {
+    // get all the transporter from shipment data
+    // get respective docket charges from three api calls for all of them
+    // sum all the docket charges
+    // return sum
+    try {
+      const res = await Promise.all([
+        getMasterDocketCharges(shipmentData.firstTransporter),
+        getMasterDocketCharges(shipmentData.secondTransporter),
+        getMasterDocketCharges(shipmentData.thirdTransporter),
+      ]) 
+      console.log("all docket charges:",res)
+      let total = 0;
+      for(let i=0; i<res.length; i++){
+        total += res[i]
+      }
+      return total
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  }
+
+  const calculateCosts = async (shipmentData, skuData) => {
     if (!shipmentData) return null
 
     const totalUpdatedPoValue = () => {
       let val = 0
       if (!skuData || skuData.length === 0) return 0
       skuData.forEach((element) => {
-        val += element.updatedPoValue || 0
+        val += element?.updatedPoValue ?? element.poValue ?? 0
       })
       return val
     }
@@ -94,9 +68,19 @@ export default function LogisticsCost({ shipmentData }) {
     const thirdTransporter = shipmentData.thirdTransporter || null
 
     // Get mapped values
-    const pickupLocation = FACILITY_PICKUP_MAPPING[facility] || FACILITY_PICKUP_MAPPING["Default"] || "Unknown"
-    const courierType = getCourierType(firstTransporter)
-    const ratePerKg = shipmentData.rpk || getRates(firstTransporter, pickupLocation, location)
+    const pickupLocation = await getPickupLocationFromFacilityMaster(facility) ?? "Unknown"
+    //  FACILITY_PICKUP_MAPPING[facility] || FACILITY_PICKUP_MAPPING["Default"] || "Unknown"
+    const courierType = await getMasterCourierType(thirdTransporter ?? secondTransporter ?? firstTransporter)
+
+    const rpkAndtat = await getMasterRPKAndTAT(firstTransporter, pickupLocation, location)
+
+    
+    let ratePerKg = shipmentData?.rpk ??  rpkAndtat?.ratesPerKg ?? 0
+    let tat = rpkAndtat?.tat
+    // if(ratePerKg === 0){
+    //   // fetch rates per kg from courier-rates master sheet
+    //   ratePerKg = await getRates(firstTransporter, pickupLocation, location)
+    // }
 
     // Cost calculations
     const frightCost = chargeableWeight * ratePerKg
@@ -118,14 +102,17 @@ export default function LogisticsCost({ shipmentData }) {
     }
 
     // Docket charges
-    let docketCharges = 0
-    if (firstTransporter) docketCharges += getDocketCharges(firstTransporter)
-    if (secondTransporter) docketCharges += getDocketCharges(secondTransporter)
-    if (thirdTransporter) docketCharges += getDocketCharges(thirdTransporter)
+    // let docketCharges = -100
+    // if (firstTransporter) docketCharges += getDocketCharges(firstTransporter)
+    // if (secondTransporter) docketCharges += getDocketCharges(secondTransporter)
+    // if (thirdTransporter) docketCharges += getDocketCharges(thirdTransporter)
+    const docketCharges = await getAllDocketCharges()
 
     // Appointment charges
-    const apptChannel = master_channel_location_mapping[channel] ? master_channel_location_mapping[channel][0]["apptChannel"] : "no";
-    const appointmentCharges = getAppointmentCharges(firstTransporter, apptChannel);
+    // const apptChannel = master_channel_location_mapping[channel] ? master_channel_location_mapping[channel][0]["apptChannel"] : "no";
+    const apptChannel = `${await getMasterApptChannel(channel)}`?.toLowerCase() ?? "no" // will be either yes or no
+
+    const appointmentCharges = await getMasterAppointmentCharges(firstTransporter, apptChannel);
       // APPOINTMENT_CHARGES_MAPPING[channel]?.[firstTransporter] ||
       // APPOINTMENT_CHARGES_MAPPING[channel]?.["Default"] ||
       // APPOINTMENT_CHARGES_MAPPING["Default"]["Default"]
@@ -156,7 +143,10 @@ export default function LogisticsCost({ shipmentData }) {
         chargeableWeight,
         ratePerKg,
         courierType,
+        apptChannel, // enum - ["yes", "no"] 
         firstTransporter,
+        secondTransporter,
+        thirdTransporter,
         updatedPoValue,
       },
       costs: {
@@ -188,7 +178,7 @@ export default function LogisticsCost({ shipmentData }) {
       setSkus(skuData)
 
       // Calculate costs after fetching SKU data
-      const calculationResult = calculateCosts(shipmentData, skuData)
+      const calculationResult = await calculateCosts(shipmentData, skuData)
 
       if (calculationResult) {
         setCalculations(calculationResult)
@@ -366,6 +356,24 @@ export default function LogisticsCost({ shipmentData }) {
               </div>
               <div className="text-sm font-semibold">₹{basicInfo?.ratePerKg?.toFixed(2)}</div>
             </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <InfoIcon className="h-4 w-4" />
+                Appointment Charges type
+              </div>
+              <div className="text-sm font-semibold">{basicInfo?.apptChannel?.toUpperCase()}</div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <InfoIcon className="h-4 w-4" />
+                Transporters (Courier partners)
+              </div>
+              <div className="text-sm ">
+                <span className="font-bold">1st: </span>{basicInfo?.firstTransporter ?? "None"}, <span className="font-bold">2nd: </span>{basicInfo?.secondTransporter ?? "None"}, <span className="font-bold">3rd: </span>{basicInfo?.thirdTransporter ?? "None"}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -414,7 +422,7 @@ export default function LogisticsCost({ shipmentData }) {
             <div>
               <div className="font-medium">Docket Charges</div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                {basicInfo.firstTransporter || "No transporter"} courier partner
+                {basicInfo.firstTransporter  ?? "None"}, {basicInfo.secondTransporter  ?? "None"}, {basicInfo.thirdTransporter  ?? "None"} - courier partners
               </div>
             </div>
             <div className="text-lg font-bold text-orange-600">₹{costs.docketCharges?.toFixed(2)}</div>

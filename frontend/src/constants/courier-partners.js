@@ -201,27 +201,27 @@ export function getAllCourierPartners(){
 export function getDocketCharges(partnerName){
     if(!partnerName) return 0;
     const option = courierPartners.find(item => item.name === partnerName)
-    return option.docketCharges;
+    return option?.docketCharges ?? null;
 }
 
 export function getCourierType(partnerName){
     if(!partnerName) return null;
     const option = courierPartners.find(item => item.name === partnerName);
-    return option.type;
+    return option?.type ?? null;
 }
 
 export function getAppointmentCharges (partnerName,appointmentChannel) {
     if(!partnerName) return 0;
     const option = courierPartners.find(item => item.name === partnerName);
     
-    if(appointmentChannel === "yes") return option.appointmentChargeYes;
-    else return option.appointmentChargeNo;
+    if(appointmentChannel === "yes") return option?.appointmentChargeYes ?? 0;
+    else return option?.appointmentChargeNo ?? 0;
 }
 
 export function getTAT (partnerName) {
   // console.log("Getting TAT for courier: ", partnerName);
   if(!partnerName || partnerName == "") return 0;
   const option = courierPartners.find(item => item.name === partnerName);
-  return option.tat;
+  return option?.tat ?? 0;
 }
 

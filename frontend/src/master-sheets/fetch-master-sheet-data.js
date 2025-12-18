@@ -132,3 +132,177 @@ export async function getMasterCourierPartnerOptions () {
     }
 }
 
+/********************************************** Courier partner options ***************************/
+// const courierPartners = [
+//   {
+//     name: "Rivigo - PTL",
+//     partner: "Rivigo",
+//     courierMode: "PTL",
+//     appointmentChargeYes: 700,
+//     appointmentChargeNo: 0,
+//     docketCharges: 80,
+//     type: "Type A",
+//     tat: 1,
+//   },
+// ];
+
+// returns array of all the option for corrier partner
+/*
+Substitute of getAllCourierPartners from constant/courier-partners.js
+*/
+export async function getAllMasterCourierPartners(){
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/courier-partner/`)
+        const apiData = res.data
+        const data = res.data.data
+        // console.log(data)
+        return data
+    } catch (error) {
+        throw error
+    }
+}
+
+export async function getPickupLocationFromFacilityMaster(facility){
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/facility/search?facility=${facility}`)
+        const data = res.data.data
+        console.log(data)
+        return data
+    } catch (error) {
+        throw error
+    }
+}
+
+export async function getAllMasterCourierPartnerOptions(){
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/courier-partner/search?attributes=courierPartnerMode`)
+        const apiData = res.data
+        const data = res.data.data
+        const options = [... new Set(data.map(item => item?.courierPartnerMode ?? null))]
+        return options
+    } catch (error) {
+        throw error
+    }
+}
+
+// returns docket chages of a courier partner
+/*
+Substitute of getDocketCharges from constant/courier-partners.js
+*/
+export async function getMasterDocketCharges(partnerName=null){
+     try {
+        const res = await api.get(`${baseUrl}/api/v1/master/courier-partner/search?courierPartnerMode=${partnerName}`)
+        const apiData = res.data
+        const data = res.data.data
+        let docketCharge = 0;
+        for(let i=0; i<data.length; i++){
+            if(docketCharge >= data[i].docketCharges){
+                continue
+            }else {
+                docketCharge = data[i].docketCharges
+            }
+        }
+        // console.log(`for partner ${partnerName} the docket charge is ${docketCharge}`)
+        return docketCharge
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+    // if(!partnerName) return 0;
+    // const option = courierPartners.find(item => item.name === partnerName)
+    // return option?.docketCharges ?? null;
+}
+
+/*
+Substitute of getCourierType from constant/courier-partners.js
+*/
+export async function getMasterCourierType(partnerName){
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/courier-partner/search?courierPartnerMode=${partnerName}`)
+        const apiData = res.data
+        const data = res.data.data
+        console.log("partners: ", data)
+        let type = data?.at(0)?.courierType ?? null
+        // console.log(`for partner ${partnerName} the courier type is ${type}`)
+        return type
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+/*
+Substitute of getRates from constant/rates-per-kg.js
+*/
+export async function getMasterRPKAndTAT(partner, pickupLoc, dropLoc){
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/courier-rates/search?courierPartner=${partner}&pickupLocation=${pickupLoc}&dropLocation=${dropLoc}`)
+        const apiData = res.data
+        const data = res.data.data
+        console.log("rates data: ", data)
+        // let type = data[0]?.type ?? null
+        // console.log(`for partner ${partner}, pickup location ${pickupLoc} & drop location ${dropLoc} the rates & tat are ${data[0]}`)
+        return data?.at(0) ?? {}
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+/*
+return appointment channel type either yes or no
+*/
+export async function getMasterApptChannel(channel){
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/channel/search?channelCategory=${channel}&channel=${channel}`)
+        const apiData = res.data
+        const data = res.data.data
+        console.log("appt channel type data: ", data)
+        // let type = data[0]?.type ?? null
+        
+        return data.at(0)?.apptChannel ?? null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+/*
+Substitute of getAppointmentCharges from constant/courier-partners.js
+*/
+export async function getMasterAppointmentCharges (partnerName,appointmentChannelType) {
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/courier-partner/search?courierPartnerMode=${partnerName}`)
+        const apiData = res.data
+        const data = res.data.data
+        console.log("appt charges data: ", data)
+        // let type = data[0]?.type ?? null
+        const partnerData = data?.at(0);
+        let apptCharge = 0;
+        if(appointmentChannelType === "yes"){
+            apptCharge = partnerData?.appointmentChargeYes
+        }
+        else if(appointmentChannelType === "no"){
+            apptCharge = partnerData?.appointmentChargeNo
+        }
+
+        return apptCharge ?? 0
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+    // if(!partnerName) return 0;
+    // const option = courierPartners.find(item => item.name === partnerName);
+    
+    // if(appointmentChannel === "yes") return option?.appointmentChargeYes ?? 0;
+    // else return option?.appointmentChargeNo ?? 0;
+}
+
+/*
+Substitute of getTat from constant/courier-partners.js
+*/
+export function getMasterTAT (partnerName) {
+  // console.log("Getting TAT for courier: ", partnerName);
+  if(!partnerName || partnerName == "") return 0;
+  const option = courierPartners.find(item => item.name === partnerName);
+  return option?.tat ?? 0;
+}

@@ -802,7 +802,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     }
 
     if (field.fieldName === 'criticalDispatchDate') {
-      const tat = getTAT(formData.firstTransporter) ?? 0; // TAT in days
+      const tat = getTAT(shipmentData?.thirdTransporter ?? shipmentData?.secondTransporter ?? shipmentData?.firstTransporter) ?? 0; // TAT in days
       const cad = formData?.currentAppointmentDate;
 
       if (cad instanceof Date && !isNaN(cad)) {
@@ -942,7 +942,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       case "number":
         let val = value;
         if(field.fieldName === "tat")
-          val = getTAT(shipmentData.firstTransporter)
+          val = getTAT(shipmentData?.thirdTransporter ?? shipmentData?.secondTransporter ?? shipmentData?.firstTransporter) ?? 0
         return (
           <div className="space-y-2">
             <Label htmlFor={field.id} className="text-sm font-medium flex items-center gap-2">
