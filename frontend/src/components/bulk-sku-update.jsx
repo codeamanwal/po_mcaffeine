@@ -43,6 +43,9 @@ export default function BulkSkuUpdateModal({
   const [reason, setReason] = useState("")
   const [validationResults, setValidationResults] = useState({ isValid: false, errors: [], warnings: [] })
 
+  const [active, setActive] = useState("input") // {input | result}
+  const [bulkResult, setBulkResult] = useState([])
+
   const isWarehouse = user?.role === "warehouse"
   const isSuperAdmin = user?.role === "superadmin"
   const hasAccess = isWarehouse || isSuperAdmin
@@ -56,6 +59,8 @@ export default function BulkSkuUpdateModal({
       setReason("")
       setError("")
       setSuccess("")
+      // setActive("input")
+      // setBulkResult([])
       setValidationResults({ isValid: false, errors: [], warnings: [] })
     }
   }, [isOpen])
@@ -220,24 +225,25 @@ export default function BulkSkuUpdateModal({
         const content = String(e.target?.result ?? "")
         const parsed = parseCsvContent(content)
         setCsvData(parsed)
+        setParsedData(parsed)
 
         // Process and validate against existing data
-        const processed = processAndValidateData(parsed)
-        setParsedData(processed)
+        // const processed = processAndValidateData(parsed)
+        // setParsedData(processed)
 
         // Validate the processed data
-        const validation = validateBulkSkuData(processed)
-        setValidationResults(validation)
+        // const validation = validateBulkSkuData(processed)
+        // setValidationResults(validation)
 
-        if (validation.isValid) {
-          setSuccess(`Successfully parsed ${parsed.length} records from CSV`)
-        } else {
-          setError(
-            `Validation failed: ${validation.errors.slice(0, 3).join(", ")}${
-              validation.errors.length > 3 ? "..." : ""
-            }`,
-          )
-        }
+        // if (validation.isValid) {
+        //   setSuccess(`Successfully parsed ${parsed.length} records from CSV`)
+        // } else {
+        //   setError(
+        //     `Validation failed: ${validation.errors.slice(0, 3).join(", ")}${
+        //       validation.errors.length > 3 ? "..." : ""
+        //     }`,
+        //   )
+        // }
       } catch (err) {
         setError(`CSV parsing error: ${err?.message ?? "Unknown error"}`)
         setCsvData([])
@@ -270,21 +276,21 @@ export default function BulkSkuUpdateModal({
       return
     }
 
-    if (!validationResults.isValid) {
-      setError("Please fix validation errors before saving")
-      return
-    }
+    // if (!validationResults.isValid) {
+    //   setError("Please fix validation errors before saving")
+    //   return
+    // }
 
     // if (isWarehouse && !reason.trim()) {
     //   setError("Reason is required for quantity updates")
     //   return
     // }
 
-    const validRecords = parsedData.filter((record) => !record.error)
-    if (validRecords.length === 0) {
-      setError("No valid records to update")
-      return
-    }
+    // const validRecords = parsedData.filter((record) => !record.error)
+    // if (validRecords.length === 0) {
+    //   setError("No valid records to update")
+    //   return
+    // }
 
     setIsLoading(true)
     setError("")
@@ -292,28 +298,31 @@ export default function BulkSkuUpdateModal({
 
     try {
       // Prepare bulk update data
-      const bulkUpdateData = validRecords.map((record) => ({
-        ...record.matchingRecord,
+      const bulkUpdateData = parsedData.map((record) => ({
+        ...record,
         updatedQty: record.updatedQty,
-        updatedGmv: record.calculatedGmv,
-        updatedPoValue: record.calculatedPoValue,
+        // updatedGmv: record.calculatedGmv,
+        // updatedPoValue: record.calculatedPoValue,
         updateReason: reason.trim(),
         updatedBy: user?.username || user?.email,
       }))
 
+      console.log("Bulk SKU Update Data:", bulkUpdateData)
       const res = await updateBulkSkus(bulkUpdateData)
-      // console.log("Bulk SKU Update Data:", bulkUpdateData)
       console.log(res.data)
+      setActive("result") 
+      setBulkResult(res.data.data)
 
-      setSuccess(res.data?.msg ?? `Successfully updated ${validRecords.length} SKU(s) from CSV`)
-      toast.success(`Successfully updated ${validRecords.length} SKU(s) from CSV`)
+      // setSuccess(res.data?.msg ?? `Successfully updated ${validRecords.length} SKU(s) from CSV`)
+      // toast.success(`Successfully updated ${validRecords.length} SKU(s) from CSV`)
 
-      onSave?.(bulkUpdateData)
+      // onSave?.(bulkUpdateData)
 
-      setTimeout(() => {
-        onClose()
-      }, 1500)
+      // setTimeout(() => {
+      //   onClose()
+      // }, 1500)
     } catch (err) {
+      // setActive("result")
       console.error("Bulk CSV update error:", err)
       const errorMessage = err?.message || "Failed to update SKUs from CSV. Please try again."
       setError(errorMessage)
@@ -391,69 +400,83 @@ export default function BulkSkuUpdateModal({
         </div>
 
         {/* CSV Upload Section */}
-        <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center justify-between">
-              <span>CSV File Upload</span>
-              <Button variant="outline" size="sm" onClick={downloadTemplate}>
-                <Download className="h-4 w-4 mr-2" />
-                Download Template
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="csv-file">Select CSV File</Label>
-              <Input id="csv-file" type="file" accept=".csv" onChange={handleFileUpload} className="cursor-pointer" />
-            </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">
-              <p>
-                <strong>Required columns:</strong> shipmentUid, poNumber, skuCode, updatedQty
-              </p>
-              <p>
-                <strong>Format:</strong> CSV with comma-separated values
-              </p>
-              <p>
-                <strong>Note:</strong> updatedQty must be ≤ original quantity and be a whole number
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {active === "input" && 
+          <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span>CSV File Upload</span>
+                <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Template
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="csv-file">Select CSV File</Label>
+                <Input id="csv-file" type="file" accept=".csv" onChange={handleFileUpload} className="cursor-pointer" />
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                <p>
+                  <strong>Required columns:</strong> shipmentUid, poNumber, skuCode, updatedQty
+                </p>
+                <p>
+                  <strong>Format:</strong> CSV with comma-separated values
+                </p>
+                <p>
+                  <strong>Note:</strong> updatedQty must be ≤ original quantity and be a whole number
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        }
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <div className="text-sm text-gray-500">
-            {parsedData.length > 0
-              ? `${validRecords.length} valid records ready for update`
-              : "Upload a CSV file to begin"}
+        { active === "input" ? (
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="text-sm text-gray-500">
+              {parsedData.length > 0
+                ? `${validRecords.length} valid records ready for update`
+                : "Upload a CSV file to begin"}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Update {validRecords.length} SKU(s)
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose} disabled={isLoading}>
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={validRecords.length === 0 || !validationResults.isValid || isLoading}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Update {validRecords.length} SKU(s)
-                </>
-              )}
-            </Button>
+         ) : (
+          <div className="flex justify-end gap-2">
+              <Button variant="outline" 
+                onClick = {() => {setActive("input"), setBulkResult([])}}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
           </div>
-        </div>
+         )
+        }
 
         {/* Validation Results */}
-        {parsedData.length > 0 && (
+        {active === "input" && parsedData.length > 0 && (
           <>
             <Separator />
             <div className="space-y-4">
@@ -494,14 +517,14 @@ export default function BulkSkuUpdateModal({
                                   <strong>SKU:</strong> {record.skuCode}
                                 </div>
                                 <div>
-                                  <strong>Qty:</strong> {record.originalQty} → {record.updatedQty}
+                                  <strong>Updated Qty:</strong> {record.updatedQty}
                                 </div>
-                                <div>
+                                {/* <div>
                                   <strong>GMV:</strong> {record.originalGmv} → {record.calculatedGmv}
                                 </div>
                                 <div>
                                   <strong>PO Value:</strong> {record.originalPoValue} → {record.calculatedPoValue}
-                                </div>
+                                </div> */}
                               </div>
                             </div>
                           ))}
@@ -545,7 +568,7 @@ export default function BulkSkuUpdateModal({
         )}
 
         {/* Reason field for warehouse users */}
-        {isWarehouse && validRecords.length > 0 && (
+        {active === "input" && isWarehouse && validRecords.length > 0 && (
           <>
             <Separator />
             <div className="space-y-2">
@@ -563,6 +586,68 @@ export default function BulkSkuUpdateModal({
             </div>
           </>
         )}
+
+        {active === "result" && (
+          <ScrollArea className="max-h-[70vh] pr-3">
+                
+                <div className="space-y-3">
+                  {/* Valid Records */}
+                  {bulkResult.length > 0 && (
+                    <Card className="bg-white dark:bg-gray-900">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm text-green-800 dark:text-green-200">
+                          Summary of Updates
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {bulkResult?.map((record, index) => (
+                            <div key={index} className={`text-xs p-2 rounded border ${record.success ? "bg-green-200 dark:bg-green-800" : "bg-red-400 dark:bg-red-700"}`}>
+                              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                <div>
+                                  <strong>Row No.:</strong> {String(record.rowNumber ?? "")}
+                                </div>
+                                <div>
+                                  <strong>UID:</strong> {String(record.uid ?? "")}
+                                </div>
+                                <div>
+                                  <strong>PO:</strong> {record.poNumber}
+                                </div>
+                                <div>
+                                  <strong>SKU:</strong> {record.skuCode}
+                                </div>
+                                <div>
+                                  <strong>Updated Qty:</strong> {record.updatedQty}
+                                </div>
+                                {
+                                  record.success === false ? (
+                                    <div>
+                                      <strong>Error:</strong> {record?.error}
+                                    </div>
+                                  ) : (
+                                    <>
+                                    {/* <div>
+                                      <strong>Updated PoValue:</strong> {record?.updatedPoValue}
+                                    </div>
+                                    <div>
+                                      <strong>Updated GMV:</strong> {record?.updatedGmv}
+                                    </div> */}
+                                    </>
+                                  )
+                                }
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+                
+                <ScrollBar orientation="vertical" />
+              </ScrollArea>
+        )}
+
       </DialogContent>
     </Dialog>
   )

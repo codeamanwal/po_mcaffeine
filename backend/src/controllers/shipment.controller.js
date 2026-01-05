@@ -998,61 +998,114 @@ async function updateBulkShipment(req, res){
 }
 
 async function updateBulkSku(req, res) {
-  const transaction = await sequelize.transaction();
-  
   try {
     const skus = req.body;
-    console.log('Received SKUs for bulk update:', skus);
 
     if (!Array.isArray(skus) || skus.length === 0) {
-      await transaction.rollback();
       return res.status(400).json({
         msg: "Invalid input. Expected non-empty array of SKU objects.",
         success: false
       });
     }
-    
-    const updatePromises = skus.map(async (sku) => {
-      const id = sku.id;
-      const updatedData = {
-        updatedQty: sku.updatedQty,
-        updatedGmv: sku.updatedGmv,
-        updatedPoValue: sku.updatedPoValue,
-        updateReason: sku.updateReason,
-        updatedBy: sku.updatedBy
+
+    const updatedBulkSkus = [];
+
+    for (const inputSku of skus) {
+      try {
+        const originalSku = await SkuOrder.findOne({
+          where: {
+            shipmentOrderId: inputSku.uid,
+            skuCode: inputSku.skuCode
+          }
+        });
+
+        if (!originalSku) {
+          updatedBulkSkus.push({
+            ...inputSku,
+            success: false,
+            error: "No such sku order exists"
+          });
+          continue;
+        }
+
+        const baseQty = Number(originalSku.qty);
+        const baseGMV = Number(originalSku.gmv);
+        const basePOV = Number(originalSku.poValue);
+        const newQty = Number(inputSku.updatedQty);
+        
+        // updated qty must be less then original qty
+        if(baseQty < newQty){
+          updatedBulkSkus.push({
+            ...inputSku,
+            success: false,
+            error: "Updated qty is greater than original qty"
+          });
+          continue;
+        }
+
+        let updatedGmv = null;
+        let updatedPoValue = null;
+
+        if (baseQty > 0) {
+          const unitGmv = baseGMV / baseQty;
+          const unitPo = basePOV / baseQty;
+
+          updatedGmv = Math.round(unitGmv * newQty * 100) / 100;
+          updatedPoValue = Math.round(unitPo * newQty * 100) / 100;
+        }
+
+        await SkuOrder.update(
+          {
+            updatedQty: newQty,
+            updatedGmv,
+            updatedPoValue
+          },
+          {
+            where: {
+              shipmentOrderId: inputSku.uid,
+              skuCode: inputSku.skuCode
+            }
+          }
+        );
+
+        updatedBulkSkus.push({
+          ...inputSku,
+          success: true,
+          error: null
+        });
+
+      } catch (err) {
+        updatedBulkSkus.push({
+          ...inputSku,
+          success: false,
+          error: err.message
+        });
       }
-      return await SkuOrder.update(updatedData, {
-        where: { id: id },
-        transaction: transaction,
-        returning: true
-      });
-    });
+    }
 
-    const results = await Promise.all(updatePromises);
-    await transaction.commit();
-
-    const successCount = results.reduce((sum, result) => sum + result[0], 0);
+    const successCount = updatedBulkSkus.filter(s => s.success).length;
 
     return res.status(200).json({
-      msg: "Bulk update completed successfully",
+      msg: "Bulk update completed",
       success: true,
       summary: {
         total: skus.length,
         successful: successCount,
         failed: skus.length - successCount
-      }
+      },
+      data: updatedBulkSkus
     });
 
   } catch (error) {
-    await transaction.rollback();
-    console.log("ERROR in updateBulkSkuWithTransaction: ", error);
+    console.error("ERROR in updateBulkSku:", error);
     return res.status(500).json({
-      msg: "Transaction failed. All changes rolled back.",
+      msg: "Something went wrong while updating skus",
       success: false,
-      err: error.message
+      error: error.message
     });
   }
 }
+
 
 async function deleteSku(req,res) {
   try {
