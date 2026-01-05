@@ -375,6 +375,8 @@ export default function DashboardPage({ onNavigate }) {
     poDateTo: null,
     workingDateFrom: null,
     workingDateTo: null,
+    dispatchDateFrom: null,
+    dispatchDateTo: null,
     currentAppointmentDateFrom: null,
     currentAppointmentDateTo: null,
     statusPlanning: [],
@@ -863,11 +865,13 @@ export default function DashboardPage({ onNavigate }) {
       brand: [],
       channel: [],
       location: [],
-      facility: [], // Added facility
+      facility: [], // Added facility filter
       poDateFrom: null,
       poDateTo: null,
       workingDateFrom: null,
       workingDateTo: null,
+      dispatchDateFrom: null,
+      dispatchDateTo: null,
       currentAppointmentDateFrom: null,
       currentAppointmentDateTo: null,
       statusPlanning: [],
@@ -1505,6 +1509,42 @@ export default function DashboardPage({ onNavigate }) {
                       <DatePicker
                         date={shipmentFilters.workingDateTo}
                         onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, workingDateTo: date }))}
+                        placeholder="To date"
+                      />
+                    </div>
+
+                    {/* Dispatch Date Range */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Dispatch Date From</label>
+                      <DatePicker
+                        date={shipmentFilters.dispatchDateFrom}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, dispatchDateFrom: date }))}
+                        placeholder="From date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Dispatch Date To</label>
+                      <DatePicker
+                        date={shipmentFilters.dispatchDateTo}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, dispatchDateTo: date }))}
+                        placeholder="To date"
+                      />
+                    </div>
+
+                    {/* Current Appointment Date Range */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Current Appt From</label>
+                      <DatePicker
+                        date={shipmentFilters.currentAppointmentDateFrom}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, currentAppointmentDateFrom: date }))}
+                        placeholder="From date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Current Appt To</label>
+                      <DatePicker
+                        date={shipmentFilters.currentAppointmentDateTo}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, currentAppointmentDateTo: date }))}
                         placeholder="To date"
                       />
                     </div>

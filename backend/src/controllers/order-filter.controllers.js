@@ -14,9 +14,11 @@ const filters = {
   statusLogistic: [],
   // date filters
   poDateFrom: "",
-  poDateTO: "",
+  poDateTo: "",
   workingDateFrom: "",
-  workingDateTO: "",
+  workingDateTo: "",
+  dispatchDateFrom: "",
+  dispatchDateTo: "",
   // search filters
   skuCode: "",
   poNumber: ""
@@ -423,6 +425,19 @@ export async function getShipments(req, res) {
     if (filters?.workingDateTo && filters.workingDateTo !== "") {
       shipmentWhere.workingDatePlanner = { [Op.lte]: filters.workingDateTo };
     }
+    if (filters?.dispatchDateFrom && filters.dispatchDateFrom !== "") {
+      shipmentWhere.dispatchDate = { [Op.gte]: filters.dispatchDateFrom };
+    }
+    if (filters?.dispatchDateTo && filters.dispatchDateTo !== "") {
+      shipmentWhere.dispatchDate = { [Op.lte]: filters.dispatchDateTo };
+    }
+    if (filters?.currentAppointmentDateFrom && filters.currentAppointmentDateFrom !== "") {
+      shipmentWhere.currentAppointmentDate = { [Op.gte]: filters.currentAppointmentDateFrom };
+    }
+    if (filters?.currentAppointmentDateTo && filters.currentAppointmentDateTo !== "") {
+      shipmentWhere.currentAppointmentDate = { [Op.lte]: filters.currentAppointmentDateTo };
+    }
+
     if (filters?.search && filters.search !== "") {
       shipmentWhere[Op.or] = [
         { poNumber: { [Op.like]: `%${filters.search}%` } },
