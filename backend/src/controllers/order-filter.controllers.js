@@ -144,17 +144,25 @@ export async function getSkus(req, res) {
         shipmentWhere.statusLogistics = { [Op.in]: filters.statusLogistics };
       }
     }
-    if (filters?.poDateFrom && filters.poDateFrom !== "") {
-      shipmentWhere.poDate = { [Op.gte]: filters.poDateFrom };
+    if (filters?.poDateFrom || filters?.poDateTo) {
+      shipmentWhere.poDate = {};
+      
+      if (filters.poDateFrom) {
+        shipmentWhere.poDate[Op.gte] = filters.poDateFrom;
+      }
+      if (filters.poDateTo) {
+        shipmentWhere.poDate[Op.lte] = filters.poDateTo;
+      }
     }
-    if (filters?.poDateTo && filters.poDateTo !== "") {
-      shipmentWhere.poDate = { [Op.lte]: filters.poDateTo };
-    }
-    if (filters?.workingDateFrom && filters.workingDateFrom !== "") {
-      shipmentWhere.workingDatePlanner = { [Op.gte]: filters.workingDateFrom };
-    }
-    if (filters?.workingDateTo && filters.workingDateTo !== "") {
-      shipmentWhere.workingDatePlanner = { [Op.lte]: filters.workingDateTo };
+    if (filters?.workingDateFrom || filters?.workingDateTo) {
+      shipmentWhere.workingDatePlanner = {};
+      
+      if (filters.workingDateFrom) {
+        shipmentWhere.workingDatePlanner[Op.gte] = filters.workingDateFrom;
+      }
+      if (filters.workingDateTo) {
+        shipmentWhere.workingDatePlanner[Op.lte] = filters.workingDateTo;
+      }
     }
     if (filters?.search && filters.search !== "") {
       shipmentWhere[Op.or] = [
@@ -300,6 +308,7 @@ export async function getSkus(req, res) {
 
 export async function getShipments(req, res) {
   try {
+    const start = Date.now();
     const currUser = req.user;
     const query = req.query;
 
@@ -413,29 +422,45 @@ export async function getShipments(req, res) {
         shipmentWhere.statusLogistics = { [Op.in]: filters.statusLogistics };
       }
     }
-    if (filters?.poDateFrom && filters.poDateFrom !== "") {
-      shipmentWhere.poDate = { [Op.gte]: filters.poDateFrom };
+    if (filters?.poDateFrom || filters?.poDateTo) {
+      shipmentWhere.poDate = {};
+      
+      if (filters.poDateFrom) {
+        shipmentWhere.poDate[Op.gte] = filters.poDateFrom;
+      }
+      if (filters.poDateTo) {
+        shipmentWhere.poDate[Op.lte] = filters.poDateTo;
+      }
     }
-    if (filters?.poDateTo && filters.poDateTo !== "") {
-      shipmentWhere.poDate = { [Op.lte]: filters.poDateTo };
+    if (filters?.workingDateFrom || filters?.workingDateTo) {
+      shipmentWhere.workingDatePlanner = {};
+      
+      if (filters.workingDateFrom) {
+        shipmentWhere.workingDatePlanner[Op.gte] = filters.workingDateFrom;
+      }
+      if (filters.workingDateTo) {
+        shipmentWhere.workingDatePlanner[Op.lte] = filters.workingDateTo;
+      }
     }
-    if (filters?.workingDateFrom && filters.workingDateFrom !== "") {
-      shipmentWhere.workingDatePlanner = { [Op.gte]: filters.workingDateFrom };
+    if (filters?.dispatchDateFrom || filters?.dispatchDateTo) {
+      shipmentWhere.dispatchDate = {};
+      
+      if (filters.dispatchDateFrom) {
+        shipmentWhere.dispatchDate[Op.gte] = filters.dispatchDateFrom;
+      }
+      if (filters.dispatchDateTo) {
+        shipmentWhere.dispatchDate[Op.lte] = filters.dispatchDateTo;
+      }
     }
-    if (filters?.workingDateTo && filters.workingDateTo !== "") {
-      shipmentWhere.workingDatePlanner = { [Op.lte]: filters.workingDateTo };
-    }
-    if (filters?.dispatchDateFrom && filters.dispatchDateFrom !== "") {
-      shipmentWhere.dispatchDate = { [Op.gte]: filters.dispatchDateFrom };
-    }
-    if (filters?.dispatchDateTo && filters.dispatchDateTo !== "") {
-      shipmentWhere.dispatchDate = { [Op.lte]: filters.dispatchDateTo };
-    }
-    if (filters?.currentAppointmentDateFrom && filters.currentAppointmentDateFrom !== "") {
-      shipmentWhere.currentAppointmentDate = { [Op.gte]: filters.currentAppointmentDateFrom };
-    }
-    if (filters?.currentAppointmentDateTo && filters.currentAppointmentDateTo !== "") {
-      shipmentWhere.currentAppointmentDate = { [Op.lte]: filters.currentAppointmentDateTo };
+    if (filters?.currentAppointmentDateFrom || filters?.currentAppointmentDateTo) {
+      shipmentWhere.currentAppointmentDate = {};
+      
+      if (filters.currentAppointmentDateFrom) {
+        shipmentWhere.currentAppointmentDate[Op.gte] = filters.currentAppointmentDateFrom;
+      }
+      if (filters.dispatchDateTo) {
+        shipmentWhere.currentAppointmentDate[Op.lte] = filters.currentAppointmentDateTo;
+      }
     }
 
     if (filters?.search && filters.search !== "") {
@@ -576,6 +601,7 @@ export async function getShipments(req, res) {
       res.setHeader("X-No-More-Pages", "false");
     }
 
+    const end = Date.now()
     // --- Send final response ---
     return res.status(200).json({
       msg: "Paginated shipment data fetched successfully",
@@ -585,6 +611,7 @@ export async function getShipments(req, res) {
       totalPages,
       shipments: shipmentsWithTotals,
       calculationDone: true,
+      // duration: `${(end - start) / 1000} sec`,
     });
   } catch (error) {
     console.error("Error fetching paginated shipments:", error);

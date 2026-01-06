@@ -417,7 +417,10 @@ export default function DashboardPage({ onNavigate }) {
   // Utility function to format date to yyyy-MM-dd
   const formatDate = (date) => {
     if (!date) return ""
-    return format(date, "yyyy-MM-dd")
+    // console.log(date)
+    const formated = format(date, "yyyy-MM-dd")
+    // console.log("formated: ", formated)
+    return formated;
   }
 
   // Get unique values for dropdown filters
@@ -1120,7 +1123,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">PO Date From</label>
                       <DatePicker
                         date={poFilters.poDateFrom}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateFrom: date }))}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateFrom: formatDate(date) }))}
                         placeholder="From date"
                       />
                     </div>
@@ -1128,7 +1131,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">PO Date To</label>
                       <DatePicker
                         date={poFilters.poDateTo}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateTo: date }))}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, poDateTo: formatDate(date) }))}
                         placeholder="To date"
                       />
                     </div>
@@ -1138,7 +1141,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Working Date From</label>
                       <DatePicker
                         date={poFilters.workingDateFrom}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, workingDateFrom: date }))}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, workingDateFrom: formatDate(date) }))}
                         placeholder="From date"
                       />
                     </div>
@@ -1146,7 +1149,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Working Date To</label>
                       <DatePicker
                         date={poFilters.workingDateTo}
-                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, workingDateTo: date }))}
+                        onDateChange={(date) => setPoFilters((prev) => ({ ...prev, workingDateTo: formatDate(date) }))}
                         placeholder="To date"
                       />
                     </div>
@@ -1482,7 +1485,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">PO Date From</label>
                       <DatePicker
                         date={shipmentFilters.poDateFrom}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateFrom: date }))}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateFrom: formatDate(date) }))}
                         placeholder="From date"
                       />
                     </div>
@@ -1490,7 +1493,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">PO Date To</label>
                       <DatePicker
                         date={shipmentFilters.poDateTo}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateTo: date }))}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, poDateTo: formatDate(date) }))}
                         placeholder="To date"
                       />
                     </div>
@@ -1500,7 +1503,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Working Date From</label>
                       <DatePicker
                         date={shipmentFilters.workingDateFrom}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, workingDateFrom: date }))}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, workingDateFrom: formatDate(date) }))}
                         placeholder="From date"
                       />
                     </div>
@@ -1508,7 +1511,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Working Date To</label>
                       <DatePicker
                         date={shipmentFilters.workingDateTo}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, workingDateTo: date }))}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, workingDateTo: formatDate(date) }))}
                         placeholder="To date"
                       />
                     </div>
@@ -1518,7 +1521,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Dispatch Date From</label>
                       <DatePicker
                         date={shipmentFilters.dispatchDateFrom}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, dispatchDateFrom: date }))}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, dispatchDateFrom: formatDate(date) }))}
                         placeholder="From date"
                       />
                     </div>
@@ -1526,7 +1529,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Dispatch Date To</label>
                       <DatePicker
                         date={shipmentFilters.dispatchDateTo}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, dispatchDateTo: date }))}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, dispatchDateTo: formatDate(date) }))}
                         placeholder="To date"
                       />
                     </div>
@@ -1536,7 +1539,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Current Appt From</label>
                       <DatePicker
                         date={shipmentFilters.currentAppointmentDateFrom}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, currentAppointmentDateFrom: date }))}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, currentAppointmentDateFrom: formatDate(date) }))}
                         placeholder="From date"
                       />
                     </div>
@@ -1544,7 +1547,7 @@ export default function DashboardPage({ onNavigate }) {
                       <label className="text-sm font-medium">Current Appt To</label>
                       <DatePicker
                         date={shipmentFilters.currentAppointmentDateTo}
-                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, currentAppointmentDateTo: date }))}
+                        onDateChange={(date) => setShipmentFilters((prev) => ({ ...prev, currentAppointmentDateTo: formatDate(date) }))}
                         placeholder="To date"
                       />
                     </div>
