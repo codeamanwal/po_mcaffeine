@@ -113,7 +113,8 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
 
       // Auto-fill SKU data
 
-      const skuData = await getSkuBySkuCodeAndChannel(skuCode, channel)
+      // const skuData = await getSkuBySkuCodeAndChannel(skuCode, channel)
+      const skuData = {}
 
       let brand = "";
       const prefix = `${skuCode}`.substring(0, 3).toLowerCase();
@@ -284,7 +285,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
     const headers = ["Channel", "Location", "PO Date", "PO Number", "Sr/ No", "SKU Name", "SKU Code", "Channel SKU Code", "Qty", "GMV", "PO Value"]
 
     const sampleData = [
-      "Amazon,AMD2,27-09-2025,PO_SAMPLE,1,sku-name,MCaf100,channel-sku-code,24,2400,2000",
+      "Amazon,AMD2,2026-01-15,PO_SAMPLE,1,sku-name,MCaf100,channel-sku-code,24,2400,2000",
       // "Amazon,Mumbai,27-12-2024,3100495853,2,MCaf42,22",
     ]
 
