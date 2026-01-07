@@ -81,6 +81,9 @@ async function createShipment(req, res) {
     // attached the shared fields to each sku-order and link to parent UID
     const skusToCreate = skuOrders.map(sku => ({
       ...sku,
+      updatedQty: sku.qty ?? null,
+      updatedGmv: sku.gmv ?? null,
+      updatedPoValue: sku.poValue ?? null,
       shipmentOrderId: parent.uid
     }));
 
@@ -188,6 +191,9 @@ async function createBulkShipment(req, res) {
         qty: order.qty,
         gmv: order.gmv,
         poValue: order.poValue,
+        updatedQty: order.qty,
+        updatedGmv: order.gmv,
+        updatedPoValue: order.poValue,
         accountsWorking: order.accountsWorking,
         channelInwardingQuantity: order.channelInwardingQuantity,
       }));
