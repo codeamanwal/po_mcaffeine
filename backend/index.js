@@ -95,6 +95,7 @@ connectToDatabase().then((res) => {
     });
 }).catch((error) => {
     console.error("Failed to start server due to DB connection error:", error);
+    process.exit(1)
 });
 
 // app.listen(port, () => {
