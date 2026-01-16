@@ -1104,7 +1104,7 @@ export default function DashboardPage({ onNavigate }) {
                     <div className="relative flex-1 max-w-sm">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <Input
-                        placeholder="Search by PO Number or SKU Code..."
+                        placeholder="Search by PO Number or Shipment UID..."
                         value={poSearchTerm}
                         onChange={(e) => setPoSearchTerm(e.target.value)}
                         className="pl-10"
