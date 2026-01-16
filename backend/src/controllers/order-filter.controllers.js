@@ -422,6 +422,38 @@ export async function getShipments(req, res) {
         shipmentWhere.statusLogistics = { [Op.in]: filters.statusLogistics };
       }
     }
+    if (filters?.transporter && filters.transporter.length > 0) {
+      if (filters.transporter.includes("Not Assigned")) {
+        shipmentWhere.firstTransporter = {
+          [Op.or]: [
+            { [Op.in]: filters.transporter.filter(val => val !== "Not Assigned") },
+            { [Op.is]: null },
+            { [Op.eq]: "" }
+          ]
+        };
+        shipmentWhere.secondTransporter = {
+          [Op.or]: [
+            { [Op.in]: filters.transporter.filter(val => val !== "Not Assigned") },
+            { [Op.is]: null },
+            { [Op.eq]: "" }
+          ]
+        };
+         shipmentWhere.thirdTransporter = {
+          [Op.or]: [
+            { [Op.in]: filters.transporter.filter(val => val !== "Not Assigned") },
+            { [Op.is]: null },
+            { [Op.eq]: "" }
+          ]
+        }
+      }
+      else {
+        shipmentWhere[Op.or] = [
+          { firstTransporter: { [Op.in]: filters.transporter } },
+          { secondTransporter: { [Op.in]: filters.transporter } },
+          { thirdTransporter: { [Op.in]: filters.transporter } },
+        ];
+      }
+    }
     if (filters?.poDateFrom || filters?.poDateTo) {
       shipmentWhere.poDate = {};
       
@@ -643,7 +675,10 @@ export async function getFilterOptions(req, res) {
         GROUP_CONCAT(DISTINCT location) AS location,
         GROUP_CONCAT(DISTINCT statusPlanning) AS statusPlanning,
         GROUP_CONCAT(DISTINCT statusWarehouse) AS statusWarehouse,
-        GROUP_CONCAT(DISTINCT statusLogistics) AS statusLogistics
+        GROUP_CONCAT(DISTINCT statusLogistics) AS statusLogistics,
+        GROUP_CONCAT(DISTINCT firstTransporter) AS firstTransporter,
+        GROUP_CONCAT(DISTINCT secondTransporter) AS secondTransporter,
+        GROUP_CONCAT(DISTINCT thirdTransporter) AS thirdTransporter
       FROM shipment_orders
     `;
 
@@ -667,8 +702,8 @@ export async function getFilterOptions(req, res) {
       FROM sku_orders;
     `);
 
-    const parse = (val) =>
-      val && typeof val === "string"
+    const parse = (val) => {
+      return val && typeof val === "string"
         ? Array.from(
           new Set(
             val
@@ -678,9 +713,11 @@ export async function getFilterOptions(req, res) {
           )
         )
         : [];
+      }
     
     
-    console.log("rows: ", parse(rows?.channel), "channel: ", rows.channel)
+    // console.log("rows: ", parse(rows?.channel), "channel: ", rows.channel)
+
 
     const filters = {
       brand: parse(skuRows[0]?.brand),
@@ -690,6 +727,8 @@ export async function getFilterOptions(req, res) {
       statusPlanning: parse(rows?.statusPlanning),
       statusWarehouse: parse(rows?.statusWarehouse),
       statusLogistics: parse(rows?.statusLogistics),
+      statusLogistics: parse(rows?.statusLogistics),
+      transporter: [...parse(rows.firstTransporter), ...parse(rows.firstTransporter), ...parse(rows.firstTransporter)],
     };
 
     return res.status(200).json({ msg: "Fetched unique options for filters", filterOptions: filters })

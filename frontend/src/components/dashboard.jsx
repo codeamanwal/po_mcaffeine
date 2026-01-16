@@ -383,6 +383,7 @@ export default function DashboardPage({ onNavigate }) {
     statusWarehouse: [],
     statusLogistics: [],
     finalStatus: [],
+    transporter: [],
   })
 
   const [statusModal, setStatusModal] = useState(false)
@@ -427,9 +428,19 @@ export default function DashboardPage({ onNavigate }) {
   const getUniqueValues = (data, field) => {
     if(field === "finalStatus"){
         const values = data?.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
-        const uniqueValues = [...new Set(values)].sort()
-        return ["Not Assigned" ,...uniqueValues]
+        const unique = new Set([...values])
+        return ["Not Assigned" ,...unique]
     }
+
+    if(data && field === "transporter" ){
+      const unique = new Set()
+      for(let i=0; i<data.length; i++){
+        const val = data[i]
+        unique.add(val)
+      }
+      return ["Not Assigned" ,...unique]
+    }
+
     if(data && data.length > 0){
       return ["Not Assigned", ...data]
     }
@@ -881,6 +892,7 @@ export default function DashboardPage({ onNavigate }) {
       statusWarehouse: [],
       statusLogistics: [],
       finalStatus: [],
+      transporter: [], // added transporter name filter
     })
     setShipmentSearchTerm("")
   }
@@ -1631,6 +1643,15 @@ export default function DashboardPage({ onNavigate }) {
                       }
                       placeholder="Select status"
                     />
+
+                    <MultiSelectFilter
+                      label="Transporter name"
+                      options={getUniqueValues(filtersOptions?.transporter, "transporter")}
+                      selectedValues={shipmentFilters.transporter}
+                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, transporter: values }))}
+                      placeholder="Select transporter"
+                    />
+
                   </div>
 
                   {/* pagination  */}
