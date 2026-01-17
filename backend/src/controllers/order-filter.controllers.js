@@ -24,7 +24,7 @@ const filters = {
   poNumber: "",
   docketNo: "",
   // null date filters
-  nullDateFilters: ["Current Appointment Date", "Working Date", "Dispatch Date"],
+  nullDatesFilter: ["Current Appointment Date", "Working Date", "Dispatch Date"],
 }
 
 export async function getSkus(req, res) {
@@ -458,18 +458,19 @@ export async function getShipments(req, res) {
       }
     }
 
-    if (filters?.nullDateFilters && filters.nullDateFilters.length > 0) {
-      if(filters.nullDateFilters.includes("Current Appointment Date")) {
-        shipmentWhere.currentAppointmentDate = {
-          [Op.is]: null
-        }
+    if (filters?.nullDatesFilter && filters.nullDatesFilter.length > 0) {
+      if(filters.nullDatesFilter.includes("Current Appointment Date")) {
+        shipmentWhere[Op.and] = [
+          {currentAppointmentDate: { [Op.is]: null }},
+          {firstAppointmentDateCOPT: { [Op.is]: null }},
+        ]
       }
-      if(filters.nullDateFilters.includes("Dispatch Date")) {
+      if(filters.nullDatesFilter.includes("Dispatch Date")) {
         shipmentWhere.dispatchDate = {
           [Op.is]: null
         }
       }
-      if(filters.nullDateFilters.includes("Working Date")) {
+      if(filters.nullDatesFilter.includes("Working Date")) {
         shipmentWhere.workingDatePlanner = {
           [Op.is]: null
         }

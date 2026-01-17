@@ -317,7 +317,7 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
 export default function DashboardPage({ onNavigate }) {
   const router = useRouter()
 
-  const base_url = process.env.NEXT_PUBLIC_API_BASE_URL; 
+  const base_url = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const { isDarkMode, setIsDarkMode } = useThemeStore()
   const { user, logout } = useUserStore()
@@ -387,6 +387,7 @@ export default function DashboardPage({ onNavigate }) {
     finalStatus: [],
     transporter: [],
     docketNo: "",
+    nullDatesFilter: [],
   })
 
   const [statusModal, setStatusModal] = useState(false)
@@ -429,22 +430,22 @@ export default function DashboardPage({ onNavigate }) {
 
   // Get unique values for dropdown filters
   const getUniqueValues = (data, field) => {
-    if(field === "finalStatus"){
-        const values = data?.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
-        const unique = new Set([...values])
-        return ["Not Assigned" ,...unique]
+    if (field === "finalStatus") {
+      const values = data?.map((item) => item[field]).filter((value) => value && value !== "" && value !== "0")
+      const unique = new Set([...values])
+      return ["Not Assigned", ...unique]
     }
 
-    if(data && field === "transporter" ){
+    if (data && field === "transporter") {
       const unique = new Set()
-      for(let i=0; i<data.length; i++){
+      for (let i = 0; i < data.length; i++) {
         const val = data[i]
         unique.add(val)
       }
-      return ["Not Assigned" ,...unique]
+      return ["Not Assigned", ...unique]
     }
 
-    if(data && data.length > 0){
+    if (data && data.length > 0) {
       return ["Not Assigned", ...data]
     }
     return ["Not Assigned"]
@@ -458,24 +459,24 @@ export default function DashboardPage({ onNavigate }) {
 
   function getTimeFromDDMMYYYY(dateStr) {
     if (!dateStr) {
-        return null; // or return "NA" or undefined
+      return null; // or return "NA" or undefined
     }
 
     const [day, month, year] = dateStr.split('-').map(Number);
 
     // Check for invalid date parts
     if (!day || !month || !year) {
-        return null; // or "NA"
+      return null; // or "NA"
     }
 
     const date = new Date(year, month - 1, day);
     return date.getTime();
-}
+  }
 
   const getPoFormateData = useCallback(async () => {
     try {
       const pourl = `${base_url}/api/v1/shipment/get-sku?page=${poPage}&limit=${200}`;
-      const res = await api.post(pourl, {filters: poFilters});
+      const res = await api.post(pourl, { filters: poFilters });
 
       const noMorePages = poPage >= res.data.totalPages;
       // console.log("No more pages (PO): ", res.data.totalPages);
@@ -486,8 +487,8 @@ export default function DashboardPage({ onNavigate }) {
         const currentAppointmentDate =
           item.currentAppointmentDate ??
           item.firstAppointmentDateCOPT ??
-          item.firstAppointmentDate ??
-          item.allAppointmentDate?.at(0) ??
+          // item.firstAppointmentDate ??
+          // item.allAppointmentDate?.at(0) ??
           "";
         const finalStatus =
           getFinalStatus(
@@ -509,7 +510,7 @@ export default function DashboardPage({ onNavigate }) {
       toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!");
       setPoFormatData(poData);
     }
-  }, [poPage, poFilters]); 
+  }, [poPage, poFilters]);
 
   useEffect(() => {
     getPoFormateData();
@@ -519,7 +520,7 @@ export default function DashboardPage({ onNavigate }) {
   const getShipmentData = useCallback(async () => {
     try {
       const shipmenturl = `${base_url}/api/v1/shipment/get-shipment?page=${shipmentPage}&limit=${200}`;
-      const res = await api.post(shipmenturl, {filters: shipmentFilters});
+      const res = await api.post(shipmenturl, { filters: shipmentFilters });
 
       const noMorePages = shipmentPage >= res.data.totalPages;
       // console.log("No more pages (PO): ", res.data.totalPages);
@@ -534,11 +535,12 @@ export default function DashboardPage({ onNavigate }) {
           let criticalDispatchDate = item.currentAppointmentDate;
           const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
           const tat = getTAT(item.firstTransporter) ?? 0;
-          const cdd = cad ? cad - tat * 24*60*60*1000 : null;
+          const cdd = cad ? cad - tat * 24 * 60 * 60 * 1000 : null;
           criticalDispatchDate = formatDate(cdd)
           // deliveryType
           const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
-          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
+          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? "";
+          // ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
           const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
           return {
             ...item,
@@ -556,7 +558,7 @@ export default function DashboardPage({ onNavigate }) {
       toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
       setShipmentStatusData(shipmentData)
     }
-  }, [shipmentPage, shipmentFilters]) 
+  }, [shipmentPage, shipmentFilters])
 
   useEffect(() => {
     getShipmentData()
@@ -572,10 +574,10 @@ export default function DashboardPage({ onNavigate }) {
     } catch (error) {
       console.error(error);
       toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!");
-    } 
+    }
   }, [])
 
-  useEffect(() => {getFilterOptions()}, [])
+  useEffect(() => { getFilterOptions() }, [])
 
   // Debounce PO search
   useEffect(() => {
@@ -589,20 +591,20 @@ export default function DashboardPage({ onNavigate }) {
   // Debounce Shipment search
   useEffect(() => {
     const delay = setTimeout(() => {
-      setShipmentFilters(prev => ({ ...prev, search: shipmentSearchTerm, docketNo: docketNo}));
+      setShipmentFilters(prev => ({ ...prev, search: shipmentSearchTerm, docketNo: docketNo }));
     }, 1000);
 
     return () => clearTimeout(delay);
   }, [shipmentSearchTerm, docketNo]);
 
-    // useEffect(() => {
-    //   const delay = setTimeout(() => {
-    //     // Update filters only after n ms of delay
-    //     setShipmentSearchTerm(prev => ({ ...prev, search: shipmentSearchTerm }));
-    //   }, 1000);
+  // useEffect(() => {
+  //   const delay = setTimeout(() => {
+  //     // Update filters only after n ms of delay
+  //     setShipmentSearchTerm(prev => ({ ...prev, search: shipmentSearchTerm }));
+  //   }, 1000);
 
-    //   return () => clearTimeout(delay); // cleanup old timeout if user types again
-    // }, [shipmentSearchTerm]);
+  //   return () => clearTimeout(delay); // cleanup old timeout if user types again
+  // }, [shipmentSearchTerm]);
 
 
   // Enhanced filter function for PO data - Updated for multi-select
@@ -632,7 +634,7 @@ export default function DashboardPage({ onNavigate }) {
   //       }
   //       return item.facility === selectedFacility
   //     })
-    
+
   //   const filterMatchField = (filterName) => {
   //     return poFilters[filterName].length === 0 || 
   //       poFilters[filterName].some((selected) => {
@@ -710,7 +712,7 @@ export default function DashboardPage({ onNavigate }) {
   //       }
   //       return item.facility === selectedFacility
   //     })
-    
+
   //   const filterMatchField = (filterName) => {
   //     return shipmentFilters[filterName].length === 0 || 
   //       shipmentFilters[filterName].some((selected) => {
@@ -784,7 +786,7 @@ export default function DashboardPage({ onNavigate }) {
   const downloadPoCSV = async () => {
     try {
       const pourl = `${base_url}/api/v1/shipment/get-sku`;
-      const res = await api.post(pourl, {filters: poFilters});
+      const res = await api.post(pourl, { filters: poFilters });
 
 
       const formattedOrders = res.data.orders.map(item => {
@@ -818,29 +820,29 @@ export default function DashboardPage({ onNavigate }) {
   const downloadShipmentCSV = async () => {
     try {
       const shipmenturl = `${base_url}/api/v1/shipment/get-shipment`;
-      const res = await api.post(shipmenturl, {filters: shipmentFilters});
+      const res = await api.post(shipmenturl, { filters: shipmentFilters });
 
       const formattedOrders = res.data?.shipments?.map(item => {
-          // add tat and critical dispatch date
-          let criticalDispatchDate = item.currentAppointmentDate;
-          const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
-          const tat = getTAT(item.firstTransporter) ?? 0;
-          const cdd = cad ? cad - tat * 24*60*60*1000 : null;
-          criticalDispatchDate = formatDate(cdd)
-          // deliveryType
-          const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
-          const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
-          const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
-          return {
-            ...item,
-            tat,
-            currentAppointmentDate,
-            criticalDispatchDate,
-            deliveryType,
-            finalStatus,
-          }
+        // add tat and critical dispatch date
+        let criticalDispatchDate = item.currentAppointmentDate;
+        const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
+        const tat = getTAT(item.firstTransporter) ?? 0;
+        const cdd = cad ? cad - tat * 24 * 60 * 60 * 1000 : null;
+        criticalDispatchDate = formatDate(cdd)
+        // deliveryType
+        const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
+        const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
+        const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+        return {
+          ...item,
+          tat,
+          currentAppointmentDate,
+          criticalDispatchDate,
+          deliveryType,
+          finalStatus,
+        }
       })
-      
+
       exportToCSV(formattedOrders, "shipment-status-data.csv", shipmentStatusDataType)
 
     } catch (error) {
@@ -897,6 +899,7 @@ export default function DashboardPage({ onNavigate }) {
       finalStatus: [],
       transporter: [], // added transporter name filter
       docketNo: "",
+      nullDatesFilter: [],
     })
     setShipmentSearchTerm("")
     setDocketNo("")
@@ -1056,7 +1059,7 @@ export default function DashboardPage({ onNavigate }) {
     return shipmentStatusDataType.slice(6)
   }
 
-  
+
 
   return (
     <div className="min-h-screen dark:bg-gray-900  bg-gray-50">
@@ -1256,151 +1259,151 @@ export default function DashboardPage({ onNavigate }) {
 
                   {/* pagination  */}
                   <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          {
-                            poPage > 1 &&
-                              <PaginationPrevious onClick={(e) => { e.preventDefault(); setPoPage(prev => prev - 1)}} href="#" />
-                          }
-                        </PaginationItem>
-                        <PaginationItem>
-                          { poPage > 1 && <PaginationLink onClick={(e) => { e.preventDefault(); setPoPage(prev => prev - 1)}} href="#"> {poPage-1} </PaginationLink>}
-                        </PaginationItem>
-                        <PaginationItem>
-                          <PaginationLink href="#" isActive>
-                            {poPage}
-                          </PaginationLink>
-                        </PaginationItem>
-                        <PaginationItem>
-                          {
-                            poHasMorePages && (
-                              <PaginationLink onClick={(e) => { e.preventDefault(); setPoPage(prev => prev + 1)}} href="#">{poPage+1}</PaginationLink>
-                            )
-                          }
-                        </PaginationItem>
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                        <PaginationItem>
-                            {
-                              poHasMorePages && (
-                                <PaginationNext onClick={(e) => { e.preventDefault(); setPoPage(prev => prev + 1)}} href="#" />
-                              )
-                            }
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        {
+                          poPage > 1 &&
+                          <PaginationPrevious onClick={(e) => { e.preventDefault(); setPoPage(prev => prev - 1) }} href="#" />
+                        }
+                      </PaginationItem>
+                      <PaginationItem>
+                        {poPage > 1 && <PaginationLink onClick={(e) => { e.preventDefault(); setPoPage(prev => prev - 1) }} href="#"> {poPage - 1} </PaginationLink>}
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationLink href="#" isActive>
+                          {poPage}
+                        </PaginationLink>
+                      </PaginationItem>
+                      <PaginationItem>
+                        {
+                          poHasMorePages && (
+                            <PaginationLink onClick={(e) => { e.preventDefault(); setPoPage(prev => prev + 1) }} href="#">{poPage + 1}</PaginationLink>
+                          )
+                        }
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                      <PaginationItem>
+                        {
+                          poHasMorePages && (
+                            <PaginationNext onClick={(e) => { e.preventDefault(); setPoPage(prev => prev + 1) }} href="#" />
+                          )
+                        }
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               </CardHeader>
 
               <CardContent>
                 <div className="max-w-full overflow-x-auto">
-                    <div className="max-h-[70vh] overflow-y-auto">
+                  <div className="max-h-[70vh] overflow-y-auto">
                     <table className="min-w-full border dark:border-gray-200 border-black relative">
-                        {/* Table Head */}
-                        <TableHeader className="bg-background sticky top-0 z-20">
+                      {/* Table Head */}
+                      <TableHeader className="bg-background sticky top-0 z-20">
                         <TableRow className={"text-xs font-semibold"}>
-                            {poFormatDataType.map((item, idx) => {
+                          {poFormatDataType.map((item, idx) => {
                             const leftOffset = idx < 7 ? `${idx * 100}px` : "auto";
                             return (
-                                <TableCell
+                              <TableCell
                                 key={idx}
                                 className="px-4 py-2 border-b border-r dark:border-gray-200 border-black text-left text-wrap bg-background"
                                 style={{
-                                    position: idx < 7 ? "sticky" : "static",
-                                    left: leftOffset,
-                                    minWidth: "100px",
-                                    maxWidth: "150px",
-                                    zIndex: idx < 7 ? 30 : 10,
-                                    whiteSpace: "normal",  
-                                    wordWrap: "break-word",
-                                    overflowWrap: "break-word",
+                                  position: idx < 7 ? "sticky" : "static",
+                                  left: leftOffset,
+                                  minWidth: "100px",
+                                  maxWidth: "150px",
+                                  zIndex: idx < 7 ? 30 : 10,
+                                  whiteSpace: "normal",
+                                  wordWrap: "break-word",
+                                  overflowWrap: "break-word",
                                 }}
-                                >
+                              >
                                 {item.label}
-                                </TableCell>
+                              </TableCell>
                             );
-                            })}
+                          })}
 
-                            {/* Sticky Right Columns */}
-                            <TableCell
+                          {/* Sticky Right Columns */}
+                          <TableCell
                             className="px-4 py-2 border-b dark:border-gray-200 border-black text-left bg-background"
                             style={{
-                                position: "sticky",
-                                right: "70px",
-                                minWidth: "50px",
-                                zIndex: 40,
+                              position: "sticky",
+                              right: "70px",
+                              minWidth: "50px",
+                              zIndex: 40,
                             }}
-                            >
+                          >
                             Action
-                            </TableCell>
-                            <TableCell
+                          </TableCell>
+                          <TableCell
                             className="px-4 py-2 border-b  dark:border-gray-200 border-black text-left bg-background"
                             style={{
-                                position: "sticky",
-                                right: "0px", 
-                                minWidth: "70px",
-                                zIndex: 40,
+                              position: "sticky",
+                              right: "0px",
+                              minWidth: "70px",
+                              zIndex: 40,
                             }}
-                            >
+                          >
                             Status
-                            </TableCell>
+                          </TableCell>
                         </TableRow>
-                        </TableHeader>
+                      </TableHeader>
 
-                        {/* Table Body */}
-                        <TableBody className={"text-xs"}>
+                      {/* Table Body */}
+                      <TableBody className={"text-xs"}>
                         {poFormatData.map((row, rowIdx) => (
-                            <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                             {poFormatDataType.map((item, colIdx) => {
-                                const leftOffset = colIdx < 7 ? `${colIdx * 100}px` : "auto";
-                                return (
+                              const leftOffset = colIdx < 7 ? `${colIdx * 100}px` : "auto";
+                              return (
                                 <TableCell
-                                    key={colIdx}
-                                    className="px-4 py-2 border-b border-r dark:border-gray-200 border-black bg-background text-wrap overflow-hidden"
-                                    style={{
+                                  key={colIdx}
+                                  className="px-4 py-2 border-b border-r dark:border-gray-200 border-black bg-background text-wrap overflow-hidden"
+                                  style={{
                                     position: colIdx < 7 ? "sticky" : "static",
                                     left: leftOffset,
                                     minWidth: "100px",
                                     maxWidth: "150px",
                                     zIndex: colIdx < 7 ? 10 : 1,
-                                    }}
+                                  }}
                                 >
-                                    { row[item.fieldName] }
+                                  {row[item.fieldName]}
                                 </TableCell>
-                                );
+                              );
                             })}
 
                             {/* Sticky Right Columns */}
                             <TableCell
-                                key={"view"}
-                                className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
-                                style={{
+                              key={"view"}
+                              className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
+                              style={{
                                 position: "sticky",
                                 right: "70px",
                                 minWidth: "50px",
                                 zIndex: 5,
-                                }}
+                              }}
                             >
-                                <DropdownMenu>
+                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="p-0 m-0 flex flex-row">
+                                  <Button variant="ghost" className="p-0 m-0 flex flex-row">
                                     <span className="sr-only">Open menu</span>
                                     <MoreHorizontal className="h-5 w-5" />
                                     {/* <span className="hidden md:block">Action</span> */}
-                                    </Button>
+                                  </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem
+                                  <DropdownMenuItem
                                     onClick={() => handleViewShipment(row)}
                                     className="cursor-pointer"
-                                    >
+                                  >
                                     <Eye className="mr-2 h-4 w-4 text-blue-500" />
                                     View Details
-                                    </DropdownMenuItem>
-                                    {
-                                      user && user.role === "superadmin" && (
-                                        <>
+                                  </DropdownMenuItem>
+                                  {
+                                    user && user.role === "superadmin" && (
+                                      <>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                           onClick={() => handleDeleteOrder(row)}
@@ -1409,38 +1412,38 @@ export default function DashboardPage({ onNavigate }) {
                                           <Trash className="mr-2 h-4 w-4" />
                                           Delete
                                         </DropdownMenuItem>
-                                        </>
-                                      )
-                                    }
-                                    
+                                      </>
+                                    )
+                                  }
+
                                 </DropdownMenuContent>
-                                </DropdownMenu>
+                              </DropdownMenu>
                             </TableCell>
                             <TableCell
-                                key={"status"}
-                                className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
-                                style={{
+                              key={"status"}
+                              className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
+                              style={{
                                 position: "sticky",
                                 right: "0px",
                                 minWidth: "70px",
                                 zIndex: 5,
-                                }}
+                              }}
                             >
-                                <Button
-                                    onClick={() => {setSelectedShipment(row); setStatusModal(true);}}
-                                    variant="ghost" className="p-0 m-0 flex flex-row"
-                                >
-                                    <span className="sr-only">Open menu</span>
-                                    <CircleAlert className="h-5 w-5" />
-                                </Button>
+                              <Button
+                                onClick={() => { setSelectedShipment(row); setStatusModal(true); }}
+                                variant="ghost" className="p-0 m-0 flex flex-row"
+                              >
+                                <span className="sr-only">Open menu</span>
+                                <CircleAlert className="h-5 w-5" />
+                              </Button>
                             </TableCell>
-                            </TableRow>
+                          </TableRow>
                         ))}
-                        </TableBody>
+                      </TableBody>
                     </table>
-                    </div>
+                  </div>
                 </div>
-                </CardContent>
+              </CardContent>
             </Card>
           </TabsContent>
 
@@ -1480,6 +1483,7 @@ export default function DashboardPage({ onNavigate }) {
                 <div className="space-y-4">
                   {/* Search */}
                   <div className="flex items-center space-x-2">
+
                     <div className="relative flex-1 max-w-sm">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <Input
@@ -1489,6 +1493,7 @@ export default function DashboardPage({ onNavigate }) {
                         className="pl-10"
                       />
                     </div>
+
                     <Button variant="outline" onClick={clearShipmentFilters}>
                       <X className="h-4 w-4 mr-2" />
                       Clear All
@@ -1497,6 +1502,16 @@ export default function DashboardPage({ onNavigate }) {
 
                   {/* Filters */}
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+
+                    {/* Multi-select null dates filter */}
+                    <MultiSelectFilter
+                      label="Not Assigned Dates Filter"
+                      options={["Current Appointment Date", "Working Date", "Dispatch Date",]}
+                      selectedValues={shipmentFilters.nullDatesFilter}
+                      onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, nullDatesFilter: values }))}
+                      placeholder="Select not assigned date filters"
+                    />
+
                     {/* Entry Date Range */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium">PO Date From</label>
@@ -1671,174 +1686,174 @@ export default function DashboardPage({ onNavigate }) {
 
                   {/* pagination  */}
                   <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          {
-                            shipmentPage > 1 && (
-                              <PaginationPrevious onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev - 1)}} href="#" />
-                            )
-                          }
-                        </PaginationItem>
-                        <PaginationItem>
-                          { shipmentPage !== 1 && <PaginationLink onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev - 1)}} href="#"> {shipmentPage-1} </PaginationLink>}
-                        </PaginationItem>
-                        <PaginationItem>
-                          <PaginationLink href="#" isActive>
-                            {shipmentPage}
-                          </PaginationLink>
-                        </PaginationItem>
-                        <PaginationItem>
-                          {
-                            shipmentHasMorePages && (
-                              <PaginationLink onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev + 1)}} href="#">{shipmentPage+1}</PaginationLink>
-                            )
-                          }
-                        </PaginationItem>
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                        <PaginationItem>
-                          {
-                            shipmentHasMorePages && (
-                              <PaginationNext onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev + 1)}} href="#" />
-                            )
-                          }
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        {
+                          shipmentPage > 1 && (
+                            <PaginationPrevious onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev - 1) }} href="#" />
+                          )
+                        }
+                      </PaginationItem>
+                      <PaginationItem>
+                        {shipmentPage !== 1 && <PaginationLink onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev - 1) }} href="#"> {shipmentPage - 1} </PaginationLink>}
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationLink href="#" isActive>
+                          {shipmentPage}
+                        </PaginationLink>
+                      </PaginationItem>
+                      <PaginationItem>
+                        {
+                          shipmentHasMorePages && (
+                            <PaginationLink onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev + 1) }} href="#">{shipmentPage + 1}</PaginationLink>
+                          )
+                        }
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                      <PaginationItem>
+                        {
+                          shipmentHasMorePages && (
+                            <PaginationNext onClick={(e) => { e.preventDefault(); setShipmentPage(prev => prev + 1) }} href="#" />
+                          )
+                        }
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
 
                 {/* pagination  */}
               </CardHeader>
 
-                <CardContent>
+              <CardContent>
                 <div className="max-w-full overflow-x-auto">
-                    <div className="max-h-[70vh] overflow-y-auto">
+                  <div className="max-h-[70vh] overflow-y-auto">
                     <table className="min-w-full border dark:border-gray-200 border-black relative">
-                        {/* Table Head */}
-                        <TableHeader className="bg-background sticky top-0 z-20">
+                      {/* Table Head */}
+                      <TableHeader className="bg-background sticky top-0 z-20">
                         <TableRow className={"text-xs font-semibold"}>
-                            {shipmentStatusDataType.map((item, idx) => {
+                          {shipmentStatusDataType.map((item, idx) => {
                             const leftOffset = idx < 7 ? `${idx * 100}px` : "auto";
                             const hide = ["statusActive"];
-                            if( hide.includes(item.fieldName)) {
+                            if (hide.includes(item.fieldName)) {
                               return (
                                 <></>
                                 // <TableCell key></TableCell>
                               )
                             }
                             return (
-                                <TableCell
+                              <TableCell
                                 key={idx}
                                 className="px-4 py-2 border-b border-r dark:border-gray-200 border-black text-left text-wrap bg-background"
                                 style={{
-                                    position: idx < 7 ? "sticky" : "static",
-                                    left: leftOffset,
-                                    minWidth: "100px",
-                                    maxWidth: "150px",
-                                    zIndex: idx < 7 ? 30 : 10,
-                                    whiteSpace: "normal",  
-                                    wordWrap: "break-word",
-                                    overflowWrap: "break-word",
+                                  position: idx < 7 ? "sticky" : "static",
+                                  left: leftOffset,
+                                  minWidth: "100px",
+                                  maxWidth: "150px",
+                                  zIndex: idx < 7 ? 30 : 10,
+                                  whiteSpace: "normal",
+                                  wordWrap: "break-word",
+                                  overflowWrap: "break-word",
                                 }}
-                                >
+                              >
                                 {item.label}
-                                </TableCell>
+                              </TableCell>
                             );
-                            })}
+                          })}
 
-                            {/* Sticky Right Columns */}
-                            <TableCell
+                          {/* Sticky Right Columns */}
+                          <TableCell
                             className="px-4 py-2 border-b dark:border-gray-200 border-black text-left bg-background"
                             style={{
-                                position: "sticky",
-                                right: "70px",
-                                minWidth: "50px",
-                                zIndex: 40,
+                              position: "sticky",
+                              right: "70px",
+                              minWidth: "50px",
+                              zIndex: 40,
                             }}
-                            >
+                          >
                             Action
-                            </TableCell>
-                            <TableCell
+                          </TableCell>
+                          <TableCell
                             className="px-4 py-2 border-b  dark:border-gray-200 border-black text-left bg-background"
                             style={{
-                                position: "sticky",
-                                right: "0px", 
-                                minWidth: "70px",
-                                zIndex: 40,
+                              position: "sticky",
+                              right: "0px",
+                              minWidth: "70px",
+                              zIndex: 40,
                             }}
-                            >
+                          >
                             Status
-                            </TableCell>
+                          </TableCell>
                         </TableRow>
-                        </TableHeader>
+                      </TableHeader>
 
-                        {/* Table Body */}
-                        <TableBody className={"text-xs"}>
+                      {/* Table Body */}
+                      <TableBody className={"text-xs"}>
                         {shipmentStatusData.map((row, rowIdx) => (
-                            <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <TableRow key={rowIdx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                             {shipmentStatusDataType.map((item, colIdx) => {
-                                const hide = ["statusActive"];
-                                if( hide.includes(item.fieldName)) {
-                                  return (
-                                    <></>
-                                    // <TableCell></TableCell>
-                                  )
-                                }
-                                const leftOffset = colIdx < 7 ? `${colIdx * 100}px` : "auto";
+                              const hide = ["statusActive"];
+                              if (hide.includes(item.fieldName)) {
                                 return (
+                                  <></>
+                                  // <TableCell></TableCell>
+                                )
+                              }
+                              const leftOffset = colIdx < 7 ? `${colIdx * 100}px` : "auto";
+                              return (
                                 <TableCell
-                                    key={colIdx}
-                                    className="px-4 py-2 border-b border-r dark:border-gray-200 border-black bg-background text-wrap overflow-hidden"
-                                    style={{
+                                  key={colIdx}
+                                  className="px-4 py-2 border-b border-r dark:border-gray-200 border-black bg-background text-wrap overflow-hidden"
+                                  style={{
                                     position: colIdx < 7 ? "sticky" : "static",
                                     left: leftOffset,
                                     minWidth: "100px",
                                     maxWidth: "150px",
                                     zIndex: colIdx < 7 ? 10 : 1,
-                                    }}
+                                  }}
                                 >
-                                    { row[item.fieldName] }
+                                  {row[item.fieldName]}
                                 </TableCell>
-                                );
+                              );
                             })}
 
                             {/* Sticky Right Columns */}
                             <TableCell
-                                className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
-                                style={{
+                              className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
+                              style={{
                                 position: "sticky",
                                 right: "70px",
                                 minWidth: "50px",
                                 zIndex: 5,
-                                }}
+                              }}
                             >
-                                <DropdownMenu>
+                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="p-0 m-0 flex flex-row">
+                                  <Button variant="ghost" className="p-0 m-0 flex flex-row">
                                     <span className="sr-only">Open menu</span>
                                     <MoreHorizontal className="h-5 w-5" />
                                     {/* <span className="hidden md:block">Action</span> */}
-                                    </Button>
+                                  </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem
+                                  <DropdownMenuItem
                                     onClick={() => handleViewShipment(row)}
                                     className="cursor-pointer"
-                                    >
+                                  >
                                     <Eye className="mr-2 h-4 w-4 text-blue-500" />
                                     View Details
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
                                     onClick={() => handleEditShipment(row)}
                                     className="cursor-pointer"
-                                    >
+                                  >
                                     <Edit className="mr-2 h-4 w-4 text-orange-500" />
                                     Edit Shipment
-                                    </DropdownMenuItem>
-                                    {
-                                      user && user.role === "superadmin" && (
-                                        <>
+                                  </DropdownMenuItem>
+                                  {
+                                    user && user.role === "superadmin" && (
+                                      <>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                           onClick={() => handleDeleteOrder(row)}
@@ -1847,48 +1862,48 @@ export default function DashboardPage({ onNavigate }) {
                                           <Trash className="mr-2 h-4 w-4" />
                                           Delete
                                         </DropdownMenuItem>
-                                        </>
-                                      )
-                                    }
+                                      </>
+                                    )
+                                  }
                                 </DropdownMenuContent>
-                                </DropdownMenu>
+                              </DropdownMenu>
                             </TableCell>
                             <TableCell
-                                className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
-                                style={{
+                              className="px-4 py-2 border-b dark:border-gray-200 border-black bg-background"
+                              style={{
                                 position: "sticky",
                                 right: "0px",
                                 minWidth: "70px",
                                 zIndex: 5,
-                                }}
+                              }}
                             >
-                                <Button
-                                    onClick={() => {setSelectedShipment(row); setStatusModal(true);}}
-                                    variant="ghost" className="p-0 m-0 flex flex-row"
-                                >
-                                    <span className="sr-only">Open menu</span>
-                                    <CircleAlert className="h-5 w-5" />
-                                </Button>
+                              <Button
+                                onClick={() => { setSelectedShipment(row); setStatusModal(true); }}
+                                variant="ghost" className="p-0 m-0 flex flex-row"
+                              >
+                                <span className="sr-only">Open menu</span>
+                                <CircleAlert className="h-5 w-5" />
+                              </Button>
                             </TableCell>
-                            </TableRow>
+                          </TableRow>
                         ))}
-                        </TableBody>
+                      </TableBody>
                     </table>
-                    </div>
+                  </div>
                 </div>
-                </CardContent>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
 
         {/* Modals */}
 
-         <StatusModal 
-            isOpen={statusModal}
-            onClose={() => {
-                setStatusModal(false);
-            }}
-            data={selectedShipment}
+        <StatusModal
+          isOpen={statusModal}
+          onClose={() => {
+            setStatusModal(false);
+          }}
+          data={selectedShipment}
         />
 
         <EditOrderModal
@@ -1982,27 +1997,27 @@ const ConfirmDialog = ({ open, type, id, onConfirm, onCancel }) => (
 )
 
 const StatusModal = ({ isOpen, onClose, data }) => {
-    const finalStatus = getFinalStatus(data.statusPlanning ?? "Confirmed", data.statusWarehouse ?? "Confirmed", data.statusLogistics ?? "Confirmed") ?? "No mapping available!"
-    return (
-       <Dialog open={isOpen} onOpenChange={onClose}>
-            {/* <DialogTitle> Final Status </DialogTitle> */}
-            <DialogContent>
-                <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" />
-                     Final Status - PO: {data?.poNumber}
-                </DialogTitle>
-                </DialogHeader>
-                
-                <p>Status (Planning): { data.statusPlanning ?? "Confirmed" }</p>
-                <p>Status (Warehouse): { data.statusWarehouse ?? "Confirmed" }</p>
-                <p>Status (Logistics): { data.statusLogistics ?? "Confirmed" }</p>
-                <p>Final Status: {finalStatus}</p>
+  const finalStatus = getFinalStatus(data.statusPlanning ?? "Confirmed", data.statusWarehouse ?? "Confirmed", data.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      {/* <DialogTitle> Final Status </DialogTitle> */}
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Final Status - PO: {data?.poNumber}
+          </DialogTitle>
+        </DialogHeader>
 
-                <Button variant="outline" onClick={onClose}>
-                    Close
-                </Button>
-            </DialogContent>
-        </Dialog>
-    )
+        <p>Status (Planning): {data.statusPlanning ?? "Confirmed"}</p>
+        <p>Status (Warehouse): {data.statusWarehouse ?? "Confirmed"}</p>
+        <p>Status (Logistics): {data.statusLogistics ?? "Confirmed"}</p>
+        <p>Final Status: {finalStatus}</p>
+
+        <Button variant="outline" onClick={onClose}>
+          Close
+        </Button>
+      </DialogContent>
+    </Dialog>
+  )
 }
