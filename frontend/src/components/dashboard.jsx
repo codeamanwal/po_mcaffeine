@@ -406,7 +406,7 @@ export default function DashboardPage({ onNavigate }) {
   const [filtersOptions, setFiltersOptions] = useState({})
 
   // Check if user has access to bulk CSV SKU update
-  const hasBulkSkuAccess = user?.role === "warehouse" || user?.role === "superadmin"
+  const hasBulkSkuAccess = user?.role === "warehouse" || user?.role === "superadmin" || user?.role === "admin"
 
   // Utility function to parse yyyy-MM-dd date strings
   const parseDate = (dateStr) => {

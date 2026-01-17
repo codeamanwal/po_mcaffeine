@@ -133,4 +133,21 @@ ShipmentOrder.associate = models => {
     });
 };
 
+ShipmentOrder.afterCreate(async (shipment, options) => {
+  await shipment.sequelize.models.SkuOrder.update(
+    { poNumber: shipment.poNumber },
+    { where: { shipmentOrderId: shipment.uid } }
+  );
+});
+
+ShipmentOrder.afterUpdate(async (shipment, options) => {
+  if (shipment.changed('poNumber')) {
+    await shipment.sequelize.models.SkuOrder.update(
+      { poNumber: shipment.poNumber },
+      { where: { shipmentOrderId: shipment.uid } }
+    );
+  }
+});
+
+
 export default ShipmentOrder;

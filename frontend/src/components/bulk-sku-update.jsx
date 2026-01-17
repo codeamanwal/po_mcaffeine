@@ -48,7 +48,8 @@ export default function BulkSkuUpdateModal({
 
   const isWarehouse = user?.role === "warehouse"
   const isSuperAdmin = user?.role === "superadmin"
-  const hasAccess = isWarehouse || isSuperAdmin
+  const isAdmin = user?.role === "admin"
+  const hasAccess = isWarehouse || isSuperAdmin || isAdmin
 
   // Reset form when modal opens/closes
   useEffect(() => {
