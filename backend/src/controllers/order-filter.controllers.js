@@ -23,6 +23,8 @@ const filters = {
   skuCode: "",
   poNumber: "",
   docketNo: "",
+  // null date filters
+  nullDateFilters: ["Current Appointment Date", "Working Date", "Dispatch Date"],
 }
 
 export async function getSkus(req, res) {
@@ -455,6 +457,25 @@ export async function getShipments(req, res) {
         ];
       }
     }
+
+    if (filters?.nullDateFilters && filters.nullDateFilters.length > 0) {
+      if(filters.nullDateFilters.includes("Current Appointment Date")) {
+        shipmentWhere.currentAppointmentDate = {
+          [Op.is]: null
+        }
+      }
+      if(filters.nullDateFilters.includes("Dispatch Date")) {
+        shipmentWhere.dispatchDate = {
+          [Op.is]: null
+        }
+      }
+      if(filters.nullDateFilters.includes("Working Date")) {
+        shipmentWhere.workingDatePlanner = {
+          [Op.is]: null
+        }
+      }
+    }
+
     if (filters?.poDateFrom || filters?.poDateTo) {
       shipmentWhere.poDate = {};
       
