@@ -21,7 +21,8 @@ const filters = {
   dispatchDateTo: "",
   // search filters
   skuCode: "",
-  poNumber: ""
+  poNumber: "",
+  docketNo: "",
 }
 
 export async function getSkus(req, res) {
@@ -499,6 +500,14 @@ export async function getShipments(req, res) {
       shipmentWhere[Op.or] = [
         { poNumber: { [Op.like]: `%${filters.search}%` } },
         { uid: { [Op.like]: `%${filters.search}%` } }
+      ];
+    }
+
+    if (filters?.docketNo && filters.docketNo !== "") {
+      shipmentWhere[Op.or] = [
+        { firstDocketNo: { [Op.like]: `%${filters.docketNo}%` } },
+        { secondDocketNo: { [Op.like]: `%${filters.docketNo}%` } },
+        { thirdDocketNo: { [Op.like]: `%${filters.docketNo}%` } },
       ];
     }
 
