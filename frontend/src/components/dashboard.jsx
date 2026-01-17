@@ -339,6 +339,8 @@ export default function DashboardPage({ onNavigate }) {
   // Search states
   const [poSearchTerm, setPoSearchTerm] = useState("")
   const [shipmentSearchTerm, setShipmentSearchTerm] = useState("")
+  const [docketNo, setDocketNo] = useState("")
+
 
   // Filter states for PO Format - Updated to support multi-select
   const [poFilters, setPoFilters] = useState({
@@ -384,6 +386,7 @@ export default function DashboardPage({ onNavigate }) {
     statusLogistics: [],
     finalStatus: [],
     transporter: [],
+    docketNo: "",
   })
 
   const [statusModal, setStatusModal] = useState(false)
@@ -586,11 +589,11 @@ export default function DashboardPage({ onNavigate }) {
   // Debounce Shipment search
   useEffect(() => {
     const delay = setTimeout(() => {
-      setShipmentFilters(prev => ({ ...prev, search: shipmentSearchTerm }));
+      setShipmentFilters(prev => ({ ...prev, search: shipmentSearchTerm, docketNo: docketNo}));
     }, 1000);
 
     return () => clearTimeout(delay);
-  }, [shipmentSearchTerm]);
+  }, [shipmentSearchTerm, docketNo]);
 
     // useEffect(() => {
     //   const delay = setTimeout(() => {
@@ -893,8 +896,10 @@ export default function DashboardPage({ onNavigate }) {
       statusLogistics: [],
       finalStatus: [],
       transporter: [], // added transporter name filter
+      docketNo: "",
     })
     setShipmentSearchTerm("")
+    setDocketNo("")
   }
 
   // Date picker component
@@ -1651,6 +1656,16 @@ export default function DashboardPage({ onNavigate }) {
                       onSelectionChange={(values) => setShipmentFilters((prev) => ({ ...prev, transporter: values }))}
                       placeholder="Select transporter"
                     />
+
+                    <div className="relative flex-1 items-center max-w-sm">
+                      <label className="text-sm font-medium">Serch Docket No</label>
+                      <Input
+                        placeholder="Search by PO Number or UID..."
+                        value={docketNo}
+                        onChange={(e) => setDocketNo(e.target.value)}
+                        className="px-2 py-1"
+                      />
+                    </div>
 
                   </div>
 
