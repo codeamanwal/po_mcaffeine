@@ -11,6 +11,7 @@ const ShipmentOrder = sequelize.define('ShipmentOrder', {
   channel: { type: DataTypes.STRING },
   location: { type: DataTypes.STRING },
   poNumber: { type: DataTypes.STRING, allowNull: false, unique:true },
+  poNumberInwardCWH: { type: DataTypes.STRING, allowNull: true },
   totalUnits: { type: DataTypes.INTEGER },
   brandName: { type: DataTypes.STRING },
   remarksPlanning: { type: DataTypes.TEXT },
