@@ -81,6 +81,7 @@ async function createShipment(req, res) {
     // attached the shared fields to each sku-order and link to parent UID
     const skusToCreate = skuOrders.map(sku => ({
       ...sku,
+      poNumber: parent.poNumber,
       updatedQty: sku.qty ?? null,
       updatedGmv: sku.gmv ?? null,
       updatedPoValue: sku.poValue ?? null,
@@ -183,6 +184,7 @@ async function createBulkShipment(req, res) {
         physicalWeight: orders[0].physicalWeight,
       };
       const skuOrders = orders.map(order => ({
+        poNumber: orders[0].poNumber,
         srNo: order.srNo,
         brandName: order.brand,
         skuName: order.skuName,

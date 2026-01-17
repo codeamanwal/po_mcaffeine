@@ -5,6 +5,7 @@ import { sequelize } from '../db/mysql.js';
 
 const SkuOrder = sequelize.define('SkuOrder', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  poNumber: { type: DataTypes.STRING },
   srNo: { type: DataTypes.STRING },
   skuName: { type: DataTypes.STRING },
   skuCode: { type: DataTypes.STRING },
