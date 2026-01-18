@@ -35,7 +35,7 @@ export async function getSkus(req, res) {
 
     // filters
     const filters = req.body.filters;
-    console.log("filters:", filters)
+    // console.log("filters:", filters)
 
     // pagination parameter
     const page = parseInt(query?.page) ?? 1;
@@ -697,7 +697,7 @@ export async function getFilterOptions(req, res) {
     }
 
     const allotedFacilities = currUser.allotedFacilities;
-    console.log("allotedFacilities: ", allotedFacilities);
+    // console.log("allotedFacilities: ", allotedFacilities);
 
     let filteroptionsql = `
       SELECT
@@ -722,7 +722,7 @@ export async function getFilterOptions(req, res) {
       replacements: {
         allotted: allotedFacilities
       },
-      logging: console.log,
+      // logging: console.log,
       type: sequelize.QueryTypes.SELECT
     });
 
@@ -766,5 +766,15 @@ export async function getFilterOptions(req, res) {
   } catch (error) {
     console.log(error)
     return res.status(500).json({ msg: "Could not fetch filter options", error })
+  }
+}
+
+// download csvs with filters
+export async function downloadSkuCsv(req, res) {
+  try {
+    
+  } catch (error) {
+    console.error("Error downloading SKU CSV:", error);
+    return res.status(500).json({ msg: "Something went wrong while downloading SKU CSV", error });
   }
 }

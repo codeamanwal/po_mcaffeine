@@ -6,6 +6,7 @@ export async function getS3UploadUrl(req, res) {
         const uploadUri = await generateS3UploadUrl(fileName, fileType);
         return res.status(200).json({msg:"Fetched the s3-upload-url", uploadUrl: uploadUri});
     } catch (error) {
+        console.log(error)
         return res.status(500).json({msg:"Could not generate file upload url!", error})
     }
 }
