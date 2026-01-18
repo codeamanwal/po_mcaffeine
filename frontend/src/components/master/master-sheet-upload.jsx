@@ -21,6 +21,7 @@ export function MasterSheetUpload({ sheetType }) {
   const [validPreview, setValidPreview] = useState([])
   const [invalidPreview, setInvalidPreview] = useState([])
   const [isDownloading, setIsDownloading] = useState(false)
+  const [validData, setValidData] = useState([]) // Store full valid data for upload
 
   const config = MASTER_SHEETS_CONFIG[sheetType]
   const requiredColumns = config.expectedColumns;
@@ -60,18 +61,15 @@ export function MasterSheetUpload({ sheetType }) {
     setError(null)
     setSuccess(false)
     setIsLoading(true)
-    
+    setValidData([]) // Reset previous data
+
     try {
-      // console.log("labels: ", requiredColumnsLabel)
-      // console.log("keys: ", requiredColumnsKey)
       // Parse Excel file
       const { rows, emptyRowsCount } = await parseExcelFile(file, requiredColumns)
-      // console.log("rows: ", rows)
-      await handleDownloadSheetData()
+
       // Validate rows for empty cells in required columns
       const { validRows, invalidRows, invalidRowsCount } = validateRowsForEmptyCells(rows, requiredColumnsKey)
-      // console.log("invalidRows: ", invalidRows)
-      // console.log("validRows: ", validRows)
+
       const totalRows = rows.length
       const stats = {
         totalRows,
@@ -82,27 +80,39 @@ export function MasterSheetUpload({ sheetType }) {
       }
 
       setUploadStats(stats)
-      // setPreview([...invalidRows, ...validRows]) // Show first 5 rows as preview
       setValidPreview([...validRows])
       setInvalidPreview([...invalidRows])
-
+      setValidData(validRows) // Store for manual upload
 
       if (validRows.length === 0) {
         setError("No valid data found in the file. Please check your sheet.")
-        setIsLoading(false)
-        return
       }
 
-      // Upload to backend
-      // console.log(sheetType, validRows);
-      const response = await uploadMasterSheetData(sheetType, validRows)
-      // const response = {status: 200};
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred"
+      setError(errorMessage)
+      console.error("Parsing error:", err)
+    } finally {
+      setIsLoading(false)
+      // Reset file input so same file can be selected again if needed
+      if (e.target) e.target.value = ""
+    }
+  }
+
+  const handleConfirmUpload = async () => {
+    if (validData.length === 0) return
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await uploadMasterSheetData(sheetType, validData)
 
       if (response.status === 200 || response.status === 201) {
         setSuccess(true)
         setError(null)
-        // Reset file input
-        if (e.target) e.target.value = ""
+        setValidData([]) // Clear pending data after success
+        setUploadStats(null) // Optional: clear stats or keep them
       } else {
         setError(response.data?.msg || "Upload failed")
       }
@@ -118,16 +128,32 @@ export function MasterSheetUpload({ sheetType }) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{config.name}</CardTitle>
-        <CardDescription>Upload an Excel file with the required columns: <span className="text-foreground font-semibold">{requiredColumnsLabel.join(", ")}</span></CardDescription>
-        <div className="my-2 w-full">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>{config.name}</CardTitle>
+            <CardDescription>Upload an Excel file with the required columns: <span className="text-foreground font-semibold">{requiredColumnsLabel.join(", ")}</span></CardDescription>
+          </div>
+          {/* Upload Button */}
+          {validData.length > 0 && (
+            <Button
+              onClick={handleConfirmUpload}
+              disabled={isLoading}
+              className="ml-auto bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isLoading ? "Uploading..." : "Upload Data"}
+              <Upload className="w-4 h-4 ml-2" />
+            </Button>
+          )}
+        </div>
+
+        <div className="my-2 w-full flex flex-wrap gap-2">
           {/* template download */}
           <Button
             onClick={handleDownloadTemplate}
             disabled={isDownloading}
             variant="outline"
             size="sm"
-            className="rounded-sm mx-3 gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
+            className="rounded-sm gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
           >
             <Download className="w-4 h-4" />
             {isDownloading ? "Downloading..." : "Download Template"}
@@ -138,7 +164,7 @@ export function MasterSheetUpload({ sheetType }) {
             disabled={isDownloading}
             variant="outline"
             size="sm"
-            className="rounded-sm mx-3 gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
+            className="rounded-sm gap-2 bg-green-300 dark:bg-green-300 dark:text-black dark:hover:text-white"
           >
             <Download className="w-4 h-4" />
             {isDownloading ? "Downloading..." : "Download Master Sheet"}
@@ -147,28 +173,30 @@ export function MasterSheetUpload({ sheetType }) {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* File Upload */}
-        <div className="flex items-center justify-center w-full">
-          <label
-            htmlFor={`file-upload-${sheetType}`}
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <Upload className="w-8 h-8 mb-2 text-gray-500" />
-              <p className="text-sm text-gray-500">
-                <span className="font-semibold">Click to upload</span> or drag and drop
-              </p>
-              <p className="text-xs text-gray-500 mt-1">Excel (.xlsx) files only</p>
-            </div>
-            <input
-              id={`file-upload-${sheetType}`}
-              type="file"
-              accept=".xlsx"
-              onChange={handleFileUpload}
-              disabled={isLoading}
-              className="hidden"
-            />
-          </label>
-        </div>
+        {!success && validData.length === 0 && (
+          <div className="flex items-center justify-center w-full">
+            <label
+              htmlFor={`file-upload-${sheetType}`}
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <Upload className="w-8 h-8 mb-2 text-gray-500" />
+                <p className="text-sm text-gray-500">
+                  <span className="font-semibold">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Excel (.xlsx) files only</p>
+              </div>
+              <input
+                id={`file-upload-${sheetType}`}
+                type="file"
+                accept=".xlsx"
+                onChange={handleFileUpload}
+                disabled={isLoading}
+                className="hidden"
+              />
+            </label>
+          </div>
+        )}
 
         {/* Error Alert */}
         {error && (
@@ -183,7 +211,8 @@ export function MasterSheetUpload({ sheetType }) {
           <Alert className="border-green-200 bg-green-50">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
-              Successfully uploaded {uploadStats?.validRows} records to {config.name}
+              Successfully uploaded records to {config.name}
+              <Button variant="link" onClick={() => setSuccess(false)} className="ml-2 h-auto p-0 text-green-800 underline">Upload another</Button>
             </AlertDescription>
           </Alert>
         )}
@@ -277,7 +306,10 @@ export function MasterSheetUpload({ sheetType }) {
             <Button
               onClick={() => {
                 setUploadStats(null)
-                setPreview([])
+                // setPreview([])
+                setValidPreview([])
+                setInvalidPreview([])
+                setValidData([])
                 setSuccess(false)
               }}
               variant="outline"
