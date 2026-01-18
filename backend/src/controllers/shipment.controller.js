@@ -783,7 +783,7 @@ async function updateShipment(req, res) {
         shipmentId: shipment.uid,
         createdBy: req.user,
         fieldName: "Po Number",
-        change: `Po number changed from ${poEditAudit.originalPoNumber} to ${poEditAudit?.newPoNumber}`,
+        change: `Po number changed from ${shipment?.dataValues?.poNumber} to ${poEditAudit?.newPoNumber}`,
         remark: `${poEditAudit.reason}! ${poEditAudit.comments}`,
       }
       isLog = true;
