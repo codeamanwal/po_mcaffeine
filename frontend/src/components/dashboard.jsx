@@ -783,39 +783,41 @@ export default function DashboardPage({ onNavigate }) {
   }
 
   // download csv with filters as it is all data from api
-  const downloadPoCSV = async () => {
+  const downloadPoCSV = async (e) => {
+    e.preventDefault();
+
     try {
-      const pourl = `${base_url}/api/v1/shipment/get-sku`;
+      const pourl = `${base_url}/api/v1/shipment/download-sku-data`;
       const res = await api.post(pourl, { filters: poFilters });
 
+      const s3Url = res?.data?.downloadUrl;
+      if (!s3Url) {
+        toast.error("Failed to download CSV!");
+        return;
+      }
 
-      const formattedOrders = res.data.orders.map(item => {
-        const currentAppointmentDate =
-          item.currentAppointmentDate ??
-          item.firstAppointmentDateCOPT ??
-          item.firstAppointmentDate ??
-          item.allAppointmentDate?.at(0) ??
-          "";
-        const finalStatus =
-          getFinalStatus(
-            item.statusPlanning ?? "Confirmed",
-            item.statusWarehouse ?? "Confirmed",
-            item.statusLogistics ?? "Confirmed"
-          ) ?? "No mapping available!";
+      const response = await fetch(s3Url);
+      const blob = await response.blob();
 
-        return {
-          ...item,
-          currentAppointmentDate,
-          finalStatus,
-        };
-      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "po-format-data.csv";
+      document.body.appendChild(a);
+      a.click();
 
-      exportToCSV(formattedOrders, "po-format-data.csv", poFormatDataType)
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(error)
-      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
+      console.error(error);
+      toast.error(
+        error?.response?.data?.msg ||
+        error?.message ||
+        "Failed to fetch data!"
+      );
     }
-  }
+  };
+
 
   const downloadShipmentCSV = async () => {
     try {
@@ -1097,7 +1099,7 @@ export default function DashboardPage({ onNavigate }) {
                       {poFormatData.length} of {totalPoOrders} Records
                     </Badge>
                     <Button
-                      onClick={downloadPoCSV}
+                      onClick={(e) => downloadPoCSV(e)}
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
                       <Download className="h-4 w-4 mr-2" />

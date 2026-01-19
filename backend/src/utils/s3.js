@@ -2,29 +2,29 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { PassThrough } from 'stream';
 import { stringify } from 'csv-stringify';
 import { Upload } from '@aws-sdk/lib-storage';
-
-const s3 = new S3Client({
-  region: process.env.S3_REGION_NAME,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
-
-
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { sequelize } from '../db/mysql.js';
+import { poFormatDataType } from './constant.js';
+
+const s3 = new S3Client({
+    region: process.env.S3_REGION_NAME,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
 
 export async function getSignedDownloadUrl({
-  bucket,
-  key,
-  expiresIn = 3600, // seconds (1 hour)
+    bucket,
+    key,
+    expiresIn = 3600, // seconds (1 hour)
 }) {
-  const command = new GetObjectCommand({
-    Bucket: bucket,
-    Key: key,
-  });
+    const command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+    });
 
-  const signedUrl = await getSignedUrl(s3, command, { expiresIn });
-  return signedUrl;
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn });
+    return signedUrl;
 }
 
 
@@ -45,58 +45,105 @@ export async function generateS3UploadUrl(fileName, fileType) {
     }
 }
 
-export async function uploadSkuDataToS3() {
-  const passThrough = new PassThrough();
+/*
+Upload sku filtered data to s3 and returns the file url to download data
+@return {string} file url to download data
+*/
+export async function uploadSkuDataToS3(customQuery = null, replacements = []) {
+    const passThrough = new PassThrough();
 
-  // CSV transformer
-  const csvStream = stringify({
-    header: true,
-    columns: [
-      'id',
-      'poNumber',
-      'skuName',
-      'qty',
-      'gmv',
-      'createdAt'
-    ],
-  });
+    // Map fields for csv-stringify: { key: 'fieldName', header: 'Label' }
+    const columns = poFormatDataType.map((field) => ({
+        key: field.fieldName,
+        header: field.label
+    }));
 
-  // Pipe CSV → S3
-  csvStream.pipe(passThrough);
+    // CSV transformer
+    const csvStream = stringify({
+        header: true,
+        columns: columns,
+    });
 
-  const fileKey = `data/sku_orders_${Date.now()}.csv`;
+    // Pipe CSV → S3
+    csvStream.pipe(passThrough);
 
-  const upload = new ({
-    client: s3,
-    params: {
-      Bucket: process.env.S3_BUCKET,
-      Key: fileKey,
-      Body: passThrough,
-      ContentType: 'text/csv',
-    },
-  });
+    const fileKey = `data/sku_orders_${Date.now()}.csv`;
 
-  // Start DB stream
-  const queryStream = connection
-    .query(`
-      SELECT id, poNumber, skuName, qty, gmv, createdAt
-      FROM sku_orders
-    `)
-    .stream({ highWaterMark: 1000 });
+    const upload = new Upload({
+        client: s3,
+        params: {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: fileKey,
+            Body: passThrough,
+            ContentType: 'text/csv',
+        },
+    });
 
-  queryStream.on('data', row => {
-    csvStream.write(row);
-  });
+    // Get raw connection for streaming
+    const connection = await sequelize.connectionManager.getConnection();
 
-  queryStream.on('end', () => {
-    csvStream.end();
-  });
+    // Default query if none provided
+    const defaultQuery = `
+        SELECT
+            so.shipmentOrderId,
+            sho.entryDate,
+            sho.poDate,
+            sho.facility,
+            sho.channel,
+            sho.location,
+            so.poNumber,
+            so.brandName,
+            so.srNo,
+            so.skuName,
+            so.skuCode,
+            so.channelSkuCode,
+            so.qty,
+            so.gmv,
+            so.poValue,
+            so.updatedQty,
+            so.updatedGmv,
+            so.updatedPoValue,
+            so.actualWeight AS productWeight,
+            sho.workingDatePlanner AS workingDate,
+            sho.dispatchDate,
+            sho.currentAppointmentDate,
+            sho.statusPlanning,
+            sho.statusWarehouse,
+            sho.statusLogistics
+        FROM sku_orders so
+        LEFT JOIN shipment_orders sho ON so.shipmentOrderId = sho.uid
+    `;
 
-  queryStream.on('error', err => {
-    csvStream.destroy(err);
-  });
+    const queryToExecute = customQuery || defaultQuery;
 
-  await upload.done();
+    // Start DB stream
+    // Note: sequelize connection.query needs raw sql.
+    // If replacements are used, we typically rely on sequelize's built-in formatting,
+    // but connection.query from driver might support '?' or named parameters depending on config.
+    // For safety with raw driver connection, assuming standard mysql driver behavior (array of values).
+    const queryStream = connection.query(queryToExecute, replacements).stream({ highWaterMark: 1000 });
 
-  return `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+    queryStream.on('data', row => {
+        csvStream.write(row);
+    });
+
+    queryStream.on('end', () => {
+        csvStream.end();
+        sequelize.connectionManager.releaseConnection(connection);
+    });
+
+    queryStream.on('error', err => {
+        console.error("Stream Error:", err);
+        csvStream.destroy(err);
+        sequelize.connectionManager.releaseConnection(connection);
+    });
+
+    try {
+        await upload.done();
+    } catch (error) {
+        console.error("Upload Error:", error);
+        throw error;
+    }
+
+    return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION_NAME}.amazonaws.com/${fileKey}`;
 }
