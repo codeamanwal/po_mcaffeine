@@ -47,9 +47,10 @@ jobs:
             ${EC2_USER}@${EC2_HOST} << 'EOF'
           
           set -e
-          cd ~/app
-          echo "$BACKEND_ENV" > /home/${EC2_USER}/app/backend/.env
-          echo "$FRONTEND_ENV" > /home/${EC2_USER}/app/frontend/.env.local
+          touch ~/app/backend/.env
+          touch ~/app/frontend/.env.local
+          echo "$BACKEND_ENV" > ~/app/backend/.env
+          echo "$FRONTEND_ENV" > ~/app/frontend/.env.local
           EOF
 
       - name: Install and Build Frontend
