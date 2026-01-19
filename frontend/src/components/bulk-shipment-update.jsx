@@ -265,7 +265,7 @@ const fieldDefinitions = {
     category: "admin",
     validation: null,
   },
-  
+
 
   // Warehouse fields
   statusWarehouse: {
@@ -447,11 +447,19 @@ const fieldDefinitions = {
     validation: null,
   },
   physicalWeight: {
-    label: "Physical Weight",
-    csvHeader: "Physical Weight",
+    label: "Chargeable Weight",
+    csvHeader: "Chargeable Weight",
     roles: ["superadmin", "admin", "logistics"],
     type: "number",
     category: "logistics",
+    validation: null,
+  },
+  actualWeight: {
+    label: "Shipment Weight",
+    csvHeader: "Shipment Weight",
+    roles: ["superadmin", "admin", "warehouse"],
+    type: "number",
+    category: "warehouse",
     validation: null,
   },
   deliveryCharges: {
@@ -660,41 +668,41 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
   }
 
   const validateFieldValue = (shipmentData) => {
-    let data = {...shipmentData, isValid: true, errors: []};
+    let data = { ...shipmentData, isValid: true, errors: [] };
     console.log("fields:", Object.keys(shipmentData))
     const fields = Object.keys(shipmentData)
     const uselessFileds = ["errors", "warnings", "isValid", "rowNumber", "uid", "poNumber"]
-    for(let fieldName of fields){
+    for (let fieldName of fields) {
       console.log(fieldName)
       const value = shipmentData[fieldName]
-      const fieldDefinition = (fieldDefinitions )[fieldName]
+      const fieldDefinition = (fieldDefinitions)[fieldName]
       if (!fieldDefinition || !fieldDefinition.validation || !value || value.trim() === "") {
         data.isValid = true;
       }
 
       let allowedValues;
-      if(fieldName === "facility"){
+      if (fieldName === "facility") {
         allowedValues = facilityOptions
-      }else if(fieldName === "firstTransporter" || fieldName === "secondTransporter" || fieldName === "thirdTransporter"){
+      } else if (fieldName === "firstTransporter" || fieldName === "secondTransporter" || fieldName === "thirdTransporter") {
         allowedValues = partnerOptions
-      }else if(uselessFileds.includes(fieldName)){
+      } else if (uselessFileds.includes(fieldName)) {
         // console.log("No allowed values!")
         continue
       }
-      else{
+      else {
         allowedValues = fieldDefinition?.validation
       }
 
       // console.log("allowed values:", allowedValues)
 
-      if(!allowedValues){
+      if (!allowedValues) {
         continue
       }
 
       if (!allowedValues.includes(value)) {
         data.isValid = false;
         data.errors.push(`${fieldDefinition.label} "${value}" is not valid. Must be one of: ${allowedValues?.join(", ")}`)
-      } 
+      }
     }
 
     return data
@@ -757,8 +765,8 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
       const update = {
         status: "valid",
-        errors: [] ,
-        warnings: [] ,
+        errors: [],
+        warnings: [],
         rowNumber: i + 1,
       }
 
@@ -804,7 +812,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
         // Date validation
         const yyyyMMddRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
         if (def.type === "date") {
-          if(!yyyyMMddRegex.test(cell)){
+          if (!yyyyMMddRegex.test(cell)) {
             update.errors.push(`${def.label} must be a valid date in YYYY-MM-DD format`)
           } else {
             update[fieldName] = cell
@@ -896,7 +904,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
       // Only keep UID, PO Number, and allowed+selected fields with non-empty values
       const allowedSelectedFields = selectedFields.filter((fname) => {
-        const def = (fieldDefinitions )[fname]
+        const def = (fieldDefinitions)[fname]
         return def?.roles?.includes(user?.role || "")
       })
       const allowedKeys = new Set(["uid", "poNumber", ...allowedSelectedFields])
@@ -1022,11 +1030,11 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     )
   }
 
-  if(isLoading === true){
+  if (isLoading === true) {
     return (
       <>
-      <Loader className="h-5 w-5" />
-      Loading...
+        <Loader className="h-5 w-5" />
+        Loading...
       </>
     )
   }
@@ -1411,7 +1419,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
                             ))}
                             <TableCell>
                               {(update.errors && update.errors.length > 0) ||
-                              (update.warnings && update.warnings.length > 0) ? (
+                                (update.warnings && update.warnings.length > 0) ? (
                                 <div className="space-y-1">
                                   {update.errors && update.errors.length > 0 && (
                                     <div className="text-xs text-red-600 dark:text-red-400">
