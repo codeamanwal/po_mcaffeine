@@ -70,7 +70,7 @@ async function createShipment(req, res) {
     // unique ponumber check
     const existingShipment = await ShipmentOrder.findAll({where: {poNumber: shipmentOrder.poNumber}});
     // console.log(existingShipment)
-    if(existingShipment.length > 0){
+    if(existingShipment?.length > 0){
        await t.rollback();
       return res.status(400).json({msg: "Shipment order already exist with this Po Number!"})
     }
@@ -229,7 +229,7 @@ async function createBulkShipment(req, res) {
 
     // console.log("Orders grouped by PO Number:", ordersByPoNumber);
     // console.log("Errors:", errors);
-    if (errors.length > 0) {
+    if (errors?.length > 0) {
       return res.status(200).json({ msg: "Some shipments failed to create", errors });
     }
 
@@ -291,7 +291,7 @@ async function getSkusByShipment(req, res) {
           ], // mysql
       ] 
     })
-    if(!skus || skus.length == 0){
+    if(!skus || skus?.length == 0){
       return res.status(404).json({msg:"No sku orders found for given shipment order!"})
     }
     return res.status(200).json({msg: "Sku orders fetched successfully", skus});
@@ -317,7 +317,7 @@ async function getAllShipments(req, res) {
     else if(currUser.role === "warehouse" || currUser.role === "logistics"){
       const allotedFacilities = currUser.allotedFacilities;
       // console.log("Facilities: ", allotedFacilities)
-      if(!allotedFacilities || allotedFacilities.length === 0){
+      if(!allotedFacilities || allotedFacilities?.length === 0){
         shipments = [];
       }
       else{ 
@@ -336,12 +336,12 @@ async function getAllShipments(req, res) {
       shipments = [];
     }
 
-    if (!shipments || shipments.length === 0) {
+    if (!shipments || shipments?.length === 0) {
       return res.status(404).json({ error: 'No shipments found!' });
     }
 
     // Process each shipment to calculate totalUnits and remove skuOrders
-    const shipmentsWithTotals = shipments.map(shipment => {
+    const shipmentsWithTotals = shipments?.map(shipment => {
       const shipmentData = shipment.toJSON();
 
       // Sum total quantity from related skuOrders
@@ -406,9 +406,9 @@ async function getPaginatedShipments(req, res) {
 
     // --- WAREHOUSE / LOGISTICS ---
     else if (currUser.role === "warehouse" || currUser.role === "logistics") {
-      const allotedFacilities = currUser.allotedFacilities;
+      const allotedFacilities = currUser?.allotedFacilities;
 
-      if (!allotedFacilities || allotedFacilities.length === 0) {
+      if (!allotedFacilities || allotedFacilities?.length === 0) {
         // No facilities assigned → no data, tell frontend to stop pagination
         res.setHeader("X-No-More-Pages", "true");
         return res.status(200).json({
@@ -455,7 +455,7 @@ async function getPaginatedShipments(req, res) {
     }
 
     // --- If no shipments found ---
-    if (!shipments || shipments.length === 0) {
+    if (!shipments || shipments?.length === 0) {
       res.setHeader("X-No-More-Pages", "true");
       return res.status(200).json({
         msg: "No shipments found",
@@ -566,7 +566,7 @@ async function getAllSkuOrders(req, res) {
               model: ShipmentOrder,
               as: "shipmentOrder",
               required: true, // ensures only skuOrders having matching shipmentOrder are fetched
-              where: allotedFacilities.length > 0 ? {
+              where: allotedFacilities?.length > 0 ? {
                 facility: {
                   [Op.in]: allotedFacilities,
                 },
@@ -654,7 +654,7 @@ async function getPaginatedSkus(req, res) {
     } else {
       const allotedFacilities = req.user?.allotedFacilities;
 
-      if (!allotedFacilities || allotedFacilities.length === 0) {
+      if (!allotedFacilities || allotedFacilities?.length === 0) {
         res.setHeader("X-No-More-Pages", "true"); 
         return res.status(200).json({
           msg: "No facilities allotted",
@@ -794,9 +794,9 @@ async function updateShipment(req, res) {
       return res.status(404).json({ error: 'Shipment not found' });
     }
     // check log for appointment date change
-    if(shipment?.dataValues?.allAppointmentDate?.length !== updateData.allAppointmentDate.length){
-      const len = updateData.allAppointmentDate.length;
-      updateData.currentAppointmentDate = updateData.allAppointmentDate[len-1];
+    if(shipment?.dataValues?.allAppointmentDate?.length !== updateData?.allAppointmentDate?.length){
+      const len = updateData?.allAppointmentDate?.length;
+      updateData.currentAppointmentDate = updateData?.allAppointmentDate[len-1];
       isLog = true;
       const new_log = {
         shipmentId: shipment.uid,

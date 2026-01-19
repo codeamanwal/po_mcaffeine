@@ -819,37 +819,38 @@ export default function DashboardPage({ onNavigate }) {
   };
 
 
-  const downloadShipmentCSV = async () => {
+  const downloadShipmentCSV = async (e) => {
+    e.preventDefault();
+
     try {
-      const shipmenturl = `${base_url}/api/v1/shipment/get-shipment`;
-      const res = await api.post(shipmenturl, { filters: shipmentFilters });
+      const shipmentUrl = `${base_url}/api/v1/shipment/download-shipment-data`;
+      const res = await api.post(shipmentUrl, { filters: shipmentFilters });
 
-      const formattedOrders = res.data?.shipments?.map(item => {
-        // add tat and critical dispatch date
-        let criticalDispatchDate = item.currentAppointmentDate;
-        const cad = getTimeFromDDMMYYYY(item.currentAppointmentDate)
-        const tat = getTAT(item.firstTransporter) ?? 0;
-        const cdd = cad ? cad - tat * 24 * 60 * 60 * 1000 : null;
-        criticalDispatchDate = formatDate(cdd)
-        // deliveryType
-        const deliveryType = getDeliveryType(item?.channel, item?.deliveryType) ?? "";
-        const currentAppointmentDate = item.currentAppointmentDate ?? item.firstAppointmentDateCOPT ?? item.firstAppointmentDate ?? item.allAppointmentDate?.at(0) ?? "";
-        const finalStatus = getFinalStatus(item.statusPlanning ?? "Confirmed", item.statusWarehouse ?? "Confirmed", item.statusLogistics ?? "Confirmed") ?? "No mapping available!"
-        return {
-          ...item,
-          tat,
-          currentAppointmentDate,
-          criticalDispatchDate,
-          deliveryType,
-          finalStatus,
-        }
-      })
+      const s3Url = res?.data?.downloadUrl;
+      if (!s3Url) {
+        toast.error("Failed to download CSV!");
+        return;
+      }
 
-      exportToCSV(formattedOrders, "shipment-status-data.csv", shipmentStatusDataType)
+      const response = await fetch(s3Url);
+      const blob = await response.blob();
 
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "shipment-order-data.csv";
+      document.body.appendChild(a);
+      a.click();
+
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(error)
-      toast.error(error?.response?.data?.msg || error?.message || "Failed to fetch data!")
+      console.error(error);
+      toast.error(
+        error?.response?.data?.msg ||
+        error?.message ||
+        "Failed to fetch data!"
+      );
     }
   }
 

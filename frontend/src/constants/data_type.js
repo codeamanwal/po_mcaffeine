@@ -78,7 +78,7 @@ export const poFormatDataType = [
     type: "select",
     options: ["MUM_WAREHOUSE1", "MUM_WAREHOUSE2", "DEL_WAREHOUSE1", "BLR_WAREHOUSE1"],
   },
-  { fieldName: "productWeight", label: "Product Weight", id: "productWeight", type: "number" },
+  { fieldName: "actualWeight", label: "Product Weight", id: "actualWeight", type: "number" },
   // { fieldName: "accountsWorking", label: "Accounts Working", id: "accountsWorking", type: "number" },
   // {
   //   fieldName: "channelInwardingQuantity",
@@ -86,7 +86,7 @@ export const poFormatDataType = [
   //   id: "channelInwardingQuantity",
   //   type: "text",
   // },
-  { fieldName: "workingDate", label: "Working Date", id: "workingDate", type: "date" },
+  { fieldName: "workingDatePlanner", label: "Working Date", id: "workingDatePlanner", type: "date" },
   { fieldName: "dispatchDate", label: "Dispatch Date", id: "dispatchDate", type: "date" },
   {
     fieldName: "currentAppointmentDate",

@@ -46,14 +46,17 @@ export async function generateS3UploadUrl(fileName, fileType) {
 }
 
 /*
-Upload sku filtered data to s3 and returns the file url to download data
+Upload filtered data to s3 as CSV and returns the file url
+@param {string} queryString - Raw SQL query to execute
+@param {Array} formatDataType - Array of objects defining fieldName and label for CSV headers
+@param {Array} replacements - Replacements for the SQL query
 @return {string} file url to download data
 */
-export async function uploadSkuDataToS3(customQuery = null, replacements = []) {
+export async function uploadCsvDataToS3(queryString, formatDataType, replacements = []) {
     const passThrough = new PassThrough();
 
     // Map fields for csv-stringify: { key: 'fieldName', header: 'Label' }
-    const columns = poFormatDataType.map((field) => ({
+    const columns = formatDataType.map((field) => ({
         key: field.fieldName,
         header: field.label
     }));
@@ -67,7 +70,7 @@ export async function uploadSkuDataToS3(customQuery = null, replacements = []) {
     // Pipe CSV → S3
     csvStream.pipe(passThrough);
 
-    const fileKey = `data/sku_orders_${Date.now()}.csv`;
+    const fileKey = `data/export_${Date.now()}.csv`;
 
     const upload = new Upload({
         client: s3,
@@ -82,46 +85,9 @@ export async function uploadSkuDataToS3(customQuery = null, replacements = []) {
     // Get raw connection for streaming
     const connection = await sequelize.connectionManager.getConnection();
 
-    // Default query if none provided
-    const defaultQuery = `
-        SELECT
-            so.shipmentOrderId,
-            sho.entryDate,
-            sho.poDate,
-            sho.facility,
-            sho.channel,
-            sho.location,
-            so.poNumber,
-            so.brandName,
-            so.srNo,
-            so.skuName,
-            so.skuCode,
-            so.channelSkuCode,
-            so.qty,
-            so.gmv,
-            so.poValue,
-            so.updatedQty,
-            so.updatedGmv,
-            so.updatedPoValue,
-            so.actualWeight AS productWeight,
-            sho.workingDatePlanner AS workingDate,
-            sho.dispatchDate,
-            sho.currentAppointmentDate,
-            sho.statusPlanning,
-            sho.statusWarehouse,
-            sho.statusLogistics
-        FROM sku_orders so
-        LEFT JOIN shipment_orders sho ON so.shipmentOrderId = sho.uid
-    `;
-
-    const queryToExecute = customQuery || defaultQuery;
-
     // Start DB stream
     // Note: sequelize connection.query needs raw sql.
-    // If replacements are used, we typically rely on sequelize's built-in formatting,
-    // but connection.query from driver might support '?' or named parameters depending on config.
-    // For safety with raw driver connection, assuming standard mysql driver behavior (array of values).
-    const queryStream = connection.query(queryToExecute, replacements).stream({ highWaterMark: 1000 });
+    const queryStream = connection.query(queryString, replacements).stream({ highWaterMark: 1000 });
 
     queryStream.on('data', row => {
         csvStream.write(row);

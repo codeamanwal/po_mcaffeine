@@ -1,8 +1,8 @@
-
-import { generateS3UploadUrl, uploadSkuDataToS3 } from "../utils/s3.js"
+import { generateS3UploadUrl, uploadCsvDataToS3 } from "../utils/s3.js"
 import SkuOrder from "../models/sku-order.model.js";
 import ShipmentOrder from "../models/shipment-order.model.js";
 import { Op } from "sequelize";
+import { poFormatDataType, shipmentFormatDataType } from "../utils/constant.js";
 
 export async function getS3UploadUrl(req, res) {
     try {
@@ -272,7 +272,7 @@ so.shipmentOrderId DESC,
     `;
 
         // --- Upload to S3 ---
-        const signedUrl = await uploadSkuDataToS3(finalQuery, replacements);
+        const signedUrl = await uploadCsvDataToS3(finalQuery, poFormatDataType, replacements);
 
         return res.status(200).json({
             msg: "File generated successfully",
@@ -282,5 +282,337 @@ so.shipmentOrderId DESC,
     } catch (error) {
         console.log(error)
         return res.status(500).json({ msg: "Could not generate file download url!", error: error })
+    }
+}
+
+export async function downloadShipmentDataWithFiltersInCsvFile(req, res) {
+    try {
+        const currUser = req.user;
+        const query = req.query;
+        const filters = req.body.filters;
+
+        // --- Construct Final Query ---
+
+        // Sum total units subquery
+        const totalUnitsQuery = `(SELECT SUM(COALESCE(sub_so.updatedQty, sub_so.qty, 0)) FROM sku_orders sub_so WHERE sub_so.shipmentOrderId = sho.uid)`;
+
+        // For role-based access, we need to ensure the query respects allotment
+        // The above sequelize 'findAndCountAll' does this via WHERE clauses.
+        // We need to use 'replacements' for raw SQL.
+
+        // Re-construct WHERE clauses for RAW SQL
+        let rawWhereClauses = [];
+        let rawReplacements = [];
+
+        // Note: The previous logic built 'filters' into 'shipmentWhere' and 'skuWhere'.
+        // Converting this Complex Sequelize Logic to Raw SQL is tricky because of the JOINs and 'distinct' behavior.
+        // BUT, since we are downloading SHIPMENT data, we are selecting from shipment_orders.
+        // If we filter by BRAND (which is on SKU), we must join SKU.
+        // If we join SKU, we get multiple rows per shipment.
+        // To get one row per shipment, we must GROUP BY shipment_order.uid or use DISTINCT.
+        // However, we can't select specific columns easily if we group, unless we aggregate everything.
+        // A better approach for Filtered Shipment Download might be:
+        // 1. Build the exact same query as 'findAndCountAll' up to the filtering.
+        // 2. But perform it in raw SQL.
+
+        // Let's iterate over filters again and build RAW SQL conditions for 'shipment_orders' alias 'sho'.
+
+        // Brand Filter (requires EXISTS or JOIN)
+        if (filters?.brand && filters.brand.length > 0) {
+            const hasNotAssigned = filters.brand.includes("Not Assigned");
+            const brandValues = filters.brand.filter(val => val !== "Not Assigned");
+
+            let brandCondition = "";
+            if (hasNotAssigned) {
+                if (brandValues.length > 0) {
+                    brandCondition = `(so.brandName IN (?) OR so.brandName IS NULL OR so.brandName = '')`;
+                    rawReplacements.push(brandValues);
+                } else {
+                    brandCondition = `(so.brandName IS NULL OR so.brandName = '')`;
+                }
+            } else {
+                brandCondition = `so.brandName IN (?)`;
+                rawReplacements.push(brandValues);
+            }
+
+            // We use EXISTS to filter shipments that have AT LEAST ONE sku with this brand
+            rawWhereClauses.push(`EXISTS (SELECT 1 FROM sku_orders so WHERE so.shipmentOrderId = sho.uid AND ${brandCondition})`);
+        }
+
+        // Channel
+        if (filters?.channel && filters.channel.length > 0) {
+            const hasNotAssigned = filters.channel.includes("Not Assigned");
+            const values = filters.channel.filter(val => val !== "Not Assigned");
+            if (hasNotAssigned) {
+                if (values.length > 0) {
+                    rawWhereClauses.push("(sho.channel IN (?) OR sho.channel IS NULL OR sho.channel = '')");
+                    rawReplacements.push(values);
+                } else {
+                    rawWhereClauses.push("(sho.channel IS NULL OR sho.channel = '')");
+                }
+            } else {
+                rawWhereClauses.push("sho.channel IN (?)");
+                rawReplacements.push(values);
+            }
+        }
+
+        // Facility
+        if (filters?.facility && filters.facility.length > 0) {
+            const hasNotAssigned = filters.facility.includes("Not Assigned");
+            const values = filters.facility.filter(val => val !== "Not Assigned");
+            if (hasNotAssigned) {
+                if (values.length > 0) {
+                    rawWhereClauses.push("(sho.facility IN (?) OR sho.facility IS NULL OR sho.facility = '')");
+                    rawReplacements.push(values);
+                } else {
+                    rawWhereClauses.push("(sho.facility IS NULL OR sho.facility = '')");
+                }
+            } else {
+                rawWhereClauses.push("sho.facility IN (?)");
+                rawReplacements.push(values);
+            }
+        }
+
+        // Location
+        if (filters?.location && filters.location.length > 0) {
+            const hasNotAssigned = filters.location.includes("Not Assigned");
+            const values = filters.location.filter(val => val !== "Not Assigned");
+            if (hasNotAssigned) {
+                if (values.length > 0) {
+                    rawWhereClauses.push("(sho.location IN (?) OR sho.location IS NULL OR sho.location = '')");
+                    rawReplacements.push(values);
+                } else {
+                    rawWhereClauses.push("(sho.location IS NULL OR sho.location = '')");
+                }
+            } else {
+                rawWhereClauses.push("sho.location IN (?)");
+                rawReplacements.push(values);
+            }
+        }
+
+        // Status Planning
+        if (filters?.statusPlanning && filters.statusPlanning.length > 0) {
+            const hasNotAssigned = filters.statusPlanning.includes("Not Assigned");
+            const values = filters.statusPlanning.filter(val => val !== "Not Assigned");
+            if (hasNotAssigned) {
+                if (values.length > 0) {
+                    rawWhereClauses.push("(sho.statusPlanning IN (?) OR sho.statusPlanning IS NULL OR sho.statusPlanning = '')");
+                    rawReplacements.push(values);
+                } else {
+                    rawWhereClauses.push("(sho.statusPlanning IS NULL OR sho.statusPlanning = '')");
+                }
+            } else {
+                rawWhereClauses.push("sho.statusPlanning IN (?)");
+                rawReplacements.push(values);
+            }
+        }
+
+        // Status Warehouse
+        if (filters?.statusWarehouse && filters.statusWarehouse.length > 0) {
+            const hasNotAssigned = filters.statusWarehouse.includes("Not Assigned");
+            const values = filters.statusWarehouse.filter(val => val !== "Not Assigned");
+            if (hasNotAssigned) {
+                if (values.length > 0) {
+                    rawWhereClauses.push("(sho.statusWarehouse IN (?) OR sho.statusWarehouse IS NULL OR sho.statusWarehouse = '')");
+                    rawReplacements.push(values);
+                } else {
+                    rawWhereClauses.push("(sho.statusWarehouse IS NULL OR sho.statusWarehouse = '')");
+                }
+            } else {
+                rawWhereClauses.push("sho.statusWarehouse IN (?)");
+                rawReplacements.push(values);
+            }
+        }
+
+        // Status Logistics
+        if (filters?.statusLogistics && filters.statusLogistics.length > 0) {
+            const hasNotAssigned = filters.statusLogistics.includes("Not Assigned");
+            const values = filters.statusLogistics.filter(val => val !== "Not Assigned");
+            if (hasNotAssigned) {
+                if (values.length > 0) {
+                    rawWhereClauses.push("(sho.statusLogistics IN (?) OR sho.statusLogistics IS NULL OR sho.statusLogistics = '')");
+                    rawReplacements.push(values);
+                } else {
+                    rawWhereClauses.push("(sho.statusLogistics IS NULL OR sho.statusLogistics = '')");
+                }
+            } else {
+                rawWhereClauses.push("sho.statusLogistics IN (?)");
+                rawReplacements.push(values);
+            }
+        }
+
+        // Transporter
+        if (filters?.transporter && filters.transporter.length > 0) {
+            const hasNotAssigned = filters.transporter.includes("Not Assigned");
+            const values = filters.transporter.filter(val => val !== "Not Assigned");
+
+            if (hasNotAssigned) {
+                // OR condition for nulls
+                const nullCond = "(sho.firstTransporter IN (?) OR sho.firstTransporter IS NULL OR sho.firstTransporter = '' " +
+                    "OR sho.secondTransporter IN (?) OR sho.secondTransporter IS NULL OR sho.secondTransporter = '' " +
+                    "OR sho.thirdTransporter IN (?) OR sho.thirdTransporter IS NULL OR sho.thirdTransporter = '')";
+                rawWhereClauses.push(nullCond);
+                rawReplacements.push(values);
+                rawReplacements.push(values);
+                rawReplacements.push(values);
+            } else {
+                // Must be in one of them?
+                // The original sequelize logic was:
+                // shipmentWhere[Op.or] = [ { firstTransporter: { [Op.in]: filters.transporter } }, ... ]
+
+                const orCond = "(sho.firstTransporter IN (?) OR sho.secondTransporter IN (?) OR sho.thirdTransporter IN (?))";
+                rawWhereClauses.push(orCond);
+                rawReplacements.push(filters.transporter);
+                rawReplacements.push(filters.transporter);
+                rawReplacements.push(filters.transporter);
+            }
+        }
+
+        // Null Dates
+        if (filters?.nullDatesFilter && filters.nullDatesFilter.length > 0) {
+            if (filters.nullDatesFilter.includes("Current Appointment Date")) {
+                rawWhereClauses.push("(sho.currentAppointmentDate IS NULL AND sho.firstAppointmentDateCOPT IS NULL)");
+            }
+            if (filters.nullDatesFilter.includes("Dispatch Date")) {
+                rawWhereClauses.push("sho.dispatchDate IS NULL");
+            }
+            if (filters.nullDatesFilter.includes("Working Date")) {
+                rawWhereClauses.push("sho.workingDatePlanner IS NULL");
+            }
+        }
+
+        // Dates
+        if (filters?.poDateFrom) { rawWhereClauses.push("sho.poDate >= ?"); rawReplacements.push(filters.poDateFrom); }
+        if (filters?.poDateTo) { rawWhereClauses.push("sho.poDate <= ?"); rawReplacements.push(filters.poDateTo); }
+
+        if (filters?.workingDateFrom) { rawWhereClauses.push("sho.workingDatePlanner >= ?"); rawReplacements.push(filters.workingDateFrom); }
+        if (filters?.workingDateTo) { rawWhereClauses.push("sho.workingDatePlanner <= ?"); rawReplacements.push(filters.workingDateTo); }
+
+        if (filters?.dispatchDateFrom) { rawWhereClauses.push("sho.dispatchDate >= ?"); rawReplacements.push(filters.dispatchDateFrom); }
+        if (filters?.dispatchDateTo) { rawWhereClauses.push("sho.dispatchDate <= ?"); rawReplacements.push(filters.dispatchDateTo); }
+
+        if (filters?.currentAppointmentDateFrom) { rawWhereClauses.push("sho.currentAppointmentDate >= ?"); rawReplacements.push(filters.currentAppointmentDateFrom); }
+        if (filters?.currentAppointmentDateTo) { rawWhereClauses.push("sho.currentAppointmentDate <= ?"); rawReplacements.push(filters.currentAppointmentDateTo); } // Fix typo in original code: if (filters.dispatchDateTo) -> currentAppointmentDateTo
+
+        // Search
+        if (filters?.search && filters.search !== "") {
+            rawWhereClauses.push("(sho.poNumber LIKE ? OR sho.uid LIKE ?)");
+            rawReplacements.push(`%${filters.search}%`);
+            rawReplacements.push(`%${filters.search}%`);
+        }
+
+        // Docket No
+        if (filters?.docketNo && filters.docketNo !== "") {
+            rawWhereClauses.push("(sho.firstDocketNo LIKE ? OR sho.secondDocketNo LIKE ? OR sho.thirdDocketNo LIKE ?)");
+            rawReplacements.push(`%${filters.docketNo}%`);
+            rawReplacements.push(`%${filters.docketNo}%`);
+            rawReplacements.push(`%${filters.docketNo}%`);
+        }
+
+        // Role Access
+        if (currUser.role !== "superadmin" && currUser.role !== "admin") {
+            const allotedFacilities = currUser.allotedFacilities;
+            if (!allotedFacilities || allotedFacilities.length === 0) {
+                rawWhereClauses.push("1 = 0");
+            } else {
+                rawWhereClauses.push("sho.facility IN (?)");
+                rawReplacements.push(allotedFacilities);
+            }
+        }
+
+        const whereSql = rawWhereClauses.length > 0 ? `WHERE ${rawWhereClauses.join(' AND ')}` : '';
+
+        // Select columns mapping to shipmentFormatDataType
+        // Note: fieldName in constant matches DB column usually, but sometimes needs alias.
+
+        const finalQuery = `
+            SELECT 
+                sho.uid,
+                sho.entryDate,
+                sho.poDate,
+                sho.facility,
+                sho.channel,
+                sho.location,
+                sho.poNumber,
+                ${totalUnitsQuery} AS totalUnits,
+                sho.remarksPlanning,
+                sho.specialRemarksCOPT,
+                sho.newShipmentReference,
+                sho.statusPlanning,
+                sho.statusWarehouse,
+                sho.statusLogistics,
+                sho.channelInwardingRemarks,
+                sho.dispatchRemarksLogistics,
+                sho.dispatchRemarksWarehouse,
+                sho.dispatchDateTentative,
+                sho.workingDatePlanner,
+                sho.rtsDate,
+                sho.dispatchDate,
+                sho.currentAppointmentDate,
+                sho.firstAppointmentDateCOPT,
+                sho.noOfBoxes,
+                sho.orderNo1,
+                sho.orderNo2,
+                sho.orderNo3,
+                sho.poNumberInwardCWH,
+                sho.pickListNo,
+                sho.workingTypeWarehouse,
+                sho.inventoryRemarksWarehouse,
+                sho.b2bWorkingTeamRemarks,
+                sho.volumetricWeight,
+                sho.channelType,
+                sho.firstTransporter,
+                sho.firstDocketNo,
+                sho.secondTransporter,
+                sho.secondDocketNo,
+                sho.thirdTransporter,
+                sho.thirdDocketNo,
+                sho.appointmentLetter,
+                sho.labelsLink,
+                sho.invoiceDate,
+                sho.invoiceLink,
+                sho.cnLink,
+                sho.ewayLink,
+                sho.invoiceValue,
+                sho.remarksAccountsTeam,
+                sho.invoiceChallanNumber,
+                sho.invoiceCheckedBy,
+                sho.customerCode,
+                sho.poEntryCount,
+                sho.deliveryDate,
+                sho.rescheduleLag,
+                sho.finalRemarks,
+                sho.actualWeight,
+                sho.physicalWeight,
+                sho.deliveryCharges,
+                sho.halting,
+                sho.unloadingCharges,
+                sho.dedicatedVehicle,
+                sho.otherCharges,
+                sho.dispatchDate As criticalDispatchDate,
+                sho.rpk,
+                sho.rpk As tat,
+                sho.deliveryType,
+                sho.appointmentShootedDate,
+                sho.appointmentRequestedDate,
+                sho.remarksWarehouse
+            FROM shipment_orders sho
+            ${whereSql}
+            ORDER BY sho.uid DESC
+        `;
+
+        const signedUrl = await uploadCsvDataToS3(finalQuery, shipmentFormatDataType, rawReplacements);
+
+        return res.status(200).json({
+            msg: "File generated successfully",
+            downloadUrl: signedUrl,
+        });
+
+    } catch (error) {
+        console.error("Error downloading filtered shipments:", error);
+        return res.status(500).json({
+            msg: "Something went wrong while downloading filtered shipments",
+            error: error.message,
+        });
     }
 }

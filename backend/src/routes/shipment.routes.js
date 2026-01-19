@@ -1,7 +1,7 @@
 import {Router} from "express"
 import { shipmentControllers } from "../controllers/shipment.controller.js"
 import {getFilterOptions, getShipments, getSkus} from "../controllers/order-filter.controllers.js"
-import { downloadSkuDataWithFiltersInCsvFile, getS3UploadUrl } from "../controllers/file.controllers.js"
+import { downloadSkuDataWithFiltersInCsvFile, downloadShipmentDataWithFiltersInCsvFile, getS3UploadUrl } from "../controllers/file.controllers.js"
 
 const router = Router()
 
@@ -53,5 +53,7 @@ router.post('/get-log', async (req, res) => {
 // file routes -->
 router.get('/get-upload-url', getS3UploadUrl)
 router.post('/download-sku-data', downloadSkuDataWithFiltersInCsvFile)
+router.post('/download-shipment-data', downloadShipmentDataWithFiltersInCsvFile)
+
 
 export const shipmentRouter = router

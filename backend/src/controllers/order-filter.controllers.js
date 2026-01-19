@@ -48,11 +48,11 @@ export async function getSkus(req, res) {
     if (filters?.skuCode && filters.skuCode !== "") {
       skuWhere.skuCode = { [Op.like]: `%${filters.skuCode}%` };
     }
-    if (filters?.brand && filters.brand.length > 0) {
-      if (filters.brand.includes("Not Assigned")) {
+    if (filters?.brand && filters?.brand?.length > 0) {
+      if (filters?.brand?.includes("Not Assigned")) {
         skuWhere.brandName = {
           [Op.or]: [
-            { [Op.in]: filters.brand.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.brand?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
@@ -63,11 +63,11 @@ export async function getSkus(req, res) {
       }
     }
 
-    if (filters?.channel && filters.channel.length > 0) {
-      if (filters.channel.includes("Not Assigned")) {
+    if (filters?.channel && filters?.channel?.length > 0) {
+      if (filters?.channel?.includes("Not Assigned")) {
         shipmentWhere.channel = {
           [Op.or]: [
-            { [Op.in]: filters.channel.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.channel?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
@@ -77,53 +77,53 @@ export async function getSkus(req, res) {
         shipmentWhere.channel = { [Op.in]: filters.channel };
       }
     }
-    if (filters?.facility && filters.facility.length > 0) {
-      if (filters.facility.includes("Not Assigned")) {
+    if (filters?.facility && filters?.facility?.length > 0) {
+      if (filters?.facility?.includes("Not Assigned")) {
         shipmentWhere.facility = {
           [Op.or]: [
-            { [Op.in]: filters.facility.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.facility?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         }
       }
       else {
-        shipmentWhere.facility = { [Op.in]: filters.facility };
+        shipmentWhere.facility = { [Op.in]: filters?.facility };
       }
     }
-    if (filters?.location && filters.location.length > 0) {
-      if (filters.location.includes("Not Assigned")) {
+    if (filters?.location && filters?.location?.length > 0) {
+      if (filters?.location?.includes("Not Assigned")) {
         shipmentWhere.location = {
           [Op.or]: [
-            { [Op.in]: filters.location.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.location?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         }
       }
       else {
-        shipmentWhere.location = { [Op.in]: filters.location };
+        shipmentWhere.location = { [Op.in]: filters?.location };
       }
     }
-    if (filters?.statusPlanning && filters.statusPlanning.length > 0) {
-      if (filters.statusPlanning.includes("Not Assigned")) {
+    if (filters?.statusPlanning && filters?.statusPlanning?.length > 0) {
+      if (filters?.statusPlanning?.includes("Not Assigned")) {
         shipmentWhere.statusPlanning = {
           [Op.or]: [
-            { [Op.in]: filters.statusPlanning.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.statusPlanning?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         }
       }
       else {
-        shipmentWhere.statusPlanning = { [Op.in]: filters.statusPlanning };
+        shipmentWhere.statusPlanning = { [Op.in]: filters?.statusPlanning };
       }
     }
-    if (filters?.statusWarehouse && filters.statusWarehouse.length > 0) {
-      if (filters.statusWarehouse.includes("Not Assigned")) {
+    if (filters?.statusWarehouse && filters?.statusWarehouse?.length > 0) {
+      if (filters?.statusWarehouse?.includes("Not Assigned")) {
         shipmentWhere.statusWarehouse = {
           [Op.or]: [
-            { [Op.in]: filters.statusWarehouse.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.statusWarehouse?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
@@ -133,18 +133,18 @@ export async function getSkus(req, res) {
         shipmentWhere.statusWarehouse = { [Op.in]: filters.statusWarehouse };
       }
     }
-    if (filters?.statusLogistics && filters.statusLogistics.length > 0) {
-      if (filters.statusLogistics.includes("Not Assigned")) {
+    if (filters?.statusLogistics && filters?.statusLogistics?.length > 0) {
+      if (filters?.statusLogistics?.includes("Not Assigned")) {
         shipmentWhere.statusLogistics = {
           [Op.or]: [
-            { [Op.in]: filters.statusLogistic.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.statusLogistics?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         }
       }
       else {
-        shipmentWhere.statusLogistics = { [Op.in]: filters.statusLogistics };
+        shipmentWhere.statusLogistics = { [Op.in]: filters?.statusLogistics };
       }
     }
     if (filters?.poDateFrom || filters?.poDateTo) {
@@ -205,7 +205,7 @@ export async function getSkus(req, res) {
     else {
       const allotedFacilities = req.user?.allotedFacilities;
 
-      if (!allotedFacilities || allotedFacilities.length === 0) {
+      if (!allotedFacilities || allotedFacilities?.length === 0) {
         res.setHeader("X-No-More-Pages", "true");
         return res.status(200).json({
           msg: "No facilities allotted",
@@ -219,14 +219,14 @@ export async function getSkus(req, res) {
 
       let facilityFilter = allotedFacilities; // default = ALL allowed facilities
 
-      if (filters?.facility && filters.facility.length > 0) {
+      if (filters?.facility && filters?.facility?.length > 0) {
         // Intersect
-        facilityFilter = filters.facility.filter(f =>
-          allotedFacilities.includes(f)
+        facilityFilter = filters?.facility?.filter(f =>
+          allotedFacilities?.includes(f)
         );
 
         // If intersection is empty -> user filtered by facilities they don't have access to
-        if (facilityFilter.length === 0) {
+        if (facilityFilter?.length === 0) {
           res.setHeader("X-No-More-Pages", "true");
           return res.status(200).json({
             msg: "No shipments found for your allotted facilities",
@@ -326,11 +326,11 @@ export async function getShipments(req, res) {
     const skuWhere = {};
     const shipmentWhere = {};
 
-    if (filters?.brand && filters.brand.length > 0) {
-      if (filters.brand.includes("Not Assigned")) {
+    if (filters?.brand && filters.brand?.length > 0) {
+      if (filters?.brand?.includes("Not Assigned")) {
         skuWhere.brandName = {
           [Op.or]: [
-            { [Op.in]: filters.brand.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.brand?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
@@ -341,11 +341,11 @@ export async function getShipments(req, res) {
       }
     }
 
-    if (filters?.channel && filters.channel.length > 0) {
-      if (filters.channel.includes("Not Assigned")) {
+    if (filters?.channel && filters?.channel?.length > 0) {
+      if (filters?.channel?.includes("Not Assigned")) {
         shipmentWhere.channel = {
           [Op.or]: [
-            { [Op.in]: filters.channel.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.channel?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
@@ -355,69 +355,68 @@ export async function getShipments(req, res) {
         shipmentWhere.channel = { [Op.in]: filters.channel };
       }
     }
-    if (filters?.facility && filters.facility.length > 0) {
-      if (filters.facility.includes("Not Assigned")) {
+    if (filters?.facility && filters?.facility?.length > 0) {
+      if (filters?.facility?.includes("Not Assigned")) {
         shipmentWhere.facility = {
           [Op.or]: [
-            { [Op.in]: filters.facility.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.facility?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         }
       }
       else {
-        shipmentWhere.facility = { [Op.in]: filters.facility };
+        shipmentWhere.facility = { [Op.in]: filters?.facility };
       }
     }
-    if (filters?.location && filters.location.length > 0) {
-      if (filters.location.includes("Not Assigned")) {
+    if (filters?.location && filters?.location?.length > 0) {
+      if (filters?.location?.includes("Not Assigned")) {
         shipmentWhere.location = {
           [Op.or]: [
-            { [Op.in]: filters.location.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.location?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         }
       }
       else {
-        shipmentWhere.location = { [Op.in]: filters.location };
+        shipmentWhere.location = { [Op.in]: filters?.location };
       }
     }
-    if (filters?.statusPlanning && filters.statusPlanning.length > 0) {
-      if (filters.statusPlanning.includes("Not Assigned")) {
+    if (filters?.statusPlanning && filters?.statusPlanning?.length > 0) {
+      if (filters?.statusPlanning?.includes("Not Assigned")) {
         shipmentWhere.statusPlanning = {
           [Op.or]: [
-            { [Op.in]: filters.statusPlanning.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.statusPlanning?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         }
       }
       else {
-        shipmentWhere.statusPlanning = { [Op.in]: filters.statusPlanning };
+        shipmentWhere.statusPlanning = { [Op.in]: filters?.statusPlanning };
       }
     }
-    if (filters?.statusWarehouse && filters.statusWarehouse.length > 0) {
-      if (filters.statusWarehouse.includes("Not Assigned")) {
+    if (filters?.statusWarehouse && filters?.statusWarehouse?.length > 0) {
+      if (filters?.statusWarehouse?.includes("Not Assigned")) {
         shipmentWhere.statusWarehouse = {
           [Op.or]: [
-            { [Op.in]: filters.statusWarehouse.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.statusWarehouse?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         }
       }
       else {
-        shipmentWhere.statusWarehouse = { [Op.in]: filters.statusWarehouse };
+        shipmentWhere.statusWarehouse = { [Op.in]: filters?.statusWarehouse };
       }
     }
-    if (filters?.statusLogistics && filters.statusLogistics.length > 0) {
-      if (filters.statusLogistics.includes("Not Assigned")) {
+    if (filters?.statusLogistics && filters?.statusLogistics?.length > 0) {
+      if (filters?.statusLogistics?.includes("Not Assigned")) {
         shipmentWhere.statusLogistics = {
           [Op.or]: [
-            { [Op.in]: filters.statusLogistic.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.statusLogistics?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
-            { [Op.eq]: "" }
           ]
         }
       }
@@ -425,25 +424,25 @@ export async function getShipments(req, res) {
         shipmentWhere.statusLogistics = { [Op.in]: filters.statusLogistics };
       }
     }
-    if (filters?.transporter && filters.transporter.length > 0) {
-      if (filters.transporter.includes("Not Assigned")) {
+    if (filters?.transporter && filters?.transporter?.length > 0) {
+      if (filters?.transporter?.includes("Not Assigned")) {
         shipmentWhere.firstTransporter = {
           [Op.or]: [
-            { [Op.in]: filters.transporter.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.transporter?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         };
         shipmentWhere.secondTransporter = {
           [Op.or]: [
-            { [Op.in]: filters.transporter.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.transporter?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
         };
          shipmentWhere.thirdTransporter = {
           [Op.or]: [
-            { [Op.in]: filters.transporter.filter(val => val !== "Not Assigned") },
+            { [Op.in]: filters?.transporter?.filter(val => val !== "Not Assigned") },
             { [Op.is]: null },
             { [Op.eq]: "" }
           ]
@@ -458,19 +457,19 @@ export async function getShipments(req, res) {
       }
     }
 
-    if (filters?.nullDatesFilter && filters.nullDatesFilter.length > 0) {
-      if(filters.nullDatesFilter.includes("Current Appointment Date")) {
+    if (filters?.nullDatesFilter && filters.nullDatesFilter?.length > 0) {
+      if(filters.nullDatesFilter?.includes("Current Appointment Date")) {
         shipmentWhere[Op.and] = [
           {currentAppointmentDate: { [Op.is]: null }},
           {firstAppointmentDateCOPT: { [Op.is]: null }},
         ]
       }
-      if(filters.nullDatesFilter.includes("Dispatch Date")) {
+      if(filters.nullDatesFilter?.includes("Dispatch Date")) {
         shipmentWhere.dispatchDate = {
           [Op.is]: null
         }
       }
-      if(filters.nullDatesFilter.includes("Working Date")) {
+      if(filters.nullDatesFilter?.includes("Working Date")) {
         shipmentWhere.workingDatePlanner = {
           [Op.is]: null
         }
@@ -562,7 +561,7 @@ export async function getShipments(req, res) {
     else if (currUser.role === "warehouse" || currUser.role === "logistics") {
       const allotedFacilities = currUser.allotedFacilities;
 
-      if (!allotedFacilities || allotedFacilities.length === 0) {
+      if (!allotedFacilities || allotedFacilities?.length === 0) {
         // No facilities assigned → no data, tell frontend to stop pagination
         res.setHeader("X-No-More-Pages", "true");
         return res.status(200).json({
@@ -577,14 +576,14 @@ export async function getShipments(req, res) {
 
       let facilityFilter = allotedFacilities; // default = ALL allowed facilities
 
-      if (filters?.facility && filters.facility.length > 0) {
+      if (filters?.facility && filters?.facility?.length > 0) {
         // Intersect
-        facilityFilter = filters.facility.filter(f =>
-          allotedFacilities.includes(f)
+        facilityFilter = filters?.facility?.filter(f =>
+          allotedFacilities?.includes(f)
         );
 
         // If intersection is empty -> user filtered by facilities they don't have access to
-        if (facilityFilter.length === 0) {
+        if (facilityFilter?.length === 0) {
           res.setHeader("X-No-More-Pages", "true");
           return res.status(200).json({
             msg: "No shipments found for your allotted facilities",
@@ -631,7 +630,7 @@ export async function getShipments(req, res) {
     }
 
     // --- If no shipments found ---
-    if (!shipments || shipments.length === 0) {
+    if (!shipments || shipments?.length === 0) {
       res.setHeader("X-No-More-Pages", "true");
       return res.status(200).json({
         msg: "No shipments found",
@@ -677,6 +676,7 @@ export async function getShipments(req, res) {
       // duration: `${(end - start) / 1000} sec`,
     });
   } catch (error) {
+    console.log(error)
     console.error("Error fetching paginated shipments:", error);
     return res.status(500).json({
       msg: "Something went wrong while fetching paginated shipments",
@@ -738,9 +738,9 @@ export async function getFilterOptions(req, res) {
         ? Array.from(
           new Set(
             val
-              .split(",")
-              .map((v) => v.trim())
-              .filter((v) => v && v !== "0")
+              ?.split(",")
+              ?.map((v) => v.trim())
+              ?.filter((v) => v && v !== "0")
           )
         )
         : [];
