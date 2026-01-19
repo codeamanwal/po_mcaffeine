@@ -48,8 +48,8 @@ jobs:
           
           set -e
           cd ~/app
-          echo "$BACKEND_ENV" > backend/.env
-          echo "$FRONTEND_ENV" > frontend/.env.local
+          echo "$BACKEND_ENV" > /home/${EC2_USER}/app/backend/.env
+          echo "$FRONTEND_ENV" > /home/${EC2_USER}/app/frontend/.env.local
           EOF
 
       - name: Install and Build Frontend
