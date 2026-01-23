@@ -1,4 +1,4 @@
-name: Deploy application on ec2
+name: Deploy test application on ec2
 
 on:
   # push:
