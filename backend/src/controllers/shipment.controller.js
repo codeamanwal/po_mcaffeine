@@ -889,13 +889,13 @@ async function updateBulkShipment(req, res){
           errs.push({ uid, poNumber, error: 'Shipment not found with given poNumber' });
           continue;
         }
+
         // check for current appt date to update from first appt date
-        if(updatedFields.includes("firstfirstAppointmentDate") || updatedFields.includes("firstfirstAppointmentDateCOPT")){
+        if(updatedFields.includes("firstAppointmentDateCOPT")){
           const firstApptDate = updateData.firstAppointmentDateCOPT || updateData.firstApptDate;
-          if(!existingShipment.currentAppointmentDate || existingShipment.currentAppointmentDate < firstApptDate){
-            updateData = {...updateData , currentAppointmentDate: firstApptDate}
-          }
+          updateData = {...updateData , currentAppointmentDate: firstApptDate}
         }
+
         // for (const field in updateData) {
         //   const entries = Object.entries(updateData[field]);
         //   for (const [key, value] of entries) {
