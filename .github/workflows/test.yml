@@ -82,18 +82,28 @@ jobs:
             ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/test_app/frontend
 
       # Upload Environment Files
-      - name: Upload env files
+      - name: Upload env file
         env:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
           BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
           FRONTEND_ENV: ${{ secrets.FRONTEND_ENV }}
         run: |
-          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} << EOF
           set -e
-          touch ~/test_app/backend.env && touch ~/test_app/frontend/.env.local
-          echo "$BACKEND_ENV" > ~/test_app/backend/.env
-          echo "$FRONTEND_ENV" > ~/test_app/frontend/.env.local
+
+          mkdir -p ~/test_app/backend
+
+          cat << 'EOT' > ~/test_app/backend/.env
+          $BACKEND_ENV
+          EOT
+
+          mkdir -p ~/test_app/frontend
+
+          cat << 'EOT' > ~/test_app/frontend/.env.local
+          $FRONTEND_ENV
+          EOT
+
           EOF
 
       # Install prod deps + restart apps
