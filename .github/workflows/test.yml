@@ -64,7 +64,7 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} "mkdir -p ~/test_app/backend && makdir ~/test_app/frontend"
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} "mkdir -p ~/test_app/backend && mkdir ~/test_app/frontend"
 
 
       # Upload Backend
