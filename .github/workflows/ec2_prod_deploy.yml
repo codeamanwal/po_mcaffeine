@@ -1,4 +1,4 @@
-name: Deploy test application on ec2
+name: Deploy application on ec2
 
 on:
   push:
@@ -64,7 +64,7 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} "mkdir -p ~/app/backend && mkdir ~/app/frontend"
+          ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_HOST} "mkdir -p ~/app/backend && mkdir -p ~/app/frontend"
 
 
       # Upload Backend
