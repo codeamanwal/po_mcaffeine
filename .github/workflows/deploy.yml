@@ -2,9 +2,9 @@ name: Deploy to EC2
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main 
+  # push:
+  #   branches:
+  #     - main 
 
 jobs:
   deploy:
@@ -66,7 +66,7 @@ jobs:
           
           set -e
           cd ~/app/frontend
-          npm install
+          npm install --loglevel=warn
           npm run build
           EOF
 
@@ -83,7 +83,7 @@ jobs:
           
           set -e
           cd ~/app/backend
-          npm install
+          npm install --loglevel=warn
 
           # Install PM2 if missing
           command -v pm2 >/dev/null 2>&1 || npm install -g pm2
