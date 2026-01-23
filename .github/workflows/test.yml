@@ -65,6 +65,7 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
+          mkdir -p ~/test_app
           rsync -az \
             backend/ \
             ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/test_app/backend
