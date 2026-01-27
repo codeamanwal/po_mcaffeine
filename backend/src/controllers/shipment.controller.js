@@ -893,7 +893,9 @@ async function updateBulkShipment(req, res){
         // check for current appt date to update from first appt date
         if(updatedFields.includes("firstAppointmentDateCOPT")){
           const firstApptDate = updateData.firstAppointmentDateCOPT || updateData.firstApptDate;
-          updateData = {...updateData , currentAppointmentDate: firstApptDate}
+          if(!existingShipment.currentAppointmentDate){
+            updateData = {...updateData , currentAppointmentDate: firstApptDate}
+          }
         }
 
         // for (const field in updateData) {
