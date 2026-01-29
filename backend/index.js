@@ -29,11 +29,11 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 const port = process.env.PORT || 8000;
 
 
-app.use("/api/v1/admin", adminRouter);
-app.use("/api/v1/warehouse", AuthMiddleware, warehouseRouter);
-app.use("/api/v1/logistic", AuthMiddleware, logisticRouter);
+// app.use("/api/v1/admin", adminRouter);
+// app.use("/api/v1/warehouse", AuthMiddleware, warehouseRouter);
+// app.use("/api/v1/logistic", AuthMiddleware, logisticRouter);
 
-app.use("/api/v1/order", AuthMiddleware, orderRouter);
+// app.use("/api/v1/order", AuthMiddleware, orderRouter);
 app.use("/api/v1/user", AuthMiddleware, userRouter);
 
 app.use("/api/v1/shipment", AuthMiddleware, shipmentRouter);

@@ -26,9 +26,6 @@ import { useUserStore } from "@/store/user-store"
 import {
   deleteShipment,
   deleteSku,
-  getPoFormatOrderList,
-  getShipmentStatusList,
-  updateSinglePoOrder,
 } from "@/lib/order"
 import { poFormatDataType, shipmentStatusDataType } from "@/constants/data_type"
 import EditOrderModal from "@/components/edit-order-modal"
@@ -1012,23 +1009,6 @@ export default function DashboardPage({ onNavigate }) {
 
   function handleDeleteShipment(data) {
     console.log("Delete Shipment:", data)
-  }
-
-  async function onUpdateSingleOrder(data) {
-    try {
-      let updatedData = localStorage.getItem("orderData")
-      updatedData = JSON.parse(updatedData)
-      // console.log("Parsed Data: ", updatedData)
-      const res = await updateSinglePoOrder(updatedData)
-      // console.log(res)
-      if (res.status === 200) {
-        console.log("Order updated successfully")
-        setEditModal(false)
-        getPoFormateData()
-      }
-    } catch (error) {
-      console.error(error)
-    }
   }
 
   async function onSavingUpdate() {

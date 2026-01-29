@@ -10,14 +10,14 @@ import { Eye, EyeOff, Database, AlertCircle, Moon, Sun } from "lucide-react"
 import { useUserStore } from "@/store/user-store"
 import { useThemeStore } from "@/store/theme-store"
 import axios from "axios"
-import { loginUrl } from "@/constants/urls"
-import { SegmentPrefixRSCPathnameNormalizer } from "next/dist/server/normalizers/request/segment-prefix-rsc"
 
 
 export default function LoginPage({ onLogin, onForgotPassword, isDarkMode, onToggleTheme }) {
 
   const { login } = useUserStore()
   const {theme, setTheme} = useThemeStore()
+
+  const base_url = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -31,7 +31,7 @@ export default function LoginPage({ onLogin, onForgotPassword, isDarkMode, onTog
       setIsLoading(true)
       setError("")
 
-      const result = await axios.post(loginUrl, {email, password})
+      const result = await axios.post(`${base_url}/api/v1/auth/login`, {email, password})
 
       // console.log(result.data)
 

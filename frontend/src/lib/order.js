@@ -1,10 +1,9 @@
-import { getAllOrdersUrl, updateSingleOrderUrl, createShipmentOrderUrl, getShipmentOrderListUrl, getAllSkuOrdersUrl, getShipmentWithSkuOrdersUrl } from "@/constants/urls"
 import api from "@/hooks/axios"
 import axios from "axios";
 
 export async function createShipmentOrder(data) {
     try {
-        const res = await api.post(createShipmentOrderUrl, data);
+        const res = await api.post("/api/v1/shipment/create-shipment-order", data);
         return res;
     } catch (error) {
         throw error;
@@ -22,7 +21,7 @@ export async function createBulkShipment(data) {
 
 export async function getShipmentWithSkuOrders(uid) {
     try {
-        const res = await api.post(getShipmentWithSkuOrdersUrl, { uid });
+        const res = await api.post("/api/v1/shipment/get-shipment-with-sku-orders", { uid });
         return res;
     } catch (error) {
         throw error;
@@ -67,7 +66,7 @@ export async function updateSkusByShipment(data) {
 
 export async function getPoFormatOrderList () {
     try {
-        const res = await api.get(getAllSkuOrdersUrl);
+        const res = await api.get("/api/v1/shipment/get-all-sku-orders");
         return res
     } catch (error) {
         throw error
@@ -76,19 +75,10 @@ export async function getPoFormatOrderList () {
 
 export async function getShipmentStatusList () {
     try {
-        const res = await api.get(getShipmentOrderListUrl);
+        const res = await api.get(`/api/v1/shipment/get-all-shipments`);
         return res;
     } catch (error) {
         throw error;
-    }
-}
-
-export async function updateSinglePoOrder (data){
-    try {
-        const res = await api.post(updateSingleOrderUrl, data);
-        return res
-    } catch (error) {
-        throw error
     }
 }
 

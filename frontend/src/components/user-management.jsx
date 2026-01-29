@@ -24,10 +24,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import NavigationHeader from "@/components/header"
 import api from "@/hooks/axios"
-import { deleteUserUrl, getAllUsersUrl, updateUserUrl } from "@/constants/urls"
 import { format } from "date-fns"
 import { useUserStore } from "@/store/user-store"
-import { master_facility_option } from "@/lib/validation"
 import { updateUser } from "@/lib/user"
 import { getMasterFacilityOptions } from "@/master-sheets/fetch-master-sheet-data"
 
@@ -57,7 +55,7 @@ export default function UserManagementPage({
   const getAllUsers = async () => {
     try {
       setIsLoading(true)
-      const res = await api.get(getAllUsersUrl)
+      const res = await api.get("/api/v1/user/get-all-users")
       if (res.status === 200) {
         setUsers(res.data.users)
       } else {
@@ -222,7 +220,7 @@ export default function UserManagementPage({
   const handleDeleteConfirm = async () => {
     if (!selectedUser) return
     try {
-      const res = await api.post(deleteUserUrl, { id: selectedUser.id })
+      const res = await api.post("/api/v1/user/delete-user", { id: selectedUser.id })
       if (res.status === 200) {
         setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id))
       } else {

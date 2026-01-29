@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, AlertCircle, CheckCircle, Lock } from "lucide-react"
 import api from "@/hooks/axios"
-import { changeUserPasswordUrl } from "@/constants/urls"
 
 export default function ChangePassword({ onBack }) {
   const [currentPassword, setCurrentPassword] = useState("")
@@ -46,7 +45,7 @@ export default function ChangePassword({ onBack }) {
         return
       }
   
-      const res = api.post(changeUserPasswordUrl, {currentPassword, newPassword});
+      const res = api.post("/api/v1/user/change-user-password", {currentPassword, newPassword});
   
       // console.log(res.data);
   
