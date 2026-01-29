@@ -2,42 +2,33 @@ import {Router} from "express"
 import { shipmentControllers } from "../controllers/shipment.controller.js"
 import {getFilterOptions, getShipments, getSkus} from "../controllers/order-filter.controllers.js"
 import { downloadSkuDataWithFiltersInCsvFile, downloadShipmentDataWithFiltersInCsvFile, getS3UploadUrl } from "../controllers/file.controllers.js"
+import { SuperOrAdminMiddleware } from "../middleware/auth.middleware.js"
 
 const router = Router()
 
-// update total unit
-router.post("/update-total-units", shipmentControllers.updateTotalUnits)
-
+/****************************** Order creation ***********/
 router.post("/create-shipment-order", shipmentControllers.createShipment)
 router.post("/create-bulk-shipments", shipmentControllers.createBulkShipment)
-router.get("/get-all-shipments", shipmentControllers.getAllShipments)
-router.post("/get-shipment-with-sku-orders", shipmentControllers.getShipmentWithSkuOrders)
-router.get("/get-all-sku-orders", shipmentControllers.getAllSkuOrders)
 
-//paginated sku and shipent order fetch
-router.get("/get-sku-orders", shipmentControllers.getPaginatedSkus);
-router.get("/get-shipment-orders", shipmentControllers.getPaginatedShipments);
-
-// paginated filtered order fetching
+/****************************** Order fetching ***********/
 router.post("/get-sku", getSkus)
 router.post("/get-shipment", getShipments)
-// filter options
-router.get('/get-filter-options', getFilterOptions)
-
 router.post("/get-skus-by-shipment", shipmentControllers.getSkusByShipment)
 
-router.get("/get-all-data", shipmentControllers.getAllData)
+/****************************** Filter options ***********/
+router.get('/get-filter-options', getFilterOptions)
 
+/****************************** Order updates ***********/
 router.post("/update-shipment", shipmentControllers.updateShipment)
 router.post("/update-bulk-shipments", shipmentControllers.updateBulkShipment)
 router.post("/update-skus-by-shipment", shipmentControllers.updateSkusBySipment)
-
 router.post("/update-bulk-skus", shipmentControllers.updateBulkSku);
 
-router.post("/delete-sku", shipmentControllers.deleteSku);
-router.post("/delete-shipment", shipmentControllers.deleteShipment);
+/****************************** Order deletion ***********/
+router.post("/delete-sku", SuperOrAdminMiddleware, shipmentControllers.deleteSku);
+router.post("/delete-shipment", SuperOrAdminMiddleware, shipmentControllers.deleteShipment);
 
-// log routes -->
+/****************************** Log Routes ***********/
 router.post('/get-log', async (req, res) => {
     try {
         const {shipmentId} = req.body;
@@ -50,7 +41,7 @@ router.post('/get-log', async (req, res) => {
     }
 })
 
-// file routes -->
+/****************************** File Routes ***********/
 router.get('/get-upload-url', getS3UploadUrl)
 router.post('/download-sku-data', downloadSkuDataWithFiltersInCsvFile)
 router.post('/download-shipment-data', downloadShipmentDataWithFiltersInCsvFile)

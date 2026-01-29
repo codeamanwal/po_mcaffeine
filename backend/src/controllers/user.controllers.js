@@ -1,4 +1,3 @@
-import { where } from "sequelize";
 import User  from "../models/user.model.js";
 
 async function createUser(req, res) {
@@ -125,8 +124,7 @@ async function changeYourPassword(req, res) {
         }
 
         const updatedUser = await User.update({password: newPassword}, {where: {id: req.user.id}})
-        // const {password, ...user} = updatedUser.toJSON();
-        return res.status(200).json({msg:"Password changed successfully", updatedUser:updatedUser, success: true, status: 200})
+        return res.status(200).json({msg:"Password changed successfully", success: true, status: 200})
     } catch (error) {
         console.log(error);
         return res.status(500).json({msg:"Something went wrong!", success: false, error, status: 500})
@@ -137,11 +135,10 @@ async function getAllUsers(req, res){
     try {
         let users = await User.findAll();
         // remove password from all the users
-        users.forEach(user => {
-            let {password, ...publicUser} = user.toJSON();
-            user = publicUser;
+        const usersWithoutPass = users.map(u => {
+            return { ...u.toJSON(), password: "..." }
         })
-        return res.status(200).json({msg:"Data fetched successfully", users, success: true, status: 200})
+        return res.status(200).json({msg:"Data fetched successfully", users: usersWithoutPass, success: true, status: 200})
     } catch (error) {
         return res.status(500).json({msg:"Something went wrong While fetcing data!", success: false, error, status: 500})
     }
@@ -186,9 +183,18 @@ async function updateUser(req, res) {
             allotedFacilities: allotedFacilities?.length > 0 ? allotedFacilities : existingUser.allotedFacilities,
         }
 
-        const updatedUser = await existingUser.update(updatedData)
+        // check if user is trying to change role to superadmin
+        if(updatedData.role === "superadmin" && loggedInUser.role !== "superadmin") {
+            return res.status(400).json({msg: "You are not authorized to change role to superadmin"})
+        }
+        if(updatedData.role === "admin" && loggedInUser.role !== "superadmin") {
+            return res.status(400).json({msg: "You are not authorized to change role to admin"})
+        }
 
-        return res.status(200).json({msg:"User updated successfully", updatedUser, success: true, status: 200})
+        const updatedUser = await existingUser.update(updatedData)
+        const {password, ...publicUser} = updatedUser.toJSON();
+
+        return res.status(200).json({msg:"User updated successfully", updatedUser: publicUser, success: true, status: 200})
     } catch (error) {
         return res.status(500).json({msg:"Something went wrong while updating data", success: false, error, status: 500})
     }

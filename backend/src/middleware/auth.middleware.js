@@ -102,7 +102,7 @@ export async function LogisticMiddleware(req, res, next) {
     }
 }
 
-export async function SuperAndAdminMiddleware(req, res, next) {
+export async function SuperOrAdminMiddleware(req, res, next) {
     try {
         const user = req.user;
         if (user.role === "superadmin" || user.role === "admin") {

@@ -1240,11 +1240,7 @@ async function updateTotalUnits(req, res) {
 export const shipmentControllers = {
     createShipment,
     createBulkShipment,
-    getShipmentWithSkuOrders,
     getSkusByShipment,
-    getAllShipments,
-    getAllSkuOrders,
-    getAllData,
     updateShipment,
     updateBulkShipment,
     updateSkusBySipment,
@@ -1252,8 +1248,5 @@ export const shipmentControllers = {
     updateBulkSku,
     deleteSku,
     deleteShipment,
-    getPaginatedSkus,
-    getPaginatedShipments,
-    updateTotalUnits,
 };
 

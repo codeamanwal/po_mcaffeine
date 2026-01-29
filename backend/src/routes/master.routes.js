@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { masterControllers } from "../controllers/master.controllers.js";
+import { SuperAdminMiddleware } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -15,8 +16,8 @@ Supported `type` for these api -
 6. appointment-remarks
 7. sku
 */
-router.post("/:type/upload", masterControllers.uploadMasterSheet);
-router.post("/:type/delete", masterControllers.deleteMasterSheet);
+router.post("/:type/upload", SuperAdminMiddleware, masterControllers.uploadMasterSheet);
+router.post("/:type/delete", SuperAdminMiddleware, masterControllers.deleteMasterSheet);
 router.get("/:type", masterControllers.getMasterSheet);
 router.get("/:type/search", masterControllers.searchMasterSheet);
 

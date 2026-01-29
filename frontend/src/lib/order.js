@@ -19,15 +19,6 @@ export async function createBulkShipment(data) {
     }
 }
 
-export async function getShipmentWithSkuOrders(uid) {
-    try {
-        const res = await api.post("/api/v1/shipment/get-shipment-with-sku-orders", { uid });
-        return res;
-    } catch (error) {
-        throw error;
-    }
-}
-
 export async function getSkuOrdersByShipment(uid){
     try {
         const res = await api.post("/api/v1/shipment/get-skus-by-shipment", {uid});
@@ -61,24 +52,6 @@ export async function updateSkusByShipment(data) {
         return res;
     } catch (error) {
         throw error
-    }
-}
-
-export async function getPoFormatOrderList () {
-    try {
-        const res = await api.get("/api/v1/shipment/get-all-sku-orders");
-        return res
-    } catch (error) {
-        throw error
-    }
-}
-
-export async function getShipmentStatusList () {
-    try {
-        const res = await api.get(`/api/v1/shipment/get-all-shipments`);
-        return res;
-    } catch (error) {
-        throw error;
     }
 }
 
