@@ -1,3 +1,4 @@
+// @deprecated - remove file
 export const channelSkuMapping = {
 
     "Amazon" : {

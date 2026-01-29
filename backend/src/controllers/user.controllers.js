@@ -136,7 +136,10 @@ async function getAllUsers(req, res){
         let users = await User.findAll();
         // remove password from all the users
         const usersWithoutPass = users.map(u => {
-            return { ...u.toJSON(), password: "..." }
+            return { 
+                ...u.toJSON(),
+                // password: "..."
+            }
         })
         return res.status(200).json({msg:"Data fetched successfully", users: usersWithoutPass, success: true, status: 200})
     } catch (error) {

@@ -10,8 +10,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
 import { Upload, FileText, AlertCircle, CheckCircle, Download, ArrowLeft, X, Eye, Database } from "lucide-react"
 import { createBulkShipment } from "@/lib/order"
-import { validateBulkOrderData, autoFillSkuData } from "@/lib/validation"
-import { getAllowedLocationsFromChannel, getAllowedSkusFromChannel, getMasterChannelOptions, getSkuBySkuCodeAndChannel } from "@/master-sheets/fetch-master-sheet-data"
+import { validateBulkOrderData } from "@/lib/validation"
 
 const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
   const [file, setFile] = useState(null)

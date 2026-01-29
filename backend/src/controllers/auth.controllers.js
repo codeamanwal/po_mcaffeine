@@ -1,4 +1,6 @@
 import User from "../models/user.model.js";
+import { generateToken } from "../utils/jwt.js";
+import { getPublicUser } from "../utils/user.js"
 
 async function loginUser( req, res ) {
     try {

@@ -11,6 +11,7 @@ import { Eye, EyeOff, AlertCircle, CheckCircle, UserPlus, ArrowLeft } from "luci
 import { useUserStore } from "@/store/user-store"
 import NavigationHeader from "@/components/header"
 import api from "@/hooks/axios"
+import { createUser } from "@/lib/user"
 
 export default function CreateUserPage({ onNavigate, isDarkMode, onToggleTheme }) {
   const [formData, setFormData] = useState({
@@ -45,12 +46,7 @@ export default function CreateUserPage({ onNavigate, isDarkMode, onToggleTheme }
         return
       }
   
-      const res = await api.post("/api/v1/user/create-user", {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-      })
+      const res = await createUser(formData.name, formData.email, formData.password, formData.role)
 
       if(res.status === 201) {
         setSuccess("User created successfully!")

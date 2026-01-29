@@ -43,3 +43,47 @@ export async function updateUser (data){
         throw error
     }
 }
+
+export async function changeUserPassword (currentPassword, newPassword) {
+    try {
+        const res = await api.post("/api/v1/user/change-user-password", {currentPassword: currentPassword, newPassword: newPassword});
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function createUser (name, email, password, role) {
+    if(!name || !email || !password || !role){
+        throw new Error("Name, email, password & role are required field for user creation.")
+    } 
+    try {
+        const res = await api.post("/api/v1/user/create-user",{
+            name: name, 
+            email: email,
+            password: password,
+            role: role,
+        });
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function getAllUsers() {
+    try {
+        const res = await api.get("/api/v1/user/get-all-users")
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function deleteUser(id) {
+    try {
+       const res = await api.post("/api/v1/user/delete-user", { id: id })
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}

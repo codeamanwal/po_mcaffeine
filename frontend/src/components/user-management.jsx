@@ -26,7 +26,7 @@ import NavigationHeader from "@/components/header"
 import api from "@/hooks/axios"
 import { format } from "date-fns"
 import { useUserStore } from "@/store/user-store"
-import { updateUser } from "@/lib/user"
+import { deleteUser, getAllUsers, updateUser } from "@/lib/user"
 import { getMasterFacilityOptions } from "@/master-sheets/fetch-master-sheet-data"
 
 
@@ -52,10 +52,12 @@ export default function UserManagementPage({
 
   const { user: currentUser } = useUserStore()
 
-  const getAllUsers = async () => {
+  const getUsers = async () => {
     try {
       setIsLoading(true)
-      const res = await api.get("/api/v1/user/get-all-users")
+      
+      const res = await getAllUsers()
+
       if (res.status === 200) {
         setUsers(res.data.users)
       } else {
@@ -69,7 +71,7 @@ export default function UserManagementPage({
   }
 
   useEffect(() => {
-    getAllUsers()
+    getUsers()
   }, [])
 
   const filteredUsers = useMemo(
@@ -220,7 +222,8 @@ export default function UserManagementPage({
   const handleDeleteConfirm = async () => {
     if (!selectedUser) return
     try {
-      const res = await api.post("/api/v1/user/delete-user", { id: selectedUser.id })
+      const res = await deleteUser(selectedUser.id)
+      
       if (res.status === 200) {
         setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id))
       } else {

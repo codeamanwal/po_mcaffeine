@@ -11,6 +11,7 @@ import { useUserStore } from "@/store/user-store"
 import NavigationHeader from "@/components/header"
 import { formatDate } from "date-fns"
 import api from "@/hooks/axios"
+import { changeUserPassword } from "@/lib/user"
 
 export default function UserSettingsPage({ onNavigate, isDarkMode, onToggleTheme }) {
   const [currentPassword, setCurrentPassword] = useState("")
@@ -50,7 +51,7 @@ export default function UserSettingsPage({ onNavigate, isDarkMode, onToggleTheme
         return
       }
   
-      const res = await api.post("/api/v1/user/change-user-password", {currentPassword, newPassword});
+      const res = await changeUserPassword(currentPassword, newPassword)
   
       // console.log(res.data);
   

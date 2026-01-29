@@ -28,7 +28,6 @@ import {
   deleteSku,
 } from "@/lib/order"
 import { poFormatDataType, shipmentStatusDataType } from "@/constants/data_type"
-import EditOrderModal from "@/components/edit-order-modal"
 import EditShipmentModal from "@/components/edit-shipment-modal"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
@@ -388,7 +387,6 @@ export default function DashboardPage({ onNavigate }) {
   })
 
   const [statusModal, setStatusModal] = useState(false)
-  const [isEditModal, setEditModal] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState({})
   const [selectedShipment, setSelectedShipment] = useState({})
   const [isShipmentEditModal, setShipmentEditModal] = useState(false)
@@ -935,12 +933,6 @@ export default function DashboardPage({ onNavigate }) {
     </Popover>
   )
 
-  function handleEditOrder(data) {
-    // console.log(data)
-    setSelectedOrder(data)
-    setEditModal(true)
-  }
-
   const handleDeleteOrder = (data) => {
     if (data.id) {
       setSelectedId(data.id)
@@ -1017,7 +1009,6 @@ export default function DashboardPage({ onNavigate }) {
     // setShipmentEditModal(false)
     setShipmentViewModal(false)
     setSkuEditModal(false)
-    // setEditModal(false)
     setBulkSkuUpdateModal(false)
     await getPoFormateData()
     await getShipmentData()
@@ -1889,7 +1880,7 @@ export default function DashboardPage({ onNavigate }) {
           data={selectedShipment}
         />
 
-        <EditOrderModal
+        {/* <EditOrderModal
           isOpen={isEditModal}
           onClose={() => {
             setEditModal(false)
@@ -1898,7 +1889,7 @@ export default function DashboardPage({ onNavigate }) {
           onSave={() => {
             onSavingUpdate()
           }}
-        />
+        /> */}
 
         <EditShipmentModal
           isOpen={isShipmentEditModal}

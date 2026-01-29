@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { useThemeStore } from "@/store/theme-store"
 import NavigationHeader from "@/components/header";
-import CreateShipmentModal from "@/components/create-order-modal";
 
 export default function CreateOrder( ){
     const router = useRouter();

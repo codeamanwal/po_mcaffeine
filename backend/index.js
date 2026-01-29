@@ -3,9 +3,6 @@ import "dotenv/config"
 import cors from "cors"
 import { connectToDatabase } from "./src/db/mysql.js";
 import { AuthMiddleware } from "./src/middleware/auth.middleware.js";
-import User from "./src/models/user.model.js";
-import { generateToken } from "./src/utils/jwt.js";
-import { getPublicUser } from "./src/utils/user.js";
 import { userRouter } from "./src/routes/user.routes.js";
 import { shipmentRouter } from "./src/routes/shipment.routes.js";
 import { masterRouter } from "./src/routes/master.routes.js";

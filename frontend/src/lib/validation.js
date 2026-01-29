@@ -13,21 +13,21 @@ import { master_channel_location_mapping } from "@/constants/master_sheet"
 const master_courier_partner_options = getAllCourierPartners();
 
 // Location options (derived from common locations)
-export const master_location_options = [
-  "New Delhi",
-  "Mumbai",
-  "Bangalore",
-  "Hyderabad",
-  "Chennai",
-  "Kolkata",
-  "Pune",
-  "Ahmedabad",
-  "Surat",
-  "Jaipur",
-  "Gurgaon",
-  "Noida",
-  "Guwahati",
-]
+// export const master_location_options = [
+//   "New Delhi",
+//   "Mumbai",
+//   "Bangalore",
+//   "Hyderabad",
+//   "Chennai",
+//   "Kolkata",
+//   "Pune",
+//   "Ahmedabad",
+//   "Surat",
+//   "Jaipur",
+//   "Gurgaon",
+//   "Noida",
+//   "Guwahati",
+// ]
 
 
 // Field validation function
@@ -217,186 +217,192 @@ export const validateBulkOrderData = (orders) => {
   }
 }
 
+// @deprecated - not required
 // Bulk sku validation
-export const validateBulkSkuData = (csvSkus) => {
-  const errors = []
-  const warnings = []
+// export const validateBulkSkuData = (csvSkus) => {
+//   const errors = []
+//   const warnings = []
 
-  // Check for duplicate entries in CSV
-  const seen = new Set()
-  const duplicates = new Set()
+//   // Check for duplicate entries in CSV
+//   const seen = new Set()
+//   const duplicates = new Set()
 
-  csvSkus.forEach((csvSku, index) => {
-    const key = `${csvSku.poNumber}-${csvSku.skuCode}`
-    if (seen.has(key)) {
-      duplicates.add(key)
-    }
-    seen.add(key)
-  })
+//   csvSkus.forEach((csvSku, index) => {
+//     const key = `${csvSku.poNumber}-${csvSku.skuCode}`
+//     if (seen.has(key)) {
+//       duplicates.add(key)
+//     }
+//     seen.add(key)
+//   })
 
-  if (duplicates.size > 0) {
-    errors.push(`Duplicate entries found in CSV for: ${Array.from(duplicates).join(", ")}`)
-  }
+//   if (duplicates.size > 0) {
+//     errors.push(`Duplicate entries found in CSV for: ${Array.from(duplicates).join(", ")}`)
+//   }
 
-  // Validate each CSV SKU entry
-  csvSkus.forEach((csvSku, index) => {
-    const rowPrefix = `Row ${csvSku.rowNumber || index + 1}`
+//   // Validate each CSV SKU entry
+//   csvSkus.forEach((csvSku, index) => {
+//     const rowPrefix = `Row ${csvSku.rowNumber || index + 1}`
 
-    // Check if record has errors from matching process
-    if (csvSku.error) {
-      errors.push(`${rowPrefix}: ${csvSku.error}`)
-      return
-    }
+//     // Check if record has errors from matching process
+//     if (csvSku.error) {
+//       errors.push(`${rowPrefix}: ${csvSku.error}`)
+//       return
+//     }
 
-    // Validate required fields
-    if (!csvSku.poNumber || !csvSku.skuCode) {
-      errors.push(`${rowPrefix}: poNumber, and skuCode are required`)
-    }
+//     // Validate required fields
+//     if (!csvSku.poNumber || !csvSku.skuCode) {
+//       errors.push(`${rowPrefix}: poNumber, and skuCode are required`)
+//     }
 
-    // Validate updated quantity
-    if (csvSku.updatedQty === undefined || csvSku.updatedQty === null) {
-      errors.push(`${rowPrefix}: updatedQty is required`)
-    } else {
-      const updatedQty = Number(csvSku.updatedQty)
-      const originalQty = Number(csvSku.originalQty ?? 0)
+//     // Validate updated quantity
+//     if (csvSku.updatedQty === undefined || csvSku.updatedQty === null) {
+//       errors.push(`${rowPrefix}: updatedQty is required`)
+//     } else {
+//       const updatedQty = Number(csvSku.updatedQty)
+//       const originalQty = Number(csvSku.originalQty ?? 0)
 
-      if (isNaN(updatedQty)) {
-        errors.push(`${rowPrefix}: updatedQty must be a valid number`)
-      } else {
-        if (updatedQty < 0) {
-          errors.push(`${rowPrefix}: updatedQty cannot be negative`)
-        }
+//       if (isNaN(updatedQty)) {
+//         errors.push(`${rowPrefix}: updatedQty must be a valid number`)
+//       } else {
+//         if (updatedQty < 0) {
+//           errors.push(`${rowPrefix}: updatedQty cannot be negative`)
+//         }
 
-        if (!Number.isInteger(updatedQty)) {
-          errors.push(`${rowPrefix}: updatedQty must be a whole number`)
-        }
+//         if (!Number.isInteger(updatedQty)) {
+//           errors.push(`${rowPrefix}: updatedQty must be a whole number`)
+//         }
 
-        if (originalQty > 0 && updatedQty > originalQty) {
-          errors.push(`${rowPrefix}: updatedQty (${updatedQty}) cannot exceed original quantity (${originalQty})`)
-        }
-      }
-    }
+//         if (originalQty > 0 && updatedQty > originalQty) {
+//           errors.push(`${rowPrefix}: updatedQty (${updatedQty}) cannot exceed original quantity (${originalQty})`)
+//         }
+//       }
+//     }
 
-    // Validate calculated values if present
-    if (csvSku.calculatedGmv !== undefined && csvSku.calculatedPoValue !== undefined) {
-      const originalGmv = Number(csvSku.originalGmv ?? 0)
-      const originalPoValue = Number(csvSku.originalPoValue ?? 0)
-      const originalQty = Number(csvSku.originalQty ?? 0)
-      const updatedQty = Number(csvSku.updatedQty ?? 0)
+//     // Validate calculated values if present
+//     if (csvSku.calculatedGmv !== undefined && csvSku.calculatedPoValue !== undefined) {
+//       const originalGmv = Number(csvSku.originalGmv ?? 0)
+//       const originalPoValue = Number(csvSku.originalPoValue ?? 0)
+//       const originalQty = Number(csvSku.originalQty ?? 0)
+//       const updatedQty = Number(csvSku.updatedQty ?? 0)
 
-      if (originalQty > 0) {
-        const expectedGmv = Math.round((originalGmv / originalQty) * updatedQty * 100) / 100
-        const expectedPoValue = Math.round((originalPoValue / originalQty) * updatedQty * 100) / 100
+//       if (originalQty > 0) {
+//         const expectedGmv = Math.round((originalGmv / originalQty) * updatedQty * 100) / 100
+//         const expectedPoValue = Math.round((originalPoValue / originalQty) * updatedQty * 100) / 100
 
-        if (Math.abs(csvSku.calculatedGmv - expectedGmv) > 0.01) {
-          warnings.push(`${rowPrefix}: Calculated GMV (${csvSku.calculatedGmv}) differs from expected (${expectedGmv})`)
-        }
+//         if (Math.abs(csvSku.calculatedGmv - expectedGmv) > 0.01) {
+//           warnings.push(`${rowPrefix}: Calculated GMV (${csvSku.calculatedGmv}) differs from expected (${expectedGmv})`)
+//         }
 
-        if (Math.abs(csvSku.calculatedPoValue - expectedPoValue) > 0.01) {
-          warnings.push(
-            `${rowPrefix}: Calculated PO Value (${csvSku.calculatedPoValue}) differs from expected (${expectedPoValue})`,
-          )
-        }
-      }
-    }
+//         if (Math.abs(csvSku.calculatedPoValue - expectedPoValue) > 0.01) {
+//           warnings.push(
+//             `${rowPrefix}: Calculated PO Value (${csvSku.calculatedPoValue}) differs from expected (${expectedPoValue})`,
+//           )
+//         }
+//       }
+//     }
 
-    // Check for significant quantity reductions (warning only)
-    if (csvSku.originalQty && csvSku.updatedQty) {
-      const originalQty = Number(csvSku.originalQty)
-      const updatedQty = Number(csvSku.updatedQty)
-      const reductionPercentage = ((originalQty - updatedQty) / originalQty) * 100
+//     // Check for significant quantity reductions (warning only)
+//     if (csvSku.originalQty && csvSku.updatedQty) {
+//       const originalQty = Number(csvSku.originalQty)
+//       const updatedQty = Number(csvSku.updatedQty)
+//       const reductionPercentage = ((originalQty - updatedQty) / originalQty) * 100
 
-      if (reductionPercentage > 50) {
-        warnings.push(`${rowPrefix}: Large quantity reduction (${reductionPercentage.toFixed(1)}%) - please verify`)
-      }
-    }
-  })
+//       if (reductionPercentage > 50) {
+//         warnings.push(`${rowPrefix}: Large quantity reduction (${reductionPercentage.toFixed(1)}%) - please verify`)
+//       }
+//     }
+//   })
 
-  return {
-    isValid: errors.length === 0,
-    errors,
-    warnings,
-  }
-}
+//   return {
+//     isValid: errors.length === 0,
+//     errors,
+//     warnings,
+//   }
+// }
 
+// @deprecated - not required
 // Auto-fill functions
-export const autoFillSkuData = (skuCode) => {
-  const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
-  if (!masterSku) return null
+// export const autoFillSkuData = (skuCode) => {
+//   const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
+//   if (!masterSku) return null
 
-  let brand = "";
-  const prefix = `${skuCode}`.substring(0,3).toLowerCase();
-  if(prefix === "hyp"){
-      brand = "Hyphen"
-    } else if(prefix === "ama"){
-      brand = "Aman"
-    } else if(prefix === "viv"){
-      brand = "Vivek"
-    } else {
-      brand = masterSku?.brand_name || "MCaffeine"
-    }
-  return {
-    skuName: masterSku?.sku_name || "",
-    brandName: brand ?? "MCaffeine",
-    mrp: masterSku?.mrp || "",
-  }
-}
+//   let brand = "";
+//   const prefix = `${skuCode}`.substring(0,3).toLowerCase();
+//   if(prefix === "hyp"){
+//       brand = "Hyphen"
+//     } else if(prefix === "ama"){
+//       brand = "Aman"
+//     } else if(prefix === "viv"){
+//       brand = "Vivek"
+//     } else {
+//       brand = masterSku?.brand_name || "MCaffeine"
+//     }
+//   return {
+//     skuName: masterSku?.sku_name || "",
+//     brandName: brand ?? "MCaffeine",
+//     mrp: masterSku?.mrp || "",
+//   }
+// }
 
-export const calculateGmv = (qty, skuCode) => {
-  const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
-  if (!masterSku || !masterSku?.mrp) return 0
+// @deprecated - not required
+// export const calculateGmv = (qty, skuCode) => {
+//   const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
+//   if (!masterSku || !masterSku?.mrp) return 0
 
-  return qty * masterSku?.mrp
-}
+//   return qty * masterSku?.mrp
+// }
 
-export const generateChannelSkuCode = (channel, skuCode) => {
-  const channelMapping = channelSkuMapping[channel]
-  if (!channelMapping || !channelMapping[skuCode]) {
-    return ""
-  }
-  return channelMapping[skuCode]
-}
+// @deprecated - not required
+// export const generateChannelSkuCode = (channel, skuCode) => {
+//   const channelMapping = channelSkuMapping[channel]
+//   if (!channelMapping || !channelMapping[skuCode]) {
+//     return ""
+//   }
+//   return channelMapping[skuCode]
+// }
 
 // Get brand from SKU codes
-export const getBrandFromSkus = (skuCodes) => {
-  const brands = new Set()
-  skuCodes.forEach((skuCode) => {
-    const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
-    if (masterSku) {
-      brands.add(masterSku?.brand_name ?? "MCaffeine")
-    }
-  })
+// export const getBrandFromSkus = (skuCodes) => {
+//   const brands = new Set()
+//   skuCodes.forEach((skuCode) => {
+//     const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
+//     if (masterSku) {
+//       brands.add(masterSku?.brand_name ?? "MCaffeine")
+//     }
+//   })
 
-  // Return brand only if all SKUs are from the same brand
-  if (brands.size === 1) {
-    return Array.from(brands)[0]
-  }
+//   // Return brand only if all SKUs are from the same brand
+//   if (brands.size === 1) {
+//     return Array.from(brands)[0]
+//   }
 
-  return null
-}
+//   return null
+// }
 
+// @deprecated - not required
 // Validate brand consistency for multiple SKUs
-export const validateBrandConsistency = (skuCodes) => {
-  const errors = []
-  const brands = new Set()
+// export const validateBrandConsistency = (skuCodes) => {
+//   const errors = []
+//   const brands = new Set()
 
-  skuCodes.forEach((skuCode) => {
-    const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
-    if (masterSku) {
-      brands.add(masterSku?.brand_name ?? "MCaffeine")
-    }
-  })
+//   skuCodes.forEach((skuCode) => {
+//     const masterSku = master_sku_code_options?.find((m) => m.sku_code === skuCode)
+//     if (masterSku) {
+//       brands.add(masterSku?.brand_name ?? "MCaffeine")
+//     }
+//   })
 
-  if (brands.size > 1) {
-    errors.push(`Multiple brands detected: ${Array.from(brands).join(", ")}. All SKUs must be from the same brand.`)
-  }
+//   if (brands.size > 1) {
+//     errors.push(`Multiple brands detected: ${Array.from(brands).join(", ")}. All SKUs must be from the same brand.`)
+//   }
 
-  return {
-    isValid: errors.length === 0,
-    errors,
-  }
-}
+//   return {
+//     isValid: errors.length === 0,
+//     errors,
+//   }
+// }
 
+// @update - update function use case 
 // Get available locations for a channel (if there are channel-specific restrictions)
 export const getLocationsForChannel = (channel) => {
   // For now, return all locations. This can be customized based on business rules
@@ -405,26 +411,30 @@ export const getLocationsForChannel = (channel) => {
   return location_options
 }
 
+// @deprecated - not required
 // Validate PO Value calculation
-export const validatePoValue = (gmv, expectedRatio = 0.8) => {
-  // Assuming PO Value is typically 80% of GMV (this can be adjusted based on business rules)
-  return Math.round(gmv * expectedRatio * 100) / 100
-}
+// export const validatePoValue = (gmv, expectedRatio = 0.8) => {
+//   // Assuming PO Value is typically 80% of GMV (this can be adjusted based on business rules)
+//   return Math.round(gmv * expectedRatio * 100) / 100
+// }
 
+// @deprecated - not required
 // Get SKU suggestions based on partial input
-export const getSkuSuggestions = (searchTerm, limit = 10) => {
-  const term = searchTerm.toLowerCase()
-  return master_sku_code_options
-    .filter((sku) => sku.sku_code.toLowerCase().includes(term) || sku.sku_name.toLowerCase().includes(term))
-    .slice(0, limit)
-}
+// export const getSkuSuggestions = (searchTerm, limit = 10) => {
+//   const term = searchTerm.toLowerCase()
+//   return master_sku_code_options
+//     .filter((sku) => sku.sku_code.toLowerCase().includes(term) || sku.sku_name.toLowerCase().includes(term))
+//     .slice(0, limit)
+// }
 
+// @deprecated - not required
 // Get channel suggestions
-export const getChannelSuggestions = (searchTerm, limit = 10) => {
-  const term = searchTerm.toLowerCase()
-  return master_channel_options.filter((channel) => channel.toLowerCase().includes(term)).slice(0, limit)
-}
+// export const getChannelSuggestions = (searchTerm, limit = 10) => {
+//   const term = searchTerm.toLowerCase()
+//   return master_channel_options.filter((channel) => channel.toLowerCase().includes(term)).slice(0, limit)
+// }
 
+// @update - update function use case 
 // Get Delivery type
 export const getDeliveryType = (channel, type) => {
   if(type) return type;
