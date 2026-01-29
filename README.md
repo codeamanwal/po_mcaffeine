@@ -76,10 +76,10 @@ For more detailed information, please refer to the documentation in the docs/ di
 The project is configured for deployment using PM2.
 
 - Start all services:
-  pm2 start ecosystem.config.js
+  `pm2 start ecosystem.config.js`
 
 - Restart all services:
-  pm2 restart ecosystem.config.js
+  `pm2 restart ecosystem.config.js`
 
 - View logs:
-  pm2 logs
+  `pm2 logs`
