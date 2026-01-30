@@ -6,4 +6,4 @@ frontend/.env.local
 
 todo.*
 *.load
-
+.env*
