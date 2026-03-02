@@ -295,6 +295,8 @@ export async function downloadShipmentDataWithFiltersInCsvFile(req, res) {
 
         // Sum total units subquery
         const totalUnitsQuery = `(SELECT SUM(COALESCE(sub_so.updatedQty, sub_so.qty, 0)) FROM sku_orders sub_so WHERE sub_so.shipmentOrderId = sho.uid)`;
+        const updatedGmvQuery = `(SELECT ROUND(SUM(COALESCE(sub_so.updatedGmv, sub_so.gmv, 0)), 4) FROM sku_orders sub_so WHERE sub_so.shipmentOrderId = sho.uid)`;
+        const updatedPoValueQuery = `(SELECT ROUND(SUM(COALESCE(sub_so.updatedPoValue, sub_so.poValue, 0)), 4) FROM sku_orders sub_so WHERE sub_so.shipmentOrderId = sho.uid)`;
 
         // For role-based access, we need to ensure the query respects allotment
         // The above sequelize 'findAndCountAll' does this via WHERE clauses.
@@ -535,6 +537,9 @@ export async function downloadShipmentDataWithFiltersInCsvFile(req, res) {
                 sho.location,
                 sho.poNumber,
                 ${totalUnitsQuery} AS totalUnits,
+                ${totalUnitsQuery} AS updatedQty,
+                ${updatedGmvQuery} AS updatedGmv,
+                ${updatedPoValueQuery} AS updatedPoValue,
                 sho.remarksPlanning,
                 sho.specialRemarksCOPT,
                 sho.newShipmentReference,

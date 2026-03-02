@@ -642,14 +642,30 @@ export async function getShipments(req, res) {
       });
     }
 
-    // --- Calculate totalUnits for each shipment ---
+    // --- Calculate totalUnits and other values for each shipment ---
     const shipmentsWithTotals = shipments.map((shipment) => {
       const shipmentData = shipment.toJSON();
       const totalUnits = shipmentData.skuOrders.reduce((sum, sku) => {
         const qty = Number(sku.updatedQty ?? sku.qty ?? 0);
         return sum + qty;
       }, 0);
+      const updatedQty = shipmentData.skuOrders.reduce((sum, sku) => {
+        const qty = Number(sku.updatedQty ?? sku.qty ?? 0);
+        return sum + qty;
+      }, 0);
+      const updatedGmv = shipmentData.skuOrders.reduce((sum, sku) => {
+        const updtGmv = Number(sku.updatedGmv ?? sku.gmv ?? 0);
+        return sum + updtGmv;
+      }, 0);
+      const updatedPoValue = shipmentData.skuOrders.reduce((sum, sku) => {
+        const updtPoValue = Number(sku.updatedPoValue ?? sku.poValue ?? 0);
+        return sum + updtPoValue;
+      }, 0);
       shipmentData.totalUnits = totalUnits;
+      shipmentData.updatedQty = updatedQty;
+      shipmentData.updatedGmv = updatedGmv;
+      shipmentData.updatedPoValue = updatedPoValue;
+
       delete shipmentData.skuOrders;
       return shipmentData;
     });
