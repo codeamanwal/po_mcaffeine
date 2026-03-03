@@ -316,7 +316,6 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         return {label: remark, value: remark}
       })
 
-      console.log("remarks options: ", options)
       setAppointmentRemarkOptions(options)
     } catch (error) {
       console.log("Error: ", error)
