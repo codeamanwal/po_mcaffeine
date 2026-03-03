@@ -880,7 +880,7 @@ async function updateBulkShipment(req, res){
           return res.status(401).json({ msg: "Unauthorized to update some fields!" });
         }
 
-        const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
+        const existingShipment = await ShipmentOrder.findOne({ where: { uid } , transaction: t});
         if (!existingShipment) {
           errs.push({ uid, poNumber, error: 'Shipment not found with given uid' });
           continue; // Skip to the next shipment if not found
@@ -893,7 +893,7 @@ async function updateBulkShipment(req, res){
         // check for current appt date to update from first appt date
         if(updatedFields.includes("firstAppointmentDateCOPT")){
           const firstApptDate = updateData.firstAppointmentDateCOPT || updateData.firstApptDate;
-          if(!existingShipment.currentAppointmentDate){
+          if(!existingShipment.currentAppointmentDate || existingShipment.currentAppointmentDate !== firstApptDate){
             updateData = {...updateData , currentAppointmentDate: firstApptDate}
           }
         }
@@ -923,7 +923,7 @@ async function updateBulkShipment(req, res){
 
     else if(user.role === "admin"){
       for(const shipment of shipments) {
-        const { uid, ...updateData } = shipment;
+        let { uid, poNumber, ...updateData } = shipment;
         
         // check for allowed fields only
         let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
@@ -932,11 +932,24 @@ async function updateBulkShipment(req, res){
           return res.status(401).json({ msg: "Unauthorized to update some fields!" });
         }
 
-        const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
+        const existingShipment = await ShipmentOrder.findOne({ where: { uid } , transaction: t});
         if (!existingShipment) {
           errs.push({ uid, error: 'Shipment not found' });
           continue; // Skip to the next shipment if not found
         }
+        if(poNumber !== existingShipment.poNumber) {
+          errs.push({ uid, poNumber, error: 'Shipment not found with given poNumber' });
+          continue;
+        }
+
+        // check for current appt date to update from first appt date
+        if(updatedFields.includes("firstAppointmentDateCOPT")){
+          const firstApptDate = updateData.firstAppointmentDateCOPT || updateData.firstApptDate;
+          if(!existingShipment.currentAppointmentDate || existingShipment.currentAppointmentDate !== firstApptDate){
+            updateData = {...updateData , currentAppointmentDate: firstApptDate}
+          }
+        }
+
         await existingShipment.update(updateData, { transaction: t });
       }
       await t.commit();
@@ -948,7 +961,7 @@ async function updateBulkShipment(req, res){
 
     else if(user.role === "warehouse"){
       for(const shipment of shipments) {
-        const { uid, ...updateData } = shipment;
+        let { uid, poNumber, ...updateData } = shipment;
 
         // check for allowed fields only
         let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
@@ -957,11 +970,16 @@ async function updateBulkShipment(req, res){
           return res.status(401).json({ msg: "Unauthorized to update some fields!" });
         }
 
-        const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
+        const existingShipment = await ShipmentOrder.findOne({ where: { uid } , transaction: t});
         if (!existingShipment) {
           errs.push({ uid, error: 'Shipment not found' });
           continue; // Skip to the next shipment if not found
         }
+        if(poNumber !== existingShipment.poNumber) {
+          errs.push({ uid, poNumber, error: 'Shipment not found with given poNumber' });
+          continue;
+        }
+
         await existingShipment.update(updateData, { transaction: t });
       }
       await t.commit();
@@ -973,7 +991,7 @@ async function updateBulkShipment(req, res){
 
     else if(user.role === "logistics"){
       for(const shipment of shipments) {
-        const { uid, ...updateData } = shipment;
+        let { uid, poNumber, ...updateData } = shipment;
 
         // check for allowed fields only
         let updatedFields = Object.keys(shipment).filter(key => key !== "poNumber" && key !== "uid");
@@ -984,11 +1002,16 @@ async function updateBulkShipment(req, res){
           return res.status(401).json({ msg: "Unauthorized to update some fields!" });
         }
 
-        const existingShipment = await ShipmentOrder.findOne({ where: { uid } });
+        const existingShipment = await ShipmentOrder.findOne({ where: { uid } , transaction: t});
         if (!existingShipment) {
           errs.push({ uid, error: 'Shipment not found' });
           continue; // Skip to the next shipment if not found
         }
+        if(poNumber !== existingShipment.poNumber) {
+          errs.push({ uid, poNumber, error: 'Shipment not found with given poNumber' });
+          continue;
+        }
+
         await existingShipment.update(updateData, { transaction: t });
       }
       await t.commit();
@@ -1008,9 +1031,6 @@ async function updateBulkShipment(req, res){
     await t.rollback();
     console.error("Error: ", error);
     return res.status(500).json({msg:"Something went wrong while updating Shipments!", error: error.message})
-  }
-  finally {
-    
   }
 }
 
