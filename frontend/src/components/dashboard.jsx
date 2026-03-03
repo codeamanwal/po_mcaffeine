@@ -64,6 +64,7 @@ import { getTAT } from "@/constants/courier-partners"
 import { getDeliveryType } from "@/lib/validation"
 import { toast } from "sonner"
 import api from "@/hooks/axios"
+import { getMasterFinalStatus } from "@/master-sheets/fetch-master-sheet-data"
 
 // Sample data based on provided format
 const poData = [
@@ -1971,7 +1972,23 @@ const ConfirmDialog = ({ open, type, id, onConfirm, onCancel }) => (
 )
 
 const StatusModal = ({ isOpen, onClose, data }) => {
-  const finalStatus = getFinalStatus(data.statusPlanning ?? "Confirmed", data.statusWarehouse ?? "Confirmed", data.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+  const [finalStatus, setFinalStatus] = useState("")
+  
+  async function fetchFinalStatus() {
+    try {
+      const finalStatus = await getMasterFinalStatus(data.statusPlanning ?? "Confirmed", data.statusWarehouse ?? "Confirmed", data.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+      setFinalStatus(finalStatus)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    console.log("fetcing final Status for tis shipment: ", data.uid)
+    fetchFinalStatus()
+  }, [data])
+
+  // const finalStatus = getFinalStatus(data.statusPlanning ?? "Confirmed", data.statusWarehouse ?? "Confirmed", data.statusLogistics ?? "Confirmed") ?? "No mapping available!"
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       {/* <DialogTitle> Final Status </DialogTitle> */}

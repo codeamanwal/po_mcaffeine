@@ -93,12 +93,29 @@ export async function getMasterFacilityOptions () {
     }
 }
 
-export async function getMasterStatusPlanningOptions () {
+export async function getMasterStatusOptions () {
     try {
-        const res = await api.get(`${baseUrl}/api/v1/master/status/search?attributes=status`)
+        const res = await api.get(`${baseUrl}/api/v1/master/status/search?attributes=statusPlanning,statusWarehouse,statusLogistics,statusFinal`)
         const apiData = res.data
         const data = res.data.data
-        const statusPlanningOptions = [... new Set(data.map(item => item.status))]
+        const statusPlanningOptions = [... new Set(data.map(item => item.statusPlanning))]
+        const statusWarehouseOptions = [... new Set(data.map(item => item.statusWarehouse))]
+        const statusLogisticsOptions = [... new Set(data.map(item => item.statusLogistics))]
+        const statusFinalOptions =  [... new Set(data.map(item => item.statusFinal))]
+
+        return {statusPlanningOptions, statusWarehouseOptions, statusLogisticsOptions, statusFinalOptions}
+    } catch (error) {
+        console.error("ERROR GETTING MASTER STATUS OPTIONS",error)
+        return {statusPlanningOptions: [], statusWarehouseOptions: [], statusLogisticsOptions: [], statusFinalOptions: []}
+    }
+}
+
+export async function getMasterStatusPlanningOptions () {
+    try {
+        const res = await api.get(`${baseUrl}/api/v1/master/status/search?attributes=statusPlanning`)
+        const apiData = res.data
+        const data = res.data.data
+        const statusPlanningOptions = [... new Set(data.map(item => item.statusPlanning))]
         return statusPlanningOptions
     } catch (error) {
         console.error("ERROR GETTING MASTER STATUS PLANNING OPTIONS",error)
@@ -108,10 +125,10 @@ export async function getMasterStatusPlanningOptions () {
 
 export async function getMasterFinalStatus (statusPlanning, statusWarehouse, statusLogistics) {
     try{
-        const res = await api.get(`${baseUrl}/api/v1/master/status/search?statusPlanning=${statusPlanning}&statusWarehouse=${statusWarehouse}&statusLogistics=${statusLogistics}`)
+        const res = await api.get(`${baseUrl}/api/v1/master/status/search?attributes=statusFinal&statusPlanning=${statusPlanning}&statusWarehouse=${statusWarehouse}&statusLogistics=${statusLogistics}`)
         const apiData = res.data
         const data = res.data.data
-        const finalStatus = [... new Set(data.map(item => item.finalStatus))]
+        const finalStatus = [... new Set(data.map(item => item.statusFinal))]
         return finalStatus
     } catch (error) {
         console.error("ERROR GETTING MASTER FINAL STATUS",error)

@@ -45,7 +45,7 @@ import SkuLevelEditModal from "./sku-level-edit-modal"
 import LogisticsCost from "./logistics-cost"
 import { getTAT } from "@/constants/courier-partners"
 import { getFinalStatus } from "@/constants/status_master"
-import { getMasterCourierPartnerOptions, getMasterFacilityOptions } from "@/master-sheets/fetch-master-sheet-data"
+import { getMasterCourierPartnerOptions, getMasterFacilityOptions, getMasterFinalStatus, getMasterStatusOptions } from "@/master-sheets/fetch-master-sheet-data"
 
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
@@ -287,6 +287,45 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const [locationOtions, setLocationOptions] = useState([])
   const [facilityOptions, setFacilityOptions ] = useState([])
   const [partnerOptions, setPartnerOptions ] = useState([])
+
+  // fetch options for various fields from master sheets
+  const [statusPlanningOptions, setStatusPlanningOptions] = useState([])
+  const [statusWarehouseOptions, setstatusWarehouseOptions] = useState([])
+  const [statusLogisticsOptions, setstatusLogisticsOptions] = useState([])
+  const [finalStatus, setFinalStatus] = useState("")
+
+
+  async function fetchStatusOptions () {
+    try {
+      const options = await getMasterStatusOptions()
+      // console.log(options.statusPlanningOptions, "\n")
+      // console.log(options.statusWarehouseOptions, "\n")
+      // console.log(options.statusLogisticsOptions, "\n")
+      setStatusPlanningOptions(options.statusPlanningOptions)
+      setstatusWarehouseOptions(options.statusWarehouseOptions)
+      setstatusLogisticsOptions(options.statusLogisticsOptions)
+    } catch (error) {
+      console.log("Error: ", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchStatusOptions()
+  }, [])
+
+  async function fetchFinalStatus() {
+    try {
+      const finalStatus = await getMasterFinalStatus(shipmentData.statusPlanning ?? "Confirmed", shipmentData.statusWarehouse ?? "Confirmed", shipmentData.statusLogistics ?? "Confirmed") ?? "No mapping available!"
+      setFinalStatus(finalStatus)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    // console.log("fetcing final Status for this shipment: ", shipmentData.uid)
+    fetchFinalStatus()
+  }, [shipmentData])
 
   const getLocations = (channel) => {
     if(!channel) return [];
@@ -864,6 +903,16 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
         )
     }
 
+    if(field.fieldName === 'statusPlanning') {
+      field = {...field, options: statusPlanningOptions}
+    }
+    if(field.fieldName === 'statusWarehouse') {
+      field = {...field, options: statusWarehouseOptions}
+    }
+    if(field.fieldName === 'statusLogistics') {
+      field = {...field, options: statusLogisticsOptions}
+    }
+
 
     switch (field.type) {
       case "date":
@@ -1083,8 +1132,6 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   }
 
   const availableTabs = getAvailableTabs()
-
-  const finalStatus = getFinalStatus(shipmentData.statusPlanning ?? "Confirmed", shipmentData.statusWarehouse ?? "Confirmed", shipmentData.statusLogistics ?? "Confirmed") ?? "No mapping available!"
 
 
   return (

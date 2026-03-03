@@ -76,32 +76,32 @@ export const validateShipmentData = (shipmentData)=> {
   // }
 
   // Validate status fields
-  if (shipmentData.statusPlanning) {
-    const statusPlanningValidation = validateField(
-      "Status Planning",
-      shipmentData.statusPlanning,
-      master_status_planning_options,
-    )
-    errors.push(...statusPlanningValidation.errors)
-  }
+  // if (shipmentData.statusPlanning) {
+  //   const statusPlanningValidation = validateField(
+  //     "Status Planning",
+  //     shipmentData.statusPlanning,
+  //     master_status_planning_options,
+  //   )
+  //   errors.push(...statusPlanningValidation.errors)
+  // }
 
-  if (shipmentData.statusWarehouse) {
-    const statusWarehouseValidation = validateField(
-      "Status Warehouse",
-      shipmentData.statusWarehouse,
-      master_status_warehouse_options,
-    )
-    errors.push(...statusWarehouseValidation.errors)
-  }
+  // if (shipmentData.statusWarehouse) {
+  //   const statusWarehouseValidation = validateField(
+  //     "Status Warehouse",
+  //     shipmentData.statusWarehouse,
+  //     master_status_warehouse_options,
+  //   )
+  //   errors.push(...statusWarehouseValidation.errors)
+  // }
 
-  if (shipmentData.statusLogistics) {
-    const statusLogisticsValidation = validateField(
-      "Status Logistics",
-      shipmentData.statusLogistics,
-      master_status_logistics_options,
-    )
-    errors.push(...statusLogisticsValidation.errors)
-  }
+  // if (shipmentData.statusLogistics) {
+  //   const statusLogisticsValidation = validateField(
+  //     "Status Logistics",
+  //     shipmentData.statusLogistics,
+  //     master_status_logistics_options,
+  //   )
+  //   errors.push(...statusLogisticsValidation.errors)
+  // }
 
   // Validate transporter fields
   // const transporterFields = ["firstTransporter", "secondTransporter", "thirdTransporter"]
