@@ -43,7 +43,7 @@ import {
 import { master_rto_remark_options } from "@/constants/master_sheet"
 
 import { toast } from "sonner"
-import { getMasterCourierPartnerOptions, getMasterFacilityOptions } from "@/master-sheets/fetch-master-sheet-data"
+import { getMasterCourierPartnerOptions, getMasterFacilityOptions, getMasterStatusOptions } from "@/master-sheets/fetch-master-sheet-data"
 import { isValid } from "date-fns"
 
 // Field definitions with role permissions, CSV headers, and validation rules
@@ -536,6 +536,11 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
   const [facilityOptions, setFacilityOptions] = useState([])
   const [partnerOptions, setPartnerOptions] = useState([])
+  const [allStatusOptions, setAllStatusOptions] = useState({
+    statusPlanning: [],
+    statusWarehouse: [],
+    statusLogistics: [],
+  })
   const [isLoading, setIsLoading] = useState(false)
 
   const getFacilityOptions = async () => {
@@ -564,9 +569,23 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     }
   }
 
+  const getAllStatusOptions = async () => {
+    try {
+      setIsLoading(true)
+      const res = await getMasterStatusOptions()
+      // console.log(res)
+      setAllStatusOptions({statusPlanning: res.statusPlanningOptions, statusWarehouse: res.statusWarehouseOptions, statusLogistics: res.statusLogisticsOptions})
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
     getFacilityOptions()
     getPartnerOptions()
+    getAllStatusOptions()
   }, [])
 
   const getAvailableFields = () => {
@@ -671,11 +690,24 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
     let data = { ...shipmentData, isValid: true, errors: [] };
     console.log("fields:", Object.keys(shipmentData))
     const fields = Object.keys(shipmentData)
-    const uselessFileds = ["errors", "warnings", "isValid", "rowNumber", "uid", "poNumber"]
+    const uselessFileds = ["errors", "warnings", "isValid", "rowNumber", "uid", "poNumber", "status"]
     for (let fieldName of fields) {
-      console.log(fieldName)
+
       const value = shipmentData[fieldName]
-      const fieldDefinition = (fieldDefinitions)[fieldName]
+      let fieldDefinition = fieldDefinitions[fieldName]
+
+      if(uselessFileds.includes(fieldName)){
+        fieldDefinition = {
+          label : fieldName,
+          csvHeader : "",
+          roles : "",
+          type : "",
+          category : "",
+          validation : null,
+        }
+        continue
+      }
+
       if (!fieldDefinition || !fieldDefinition.validation || !value || value.trim() === "") {
         data.isValid = true;
       }
@@ -683,21 +715,31 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
       let allowedValues;
       if (fieldName === "facility") {
         allowedValues = facilityOptions
+      } else if (fieldName === "statusPlanning") {
+        allowedValues = allStatusOptions.statusPlanning
+      } else if (fieldName === "statusWarehouse") {
+        allowedValues = allStatusOptions.statusWarehouse
+      } else if (fieldName === "statusLogistics") {
+        allowedValues = allStatusOptions.statusLogistics
       } else if (fieldName === "firstTransporter" || fieldName === "secondTransporter" || fieldName === "thirdTransporter") {
         allowedValues = partnerOptions
-      } else if (uselessFileds.includes(fieldName)) {
-        // console.log("No allowed values!")
-        continue
-      }
+      } 
       else {
         allowedValues = fieldDefinition?.validation
       }
 
       // console.log("allowed values:", allowedValues)
 
-      if (!allowedValues) {
+      if(!allowedValues && (fieldName === "facility" || fieldName === "statusPlanning" || fieldName === "statusWarehouse" || fieldName === "statusLogistics")){
+        // console.log("fieldName: ", fieldName)
+        data.isValid = false;
+        data.errors.push(`${fieldDefinition.label} "${value}" is not valid. No options found`)
+      }
+
+      if(!allowedValues){
         continue
       }
+
 
       if (!allowedValues.includes(value)) {
         data.isValid = false;
