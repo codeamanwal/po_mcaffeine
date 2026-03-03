@@ -149,6 +149,19 @@ export async function getMasterCourierPartnerOptions () {
     }
 }
 
+export async function getMasterApptChangeRemarksOptions () {
+    try{
+        const res = await api.get(`${baseUrl}/api/v1/master/appointment-remarks/search?attributes=remark`)
+        const apiData = res.data
+        const data = res.data.data
+        const options = [... new Set(data.map(item => item.remark))]
+        return options
+    } catch (error) {
+        console.error("ERROR GETTING MASTER APPOINTMENT CHANGE REAMERKS OPTIONS",error)
+        return []
+    }
+}
+
 /********************************************** Courier partner options ***************************/
 // const courierPartners = [
 //   {

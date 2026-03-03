@@ -40,12 +40,10 @@ import { getLogsOfShipment } from '@/lib/order'
 import { toast } from "sonner"
 import SearchableSelect from "./ui/searchable-select"
 
-import {master_appointment_change_options} from "@/constants/master_sheet"
 import SkuLevelEditModal from "./sku-level-edit-modal"
 import LogisticsCost from "./logistics-cost"
 import { getTAT } from "@/constants/courier-partners"
-import { getFinalStatus } from "@/constants/status_master"
-import { getMasterCourierPartnerOptions, getMasterFacilityOptions, getMasterFinalStatus, getMasterStatusOptions } from "@/master-sheets/fetch-master-sheet-data"
+import { getMasterApptChangeRemarksOptions, getMasterCourierPartnerOptions, getMasterFacilityOptions, getMasterFinalStatus, getMasterStatusOptions } from "@/master-sheets/fetch-master-sheet-data"
 
 // Master reasons for editing PO Number
 const PO_EDIT_REASONS = [
@@ -294,6 +292,8 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
   const [statusLogisticsOptions, setstatusLogisticsOptions] = useState([])
   const [finalStatus, setFinalStatus] = useState("")
 
+  const [ appointmentRemarkOptions, setAppointmentRemarkOptions] = useState([])
+
 
   async function fetchStatusOptions () {
     try {
@@ -309,8 +309,23 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
     }
   }
 
+  async function fetchApptChangeRemarkOptions () {
+    try {
+      let options = await getMasterApptChangeRemarksOptions()
+      options = options.map(remark => {
+        return {label: remark, value: remark}
+      })
+
+      console.log("remarks options: ", options)
+      setAppointmentRemarkOptions(options)
+    } catch (error) {
+      console.log("Error: ", error)
+    }
+  }
+
   useEffect(() => {
     fetchStatusOptions()
+    fetchApptChangeRemarkOptions()
   }, [])
 
   async function fetchFinalStatus() {
@@ -335,11 +350,6 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
 
   const { user } = useUserStore()
 
-   const appointmentRemarkOptions = useMemo(() => master_appointment_change_options.map((remark) => (
-  { 
-    value: remark.remark,
-    label: `${remark.remark}`,
-  })), [])
 
   useEffect(() => {
     if (shipmentData) {
