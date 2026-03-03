@@ -765,6 +765,10 @@ export async function getFilterOptions(req, res) {
     
     // console.log("rows: ", parse(rows?.channel), "channel: ", rows.channel)
 
+    const finalStatusFilterOptionsSql = `SELECT statusFinal FROM status_masters;` ;
+
+    const finalStatusFilterOptionsObj = await sequelize.query(finalStatusFilterOptionsSql, {type: sequelize.QueryTypes.SELECT})
+    const finalStatusFilterOptions = [... new Set(finalStatusFilterOptionsObj.map(obj => obj.statusFinal))]
 
     const filters = {
       brand: parse(skuRows[0]?.brand),
@@ -775,6 +779,7 @@ export async function getFilterOptions(req, res) {
       statusWarehouse: parse(rows?.statusWarehouse),
       statusLogistics: parse(rows?.statusLogistics),
       statusLogistics: parse(rows?.statusLogistics),
+      statusFinal: finalStatusFilterOptions,
       transporter: [...parse(rows.firstTransporter), ...parse(rows.firstTransporter), ...parse(rows.firstTransporter)],
     };
 
