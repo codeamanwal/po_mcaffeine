@@ -42,7 +42,7 @@ export default function ForgotPasswordPage({
     setSuccess("")
     try {
       const res = await sendForgotPasswordEmail(email)
-      console.log(res.data);
+      // console.log(res.data);
       
       toast.success(res.data.msg ?? "Email sent successfully");
       router.push("/login");

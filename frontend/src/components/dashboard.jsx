@@ -1984,7 +1984,6 @@ const StatusModal = ({ isOpen, onClose, data }) => {
   }
 
   useEffect(() => {
-    console.log("fetcing final Status for tis shipment: ", data.uid)
     fetchFinalStatus()
   }, [data])
 

@@ -148,7 +148,7 @@ export default function UserManagementPage({
   useEffect(() => {
     async function fetchFacilityOptions() {
      const res = await getMasterFacilityOptions();
-     console.log(res) 
+    //  console.log(res) 
      setFacilityOptions(res)
     }
     fetchFacilityOptions()
@@ -204,7 +204,7 @@ export default function UserManagementPage({
       }
 
       const res = await updateUser(payload)
-      console.log(res.data)
+      // console.log(res.data)
       setEditSuccess(res.data.msg)
     } catch (err) {
       setEditError(err?.response?.data?.msg || err?.message || "Failed to update user")

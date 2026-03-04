@@ -307,9 +307,9 @@ export default function BulkSkuUpdateModal({
         updatedBy: user?.username || user?.email,
       }))
 
-      console.log("Bulk SKU Update Data:", bulkUpdateData)
+      // console.log("Bulk SKU Update Data:", bulkUpdateData)
       const res = await updateBulkSkus(bulkUpdateData)
-      console.log(res.data)
+      // console.log(res.data)
       setActive("result") 
       setBulkResult(res.data.data)
 

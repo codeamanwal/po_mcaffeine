@@ -688,7 +688,7 @@ export default function BulkUpdateShipmentModal({ isOpen, onClose, onSave }) {
 
   const validateFieldValue = (shipmentData) => {
     let data = { ...shipmentData, isValid: true, errors: [] };
-    console.log("fields:", Object.keys(shipmentData))
+    // console.log("fields:", Object.keys(shipmentData))
     const fields = Object.keys(shipmentData)
     const uselessFileds = ["errors", "warnings", "isValid", "rowNumber", "uid", "poNumber", "status"]
     for (let fieldName of fields) {

@@ -258,7 +258,7 @@ const BulkOrderPage = ({ onNavigate, isDarkMode, onToggleTheme }) => {
       }
 
       const res = await createBulkShipment(validOrders)
-      console.log("Upload response:", res.data)
+      // console.log("Upload response:", res.data)
 
       setSuccess(`Successfully uploaded ${validOrders.length} orders to the system`)
 

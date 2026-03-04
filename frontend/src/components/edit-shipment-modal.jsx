@@ -1040,7 +1040,7 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
                 formData[field.fieldName] ? (
                   <span  id={field.id} className="flex flex-row justify-center items-center">
                     <img 
-                      onClick={(e) => { console.log(formData[field.fieldName]); window.open(`${formData[field.fieldName]}`)}} 
+                      onClick={(e) => { window.open(`${formData[field.fieldName]}`)}} 
                       className="hover:cursor-pointer max-h-10" 
                       src={formData[field.fieldName]} 
                       alt="preview" 

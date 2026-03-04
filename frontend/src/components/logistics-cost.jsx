@@ -29,7 +29,7 @@ export default function LogisticsCost({ shipmentData }) {
         getMasterDocketCharges(shipmentData.secondTransporter),
         getMasterDocketCharges(shipmentData.thirdTransporter),
       ]) 
-      console.log("all docket charges:",res)
+      // console.log("all docket charges:",res)
       let total = 0;
       for(let i=0; i<res.length; i++){
         total += res[i]
