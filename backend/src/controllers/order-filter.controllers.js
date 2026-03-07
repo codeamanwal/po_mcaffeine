@@ -715,87 +715,150 @@ export async function getFilterOptions(req, res) {
     const allotedFacilities = currUser.allotedFacilities;
     // console.log("allotedFacilities: ", allotedFacilities);
 
-    let filteroptionsql = `
-      SELECT
-        GROUP_CONCAT(DISTINCT channel) AS channel,
-        GROUP_CONCAT(DISTINCT facility) AS faci,
-        GROUP_CONCAT(DISTINCT location) AS location,
-        GROUP_CONCAT(DISTINCT statusPlanning) AS statusPlanning,
-        GROUP_CONCAT(DISTINCT statusWarehouse) AS statusWarehouse,
-        GROUP_CONCAT(DISTINCT statusLogistics) AS statusLogistics,
-        GROUP_CONCAT(DISTINCT firstTransporter) AS firstTransporter,
-        GROUP_CONCAT(DISTINCT secondTransporter) AS secondTransporter,
-        GROUP_CONCAT(DISTINCT thirdTransporter) AS thirdTransporter
-      FROM shipment_orders
-    `;
+    // let filteroptionsql = `
+    //   SELECT
+    //     GROUP_CONCAT(DISTINCT channel) AS channel,
+    //     GROUP_CONCAT(DISTINCT facility) AS faci,
+    //     GROUP_CONCAT(DISTINCT location) AS location,
+    //     GROUP_CONCAT(DISTINCT statusPlanning) AS statusPlanning,
+    //     GROUP_CONCAT(DISTINCT statusWarehouse) AS statusWarehouse,
+    //     GROUP_CONCAT(DISTINCT statusLogistics) AS statusLogistics,
+    //     GROUP_CONCAT(DISTINCT firstTransporter) AS firstTransporter,
+    //     GROUP_CONCAT(DISTINCT secondTransporter) AS secondTransporter,
+    //     GROUP_CONCAT(DISTINCT thirdTransporter) AS thirdTransporter
+    //   FROM shipment_orders
+    // `;
 
-    // Add WHERE only for non-admins
-    if (!isAdmin) {
-      filteroptionsql += ` WHERE facility IN (:allotted)`;
+    let sql_option_query = `
+      SELECT 'facility' AS type, facility AS value FROM shipment_orders
+      UNION
+      SELECT 'location', location FROM shipment_orders
+      UNION
+      SELECT 'channel', channel FROM shipment_orders
+      UNION
+      SELECT 'statusPlanning', statusPlanning FROM shipment_orders
+      UNION
+      SELECT 'statusWarehouse', statusWarehouse FROM shipment_orders
+      UNION
+      SELECT 'statusLogistics', statusLogistics FROM shipment_orders
+      UNION
+      SELECT 'transporter', firstTransporter FROM shipment_orders
+      UNION
+      SELECT 'transporter', secondTransporter FROM shipment_orders
+      UNION
+      SELECT 'transporter', thirdTransporter FROM shipment_orders
+      UNION
+      SELECT 'brand', brandName FROM sku_orders
+      UNION
+      SELECT 'statusFinal', statusFinal FROM status_masters
+    ;`
+
+    const q_res = await sequelize.query(sql_option_query,  {type: sequelize.QueryTypes.SELECT});
+    // console.log("q_res:", q_res)
+
+    const unique_val_options = {
+      brand: [],
+      channel: [],
+      facility: [],
+      location: [],
+      statusPlanning: [],
+      statusWarehouse: [],
+      statusLogistics: [],
+      statusLogistics: [],
+      statusFinal: [],
+      transporter: [],
     }
 
-    const [rows] = await sequelize.query(filteroptionsql, {
-      replacements: {
-        allotted: allotedFacilities
-      },
-      // logging: console.log,
-      type: sequelize.QueryTypes.SELECT
-    });
-
-
-
-    const [skuRows] = await sequelize.query(`
-      SELECT GROUP_CONCAT(DISTINCT brandName) AS brand
-      FROM sku_orders;
-    `);
-
-    const parse = (val) => {
-      return val && typeof val === "string"
-        ? Array.from(
-          new Set(
-            val
-              ?.split(",")
-              ?.map((v) => v.trim())
-              ?.filter((v) => v && v !== "0")
-          )
-        )
-        : [];
+    q_res.map((row) => {
+      if(row.type === 'facility'){
+        unique_val_options.facility.push(row.value)
       }
+      else if(row.type === 'location'){
+        unique_val_options.location.push(row.value)
+      }
+      else if(row.type === 'channel'){
+        unique_val_options.channel.push(row.value)
+      }
+      else if(row.type === 'statusPlanning'){
+        unique_val_options.statusPlanning.push(row.value)
+      }
+      else if(row.type === 'statusWarehouse'){
+        unique_val_options.statusWarehouse.push(row.value)
+      }
+      else if(row.type === 'statusLogistics'){
+        unique_val_options.statusLogistics.push(row.value)
+      }
+      else if(row.type === 'transporter'){
+        unique_val_options.transporter.push(row.value)
+      }
+      else if(row.type === 'brand'){
+        unique_val_options.brand.push(row.value)
+      }
+      else if(row.type === 'statusFinal'){
+        unique_val_options.statusFinal.push(row.value)
+      }
+    })
+
+    // console.log("unique_val_options:", unique_val_options)
+
+
+    // // Add WHERE only for non-admins
+    // if (!isAdmin) {
+    //   filteroptionsql += ` WHERE facility IN (:allotted)`;
+    // }
+
+    // // const [rows] = await sequelize.query(filteroptionsql, {
+    // //   replacements: {
+    // //     allotted: allotedFacilities
+    // //   },
+    // //   // logging: console.log,
+    // //   type: sequelize.QueryTypes.SELECT
+    // // });
+
+
+
+    // const [skuRows] = await sequelize.query(`
+    //   SELECT GROUP_CONCAT(DISTINCT brandName) AS brand
+    //   FROM sku_orders;
+    // `);
+
+    // const parse = (val) => {
+    //   return val && typeof val === "string"
+    //     ? Array.from(
+    //       new Set(
+    //         val
+    //           ?.split(",")
+    //           ?.map((v) => v.trim())
+    //           ?.filter((v) => v && v !== "0")
+    //       )
+    //     )
+    //     : [];
+    //   }
     
     
-    // console.log("rows: ", parse(rows?.channel), "channel: ", rows.channel)
+    // // console.log("rows: ", parse(rows?.channel), "channel: ", rows.channel)
 
-    const finalStatusFilterOptionsSql = `SELECT statusFinal FROM status_masters;` ;
+    // const finalStatusFilterOptionsSql = `SELECT statusFinal FROM status_masters;` ;
 
-    const finalStatusFilterOptionsObj = await sequelize.query(finalStatusFilterOptionsSql, {type: sequelize.QueryTypes.SELECT})
-    const finalStatusFilterOptions = [... new Set(finalStatusFilterOptionsObj.map(obj => obj.statusFinal))]
+    // const finalStatusFilterOptionsObj = await sequelize.query(finalStatusFilterOptionsSql, {type: sequelize.QueryTypes.SELECT})
+    // const finalStatusFilterOptions = [... new Set(finalStatusFilterOptionsObj.map(obj => obj.statusFinal))]
 
-    const filters = {
-      brand: parse(skuRows[0]?.brand),
-      channel: parse(rows?.channel),
-      facility: parse(rows?.faci),
-      location: parse(rows?.location),
-      statusPlanning: parse(rows?.statusPlanning),
-      statusWarehouse: parse(rows?.statusWarehouse),
-      statusLogistics: parse(rows?.statusLogistics),
-      statusLogistics: parse(rows?.statusLogistics),
-      statusFinal: finalStatusFilterOptions,
-      transporter: [...parse(rows.firstTransporter), ...parse(rows.firstTransporter), ...parse(rows.firstTransporter)],
-    };
+    // const filters = {
+    //   brand: parse(skuRows[0]?.brand),
+    //   channel: parse(rows?.channel),
+    //   facility: parse(rows?.faci),
+    //   location: parse(rows?.location),
+    //   statusPlanning: parse(rows?.statusPlanning),
+    //   statusWarehouse: parse(rows?.statusWarehouse),
+    //   statusLogistics: parse(rows?.statusLogistics),
+    //   statusLogistics: parse(rows?.statusLogistics),
+    //   statusFinal: finalStatusFilterOptions,
+    //   transporter: [...parse(rows.firstTransporter), ...parse(rows.firstTransporter), ...parse(rows.firstTransporter)],
+    // };
 
-    return res.status(200).json({ msg: "Fetched unique options for filters", filterOptions: filters })
+    return res.status(200).json({ msg: "Fetched unique options for filters", filterOptions: unique_val_options })
   } catch (error) {
     console.log(error)
     return res.status(500).json({ msg: "Could not fetch filter options", error })
-  }
-}
-
-// download csvs with filters
-export async function downloadSkuCsv(req, res) {
-  try {
-    
-  } catch (error) {
-    console.error("Error downloading SKU CSV:", error);
-    return res.status(500).json({ msg: "Something went wrong while downloading SKU CSV", error });
   }
 }
