@@ -770,6 +770,7 @@ export async function getFilterOptions(req, res) {
     }
 
     q_res.map((row) => {
+    if(row && row.value && row?.value !== null && row?.value !== undefined){
       if(row.type === 'facility'){
         unique_val_options.facility.push(row.value)
       }
@@ -797,6 +798,7 @@ export async function getFilterOptions(req, res) {
       else if(row.type === 'statusFinal'){
         unique_val_options.statusFinal.push(row.value)
       }
+    }
     })
 
     // console.log("unique_val_options:", unique_val_options)
