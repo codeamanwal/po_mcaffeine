@@ -649,6 +649,14 @@ export default function EditShipmentModal({ isOpen, onClose, shipmentData, onSav
       dataToSave.allAppointmentDate = finalAppointmentDates
       dataToSave.appointmentRemarks = finalAppointmentRemarks
 
+      // save first appt date and current appt date to be as empty if first appt date copt is null or undefined (not selected in field) 
+      if(dataToSave.firstAppointmentDateCOPT === null || dataToSave.firstAppointmentDateCOPT === undefined){
+        dataToSave.firstAppointmentDateCOPT = null
+        dataToSave.currentAppointmentDate = null
+      }
+
+
+      console.log("before saving the data is :", dataToSave)
       const res = await updateShipment(dataToSave)
       setSuccess("Shipment updated successfully!")
       onSave()
