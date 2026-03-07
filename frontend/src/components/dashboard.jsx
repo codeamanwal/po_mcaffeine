@@ -244,6 +244,17 @@ const shipmentData = [
 // Multi-select filter component
 const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery("")
+    }
+  }, [isOpen])
+
+  const filteredOptions = options.filter((option) =>
+    option.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const handleToggle = (value) => {
     const newSelection = selectedValues.includes(value)
@@ -258,6 +269,16 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
     } else {
       onSelectionChange(options)
     }
+  }
+
+  const handleSelectAllFiltered = () => {
+    const newSelection = [...selectedValues]
+    filteredOptions.forEach((opt) => {
+      if (!newSelection.includes(opt)) {
+        newSelection.push(opt)
+      }
+    })
+    onSelectionChange(newSelection)
   }
 
   return (
@@ -279,19 +300,42 @@ const MultiSelectFilter = ({ label, options, selectedValues, onSelectionChange, 
         <PopoverContent className="w-full p-0" align="start">
           <div className="max-h-60 overflow-auto">
             <div className="p-2 border-b">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 h-8"
+                />
+              </div>
+            </div>
+            <div className="p-2 border-b flex flex-col gap-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="select-all"
-                  checked={selectedValues.length === options.length}
+                  checked={selectedValues.length === options.length && options.length > 0}
                   onCheckedChange={handleSelectAll}
                 />
                 <Label htmlFor="select-all" className="text-sm font-medium">
                   Select All
                 </Label>
               </div>
+              {searchQuery && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="select-all-filtered"
+                    checked={filteredOptions.length > 0 && filteredOptions.every((opt) => selectedValues.includes(opt))}
+                    onCheckedChange={handleSelectAllFiltered}
+                  />
+                  <Label htmlFor="select-all-filtered" className="text-sm font-medium">
+                    Select All Filtered ({filteredOptions.length})
+                  </Label>
+                </div>
+              )}
             </div>
             <div className="p-2 space-y-2">
-              {options.map((option, idx) => (
+              {filteredOptions.map((option, idx) => (
                 <div key={idx} className="flex items-center space-x-2">
                   <Checkbox
                     id={option}
