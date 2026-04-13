@@ -1,0 +1,21 @@
+name: Renew SSL Certificate
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"  
+  workflow_dispatch:
+
+jobs:
+  renew-cert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into EC2 and renew cert
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo certbot renew
+            sudo systemctl reload nginx
